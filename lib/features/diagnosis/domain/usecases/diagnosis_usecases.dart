@@ -24,12 +24,12 @@ class AnalyzeCropParams extends Equatable {
 }
 
 class GetDiagnosisHistoryUseCase
-    implements UseCase<List<DiagnosisHistoryItem>, NoParams> {
+    implements UseCase<List<DiagnosisEntity>, NoParams> {
   final DiagnosisRepository repository;
   const GetDiagnosisHistoryUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<DiagnosisHistoryItem>>> call(NoParams params) {
+  Future<Either<Failure, List<DiagnosisEntity>>> call(NoParams params) {
     return repository.getHistory();
   }
 }

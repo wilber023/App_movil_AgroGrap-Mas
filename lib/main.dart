@@ -44,8 +44,19 @@ class AgroGraphApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<AuthBloc>()..add(const AuthCheckSessionRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<AuthBloc>()..add(const AuthCheckSessionRequested()),
+        ),
+        BlocProvider(
+          create: (_) => sl<HomeBloc>()..add(const HomeLoadRequested()),
+        ),
+        BlocProvider(create: (_) => sl<DiagnosisBloc>()),
+        BlocProvider(
+          create: (_) => sl<TreatmentBloc>()..add(const TreatmentAgendaRequested()),
+        ),
+      ],
       child: MaterialApp(
         title: 'AgroGraph-MAS',
         debugShowCheckedModeBanner: false,
@@ -89,31 +100,19 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) =>
-              sl<HomeBloc>()..add(const HomeLoadRequested()),
-        ),
-        BlocProvider(create: (_) => sl<DiagnosisBloc>()),
-        BlocProvider(
-          create: (_) =>
-              sl<TreatmentBloc>()..add(const TreatmentAgendaRequested()),
-        ),
-      ],
-      child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: const [
-            HomePage(),
-            DiagnosisPage(),
-            TreatmentPage(),
-            ParcelsPage(),
-            ProfilePage(),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: const [
+          HomePage(),       // Tab 0: Inicio
+          DiagnosisPage(),  // Tab 1: Diagnostico
+          ParcelsPage(),    // Tab 2: Mis Parcelas
+          TreatmentPage(),  // Tab 3: Agenda
+          ProfilePage(),    // Tab 4: Perfil
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.surfaceContainerLowest,
@@ -123,28 +122,27 @@ class _MainShellState extends State<MainShell> {
           unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
+              icon: Icon(Icons.home_outlined),
               label: 'Inicio',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.camera_alt_rounded),
-              label: 'Captura',
+              icon: Icon(Icons.camera_alt_outlined),
+              label: 'Diagnostico',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.event_note_rounded),
+              icon: Icon(Icons.landscape_outlined),
+              label: 'Mis Parcelas',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.event_note_outlined),
               label: 'Agenda',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.landscape_rounded),
-              label: 'Parcelas',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
+              icon: Icon(Icons.person_outlined),
               label: 'Perfil',
             ),
           ],
         ),
-      ),
     );
   }
 }

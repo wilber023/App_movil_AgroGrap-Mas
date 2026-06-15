@@ -23,10 +23,6 @@ import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_dashboard_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 
-// -- Diagnosis --
-import '../../features/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
-import '../../features/diagnosis/data/repositories/diagnosis_repository_impl.dart';
-import '../../features/diagnosis/domain/repositories/diagnosis_repository.dart';
 import '../../features/diagnosis/domain/usecases/diagnosis_usecases.dart';
 import '../../features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
 
@@ -186,24 +182,10 @@ void _initHomeFeature() {
 // =============================================================================
 
 void _initDiagnosisFeature() {
-  sl.registerLazySingleton<DiagnosisRemoteDataSource>(
-    () => DiagnosisRemoteDataSourceImpl(client: sl()),
-  );
-
-  sl.registerLazySingleton<DiagnosisRepository>(
-    () => DiagnosisRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
   sl.registerLazySingleton(() => AnalyzeCropUseCase(sl()));
   sl.registerLazySingleton(() => GetDiagnosisHistoryUseCase(sl()));
 
-  sl.registerFactory(() => DiagnosisBloc(
-    analyzeCropUseCase: sl(),
-    getHistoryUseCase: sl(),
-  ));
+  sl.registerFactory(() => DiagnosisBloc());
 }
 
 // =============================================================================

@@ -2,54 +2,54 @@ import 'package:equatable/equatable.dart';
 
 class DiagnosisEntity extends Equatable {
   final String id;
-  final String cropName;
   final String diseaseName;
-  final String severity; // alta, media, baja
+  final String scientificName;
+  final String cropName;
+  final String? parcelName;
+  final String severity; // Critica, Moderada, Leve, Saludable
   final double confidence;
   final String description;
   final List<String> symptoms;
-  final List<String> recommendations;
-  final String? imageUrl;
+  final List<String> recommendationsWhatIs;
+  final List<String> recommendationsWhatToDo;
+  final String recommendationsNoAction;
+  final String? imagePath;
   final DateTime diagnosedAt;
-  final String parcelName;
+  final bool isPendingSync;
+  final double? treatmentProgress;
+  final String? treatmentStep;
+  final String statusLabel; // En tratamiento, Seguimiento, Completado, etc.
 
   const DiagnosisEntity({
     required this.id,
-    required this.cropName,
     required this.diseaseName,
+    required this.scientificName,
+    required this.cropName,
+    this.parcelName,
     required this.severity,
     required this.confidence,
     required this.description,
     this.symptoms = const [],
-    this.recommendations = const [],
-    this.imageUrl,
+    this.recommendationsWhatIs = const [],
+    this.recommendationsWhatToDo = const [],
+    this.recommendationsNoAction = '',
+    this.imagePath,
     required this.diagnosedAt,
-    this.parcelName = '',
-  });
-
-  bool get isHighSeverity => severity.toLowerCase() == 'alta';
-
-  @override
-  List<Object?> get props => [id, cropName, diseaseName, severity, confidence];
-}
-
-class DiagnosisHistoryItem extends Equatable {
-  final String id;
-  final String cropName;
-  final String diseaseName;
-  final String severity;
-  final DateTime diagnosedAt;
-  final String? thumbnailUrl;
-
-  const DiagnosisHistoryItem({
-    required this.id,
-    required this.cropName,
-    required this.diseaseName,
-    required this.severity,
-    required this.diagnosedAt,
-    this.thumbnailUrl,
+    this.isPendingSync = false,
+    this.treatmentProgress,
+    this.treatmentStep,
+    required this.statusLabel,
   });
 
   @override
-  List<Object?> get props => [id, cropName, diseaseName, severity];
+  List<Object?> get props => [
+        id,
+        diseaseName,
+        cropName,
+        parcelName,
+        severity,
+        confidence,
+        isPendingSync,
+        statusLabel,
+      ];
 }
