@@ -22,7 +22,6 @@ const Color _chipBlueBg = Color(0xFFE6F1FB);
 const Color _chipBlueText = Color(0xFF0C447C);
 const Color _trackGrey = Color(0xFFE2EBE6);
 const Color _alertBorder = Color(0xFFF09595);
-const Color _noteGrey = Color(0xFFF4F6F3);
 
 class ParcelDetailPage extends StatelessWidget {
   final String parcelName;
@@ -217,8 +216,6 @@ class ParcelDetailPage extends StatelessWidget {
       children: [
         _actionCard('Diagnosticar', Icons.camera_alt_outlined, AppColors.forestGreen),
         const SizedBox(width: 8),
-        _actionCard('Analisis econ.', Icons.bar_chart_outlined, const Color(0xFF52B788)),
-        const SizedBox(width: 8),
         _actionCard('Historial', Icons.access_time_outlined, _hintColor),
       ],
     );
@@ -272,7 +269,7 @@ class ParcelDetailPage extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Tizon tardio \u00B7 91% confianza',
+                  'Tizón tardío \u00B7 91% confianza',
                   style: AppTypography.labelMd.copyWith(
                     color: _chipAlertText,
                     fontSize: 13,
@@ -285,7 +282,7 @@ class ParcelDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Intervencion recomendada en las proximas 24 horas.',
+            'Intervención recomendada en las próximas 24 horas.',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 11,
@@ -293,51 +290,24 @@ class ParcelDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.burntOrange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Text(
-                      'Ver diagnostico',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 11),
-                    ),
-                  ),
+          SizedBox(
+            height: 36,
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.burntOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                elevation: 0,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 36,
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.burntOrange,
-                      side: const BorderSide(color: AppColors.burntOrange, width: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Text(
-                      'Ver costos \u2192',
-                      style: TextStyle(fontFamily: 'Inter', fontSize: 11),
-                    ),
-                  ),
-                ),
+              child: const Text(
+                'Ver diagnóstico',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 11),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -389,7 +359,7 @@ class ParcelDetailPage extends StatelessWidget {
               const Icon(Icons.calendar_today_outlined, color: AppColors.warmAmber, size: 12),
               const SizedBox(width: 6),
               Text(
-                'Proximo: Segunda aplicacion \u00B7 10 jun',
+                'Próximo: Segunda aplicación \u00B7 10 jun',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 11,
@@ -431,31 +401,33 @@ class ParcelDetailPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          _dataRow('Riego', 'Temporal', null),
+          _dataRow('Tipo de terreno', 'Pendiente ligera', null),
+          _divider(),
+          _dataRow('Condición del suelo', 'Buen drenaje', null),
+          _divider(),
+          _dataRow('Maleza predominante', 'Pastos', null),
           _divider(),
           _dataRow('Siembra', '15 mar 2026', null),
           _divider(),
-          _dataRow('Historial previo', 'Tizon tardio', AppColors.burntOrange),
-          _divider(),
-          _dataRow('Etapa actual', 'Floracion', _chipBlueText),
+          _dataRow('Etapa actual', 'Floración', null),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _noteGrey,
+              color: const Color(0xFFF4F6F3),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.memory_outlined, color: _hintColor, size: 12),
-                const SizedBox(width: 6),
+                Icon(Icons.info_outline, color: Color(0xFFADB5BD), size: 12),
+                SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Datos usados por el modelo IA para esta parcela.',
+                    'Estos datos ayudan a contextualizar diagnósticos y futuras recomendaciones.',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
-                      color: _hintColor,
+                      color: Color(0xFFADB5BD),
                     ),
                   ),
                 ),
