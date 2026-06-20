@@ -8,8 +8,7 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
-import 'features/auth/presentation/bloc/auth_state.dart';
-import 'features/auth/presentation/pages/welcome_page.dart';
+import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
 import 'features/diagnosis/presentation/pages/diagnosis_page.dart';
 import 'features/home/presentation/bloc/home_bloc.dart';
@@ -61,28 +60,8 @@ class AgroGraphApp extends StatelessWidget {
         title: 'AgroGraph-MAS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        home: const AuthGate(),
+        home: const SplashPage(),
       ),
-    );
-  }
-}
-
-// Decide que pantalla mostrar segun el estado de sesion.
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthLoading || state is AuthInitial) {
-          return const _SplashScreen();
-        }
-        if (state is AuthAuthenticated) {
-          return const MainShell();
-        }
-        return const WelcomePage();
-      },
     );
   }
 }
@@ -149,52 +128,3 @@ class _MainShellState extends State<MainShell> {
 
 // -- Pantallas auxiliares --
 
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primaryContainer,
-              Theme.of(context).colorScheme.primary,
-            ],
-          ),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.eco_rounded, size: 72, color: Colors.white),
-            SizedBox(height: 24),
-            Text(
-              'AgroGraph-MAS',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: -0.5,
-              ),
-            ),
-            SizedBox(height: 32),
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.white70,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

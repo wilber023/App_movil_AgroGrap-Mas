@@ -7,6 +7,7 @@
 
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/profile_type.dart';
 import '../../domain/entities/user_entity.dart';
 
 /// Clase base sellada para todos los estados de autenticacion.
@@ -27,18 +28,22 @@ final class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// Estado de sesion activa: el usuario esta autenticado.
+/// Estado de sesion activa: el usuario esta autenticado como Agricultor.
 final class AuthAuthenticated extends AuthState {
   final UserEntity user;
+  final ProfileType profileType;
 
-  const AuthAuthenticated({required this.user});
+  const AuthAuthenticated({
+    required this.user,
+    this.profileType = ProfileType.agricultor,
+  });
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, profileType];
 }
 
 /// Estado sin sesion: no hay usuario autenticado.
-/// Se muestra la pantalla de Bienvenida (Stitch: "AgroGraph-MAS - Splash").
+/// Se muestra la pantalla de Splash / Seleccion de Perfil.
 final class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
@@ -51,4 +56,15 @@ final class AuthFailureState extends AuthState {
 
   @override
   List<Object?> get props => [message];
+}
+
+/// Estado cuando el feature del perfil aun no esta implementado.
+final class AuthFeatureNotReady extends AuthState {
+  final ProfileType profileType;
+  final UserEntity? user;
+
+  const AuthFeatureNotReady({required this.profileType, this.user});
+
+  @override
+  List<Object?> get props => [profileType, user];
 }

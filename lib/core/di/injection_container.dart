@@ -14,7 +14,11 @@ import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/get_current_user_usecase.dart';
 import '../../features/auth/domain/usecases/logout_usecase.dart';
+import '../../features/auth/domain/usecases/select_profile_type_usecase.dart';
+import '../../features/auth/domain/usecases/get_saved_session_usecase.dart';
+import '../../features/auth/domain/usecases/validate_register_form_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/splash_cubit.dart';
 
 // -- Home --
 import '../../features/home/data/datasources/home_remote_datasource.dart';
@@ -111,6 +115,9 @@ void _initAuthFeature() {
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
+  sl.registerLazySingleton(() => SelectProfileTypeUseCase(sl()));
+  sl.registerLazySingleton(() => GetSavedSessionUseCase(sl()));
+  sl.registerLazySingleton(() => const ValidateRegisterFormUseCase());
 
   // -- Bloc (Factory: nueva instancia por pantalla) --
   sl.registerFactory(() => AuthBloc(
@@ -118,6 +125,11 @@ void _initAuthFeature() {
     registerUseCase: sl(),
     getCurrentUserUseCase: sl(),
     logoutUseCase: sl(),
+  ));
+  
+  sl.registerFactory(() => SplashCubit(
+    getSavedSessionUseCase: sl(),
+    authRepository: sl(),
   ));
 }
 

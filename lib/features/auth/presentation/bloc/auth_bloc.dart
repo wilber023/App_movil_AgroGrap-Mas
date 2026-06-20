@@ -10,6 +10,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
+import '../../domain/entities/profile_type.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -43,6 +44,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckSessionRequested>(_onCheckSessionRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthRefreshSessionRequested>(_onRefreshSessionRequested);
+    on<AuthProfileTypeSelected>(_onProfileTypeSelected);
   }
 
   /// Maneja el evento de login.
@@ -61,7 +63,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) => emit(AuthFailureState(message: failure.message)),
-      (user) => emit(AuthAuthenticated(user: user)),
+      (user) {
+        // Rutar segun ProfileType seleccionado
+        if (event.profileType == ProfileType.agricultor) {
+          emit(AuthAuthenticated(user: user, profileType: event.profileType));
+        } else {
+          // Aprendiz Agricola — feature aun no implementado
+          emit(AuthFeatureNotReady(
+            profileType: event.profileType,
+            user: user,
+          ));
+        }
+      },
     );
   }
 
@@ -84,7 +97,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) => emit(AuthFailureState(message: failure.message)),
-      (user) => emit(AuthAuthenticated(user: user)),
+      (user) {
+        // Rutar segun ProfileType seleccionado
+        if (event.profileType == ProfileType.agricultor) {
+          emit(AuthAuthenticated(user: user, profileType: event.profileType));
+        } else {
+          // Registro exitoso, pero el feature no esta listo aun
+          emit(AuthFeatureNotReady(
+            profileType: event.profileType,
+            user: user,
+          ));
+        }
+      },
     );
   }
 
@@ -125,5 +149,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     // El refresco de token se manejara via interceptor de Dio.
     // Este handler queda como punto de extension.
+  }
+
+  /// Maneja la seleccion de tipo de perfil.
+  Future<void> _onProfileTypeSelected(
+    AuthProfileTypeSelected event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Solo persiste la seleccion — no cambia estado de autenticacion.
+    // La UI navega directamente al formulario de registro/login correspondiente.
   }
 }

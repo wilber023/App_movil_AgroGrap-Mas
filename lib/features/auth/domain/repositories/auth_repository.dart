@@ -10,6 +10,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
+import '../entities/profile_type.dart';
 import '../entities/user_entity.dart';
 
 /// Contrato abstracto del repositorio de autenticacion.
@@ -49,4 +50,11 @@ abstract interface class AuthRepository {
 
   /// Refresca el token de acceso usando el refresh token almacenado.
   Future<Either<Failure, UserEntity>> refreshSession();
+
+  /// Guarda el tipo de perfil seleccionado por el usuario.
+  Future<Either<Failure, void>> saveSelectedProfileType(ProfileType profileType);
+
+  /// Recupera el tipo de perfil seleccionado por el usuario.
+  Future<Either<Failure, ProfileType?>> getSelectedProfileType();
 }
+

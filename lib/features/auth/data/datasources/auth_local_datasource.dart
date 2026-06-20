@@ -29,6 +29,12 @@ abstract interface class AuthLocalDataSource {
 
   /// Verifica si hay un usuario cacheado sin lanzar excepciones.
   Future<bool> hasCachedUser();
+
+  /// Almacena el perfil seleccionado.
+  Future<void> cacheSelectedProfileType(String profileKey);
+
+  /// Recupera el perfil seleccionado.
+  Future<String?> getSelectedProfileType();
 }
 
 /// Implementacion concreta de [AuthLocalDataSource] usando Hive.
@@ -86,5 +92,27 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<bool> hasCachedUser() async {
     return authBox.containsKey(_cachedUserKey);
+  }
+
+  @override
+  Future<void> cacheSelectedProfileType(String profileKey) async {
+    try {
+      await authBox.put('SELECTED_PROFILE_TYPE', profileKey);
+    } catch (e) {
+      throw CacheException(
+        message: 'Error al guardar el tipo de perfil en cache: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<String?> getSelectedProfileType() async {
+    try {
+      return authBox.get('SELECTED_PROFILE_TYPE');
+    } catch (e) {
+      throw CacheException(
+        message: 'Error al leer el tipo de perfil del cache: ${e.toString()}',
+      );
+    }
   }
 }

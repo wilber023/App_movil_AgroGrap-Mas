@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../auth/presentation/pages/welcome_page.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/pages/select_profile_page.dart';
 import '../../../subscription/presentation/pages/subscription_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -298,8 +302,9 @@ class _ProfilePageState extends State<ProfilePage> {
               style: AppTypography.labelMd.copyWith(color: AppColors.error),
             ),
             onTap: () {
+              context.read<AuthBloc>().add(const AuthLogoutRequested());
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const WelcomePage()),
+                MaterialPageRoute(builder: (_) => const SelectProfilePage()),
                 (Route<dynamic> route) => false,
               );
             },

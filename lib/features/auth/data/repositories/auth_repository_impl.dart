@@ -14,6 +14,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
+import '../../domain/entities/profile_type.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -133,6 +134,27 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(refreshedUser);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> saveSelectedProfileType(ProfileType profileType) async {
+    try {
+      await localDataSource.cacheSelectedProfileType(profileType.key);
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ProfileType?>> getSelectedProfileType() async {
+    try {
+      final key = await localDataSource.getSelectedProfileType();
+      if (key == null) return const Right(null);
+      return Right(ProfileType.fromKey(key));
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     }
