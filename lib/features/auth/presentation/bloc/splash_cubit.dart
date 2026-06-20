@@ -21,10 +21,7 @@ class SplashNavigateToProfileSelect extends SplashState {}
 
 class SplashNavigateToAgricultorHome extends SplashState {}
 
-class SplashFeatureNotReadyYet extends SplashState {
-  final ProfileType profileType;
-  SplashFeatureNotReadyYet({required this.profileType});
-}
+class SplashNavigateToAprendizHome extends SplashState {}
 
 class SplashCubit extends Cubit<SplashState> {
   final GetSavedSessionUseCase getSavedSessionUseCase;
@@ -62,7 +59,7 @@ class SplashCubit extends Cubit<SplashState> {
             if (profileType == ProfileType.agricultor) {
               emit(SplashNavigateToAgricultorHome());
             } else if (profileType == ProfileType.aprendizAgricola) {
-              emit(SplashFeatureNotReadyYet(profileType: profileType!));
+              emit(SplashNavigateToAprendizHome());
             } else {
               emit(SplashNavigateToProfileSelect());
             }

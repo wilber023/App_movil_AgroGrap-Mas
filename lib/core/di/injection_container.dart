@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
 import '../network/api_endpoints.dart';
+import '../network/api_client.dart';
 import '../network/network_info.dart';
 
 // -- Auth --
@@ -27,6 +28,9 @@ import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_dashboard_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 
+import '../../features/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
+import '../../features/diagnosis/data/repositories/diagnosis_repository_impl.dart';
+import '../../features/diagnosis/domain/repositories/diagnosis_repository.dart';
 import '../../features/diagnosis/domain/usecases/diagnosis_usecases.dart';
 import '../../features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
 
@@ -36,6 +40,36 @@ import '../../features/treatment/data/repositories/treatment_repository_impl.dar
 import '../../features/treatment/domain/repositories/treatment_repository.dart';
 import '../../features/treatment/domain/usecases/treatment_usecases.dart';
 import '../../features/treatment/presentation/bloc/treatment_bloc.dart';
+
+// -- Aprendiz --
+import '../../features/aprendiz/data/datasources/crop_plan_local_datasource.dart';
+import '../../features/aprendiz/data/datasources/crop_plan_remote_datasource.dart';
+import '../../features/aprendiz/data/repositories/crop_plan_repository_impl.dart';
+import '../../features/aprendiz/domain/repositories/crop_plan_repository.dart';
+import '../../features/aprendiz/domain/usecases/register_crop_plan_usecase.dart';
+import '../../features/aprendiz/domain/usecases/get_saved_crop_plan_usecase.dart';
+import '../../features/aprendiz/domain/usecases/get_crop_plan_progress_usecase.dart';
+import '../../features/aprendiz/domain/usecases/get_crop_health_indicator_usecase.dart';
+import '../../features/aprendiz/domain/usecases/complete_activity_usecase.dart';
+import '../../features/aprendiz/domain/usecases/postpone_activity_usecase.dart';
+import '../../features/aprendiz/domain/usecases/get_due_inspection_activity_usecase.dart';
+import '../../features/aprendiz/presentation/bloc/aprendiz_home_cubit.dart';
+
+import '../../features/aprendiz/data/datasources/crop_history_local_datasource.dart';
+import '../../features/aprendiz/data/datasources/crop_history_remote_datasource.dart';
+import '../../features/aprendiz/data/repositories/crop_history_repository_impl.dart';
+import '../../features/aprendiz/domain/repositories/crop_history_repository.dart';
+import '../../features/aprendiz/domain/usecases/get_crop_history_usecase.dart';
+import '../../features/aprendiz/presentation/bloc/crop_history_bloc.dart';
+import '../../features/aprendiz/domain/usecases/accept_guided_action_usecase.dart';
+import '../../features/aprendiz/presentation/bloc/diagnosis_result_aprendiz_cubit.dart';
+import '../../features/aprendiz/presentation/bloc/aprendiz_my_crop_cubit.dart';
+import '../../features/aprendiz/domain/repositories/aprendiz_diagnosis_repository.dart';
+import '../../features/aprendiz/data/repositories/aprendiz_diagnosis_repository_impl.dart';
+import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_remote_datasource.dart';
+import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_local_datasource.dart';
+import '../../features/aprendiz/domain/usecases/analyze_crop_aprendiz_usecase.dart';
+import '../../features/aprendiz/presentation/bloc/diagnosis_camera_aprendiz_cubit.dart';
 
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
@@ -61,6 +95,7 @@ Future<void> initDependencies() async {
   _initParcelsFeature();
   _initEconomicsFeature();
   _initProfileFeature();
+  _initAprendizFeature();
 }
 
 // =============================================================================
@@ -75,6 +110,8 @@ Future<void> _initCore() async {
     receiveTimeout: Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
     headers: {'Content-Type': 'application/json'},
   )));
+
+  sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
 
   // -- Connectivity Monitor (offline-first) --
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
@@ -193,7 +230,19 @@ void _initHomeFeature() {
 // Stitch screens: 32ae4671..., 71358cf2...
 // =============================================================================
 
+
 void _initDiagnosisFeature() {
+  sl.registerLazySingleton<DiagnosisRemoteDataSource>(
+    () => DiagnosisRemoteDataSourceImpl(apiClient: sl()),
+  );
+
+  sl.registerLazySingleton<DiagnosisRepository>(
+    () => DiagnosisRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
   sl.registerLazySingleton(() => AnalyzeCropUseCase(sl()));
   sl.registerLazySingleton(() => GetDiagnosisHistoryUseCase(sl()));
 
@@ -320,4 +369,95 @@ void _initProfileFeature() {
   //   getProfileUseCase: sl(),
   //   updateProfileUseCase: sl(),
   // ));
+}
+
+// =============================================================================
+// FEATURE: APRENDIZ (Aprendiz Agrícola)
+// =============================================================================
+
+void _initAprendizFeature() {
+  // DataSources
+  sl.registerLazySingleton<CropPlanRemoteDataSource>(
+    () => CropPlanRemoteDataSourceImpl(apiClient: sl()),
+  );
+  sl.registerLazySingleton<CropPlanLocalDataSource>(
+    () => CropPlanLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO: Usar caja propia
+  );
+
+  // Repository
+  sl.registerLazySingleton<CropPlanRepository>(
+    () => CropPlanRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // UseCases
+  sl.registerLazySingleton(() => RegisterCropPlanUseCase(sl()));
+  sl.registerLazySingleton(() => GetSavedCropPlanUseCase(sl()));
+  sl.registerLazySingleton(() => GetCropPlanProgressUseCase(sl()));
+  sl.registerLazySingleton(() => GetCropHealthIndicatorUseCase(sl()));
+  sl.registerLazySingleton(() => AnalyzeCropAprendizUseCase(sl()));
+  sl.registerLazySingleton(() => CompleteActivityUseCase(sl()));
+  sl.registerLazySingleton(() => PostponeActivityUseCase(sl()));
+  sl.registerLazySingleton(() => GetDueInspectionActivityUseCase(sl()));
+  
+  // -- HISTORY --
+  sl.registerLazySingleton<CropHistoryRemoteDataSource>(
+    () => CropHistoryRemoteDataSourceImpl(apiClient: sl()),
+  );
+  sl.registerLazySingleton<CropHistoryLocalDataSource>(
+    () => CropHistoryLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO
+  );
+  sl.registerLazySingleton<AprendizDiagnosisRemoteDataSource>(
+    () => AprendizDiagnosisRemoteDataSourceImpl(apiClient: sl()),
+  );
+  sl.registerLazySingleton<AprendizDiagnosisLocalDataSource>(
+    () => AprendizDiagnosisLocalDataSourceImpl(),
+  );
+  sl.registerLazySingleton<CropHistoryRepository>(
+    () => CropHistoryRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+  sl.registerLazySingleton<AprendizDiagnosisRepository>(
+    () => AprendizDiagnosisRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+  sl.registerLazySingleton(() => GetCropHistoryUseCase(sl()));
+  
+  sl.registerLazySingleton(() => AcceptGuidedActionUseCase(
+    completeActivityUseCase: sl(),
+    cropPlanRepository: sl(),
+  ));
+
+  // Cubits
+  sl.registerFactory(() => AprendizHomeCubit(
+    getDueInspectionActivityUseCase: sl(),
+    postponeActivityUseCase: sl(),
+    getSavedCropPlanUseCase: sl(),
+    getCropHealthIndicatorUseCase: sl(),
+    networkInfo: sl(),
+  ));
+  
+  sl.registerFactory(() => DiagnosisCameraAprendizCubit(
+    analyzeCropUseCase: sl(),
+  ));
+
+  sl.registerFactory(() => CropHistoryBloc(
+    getCropHistoryUseCase: sl(),
+  ));
+  sl.registerFactory(() => AprendizMyCropCubit(
+    getSavedCropPlanUseCase: sl(),
+    networkInfo: sl(),
+  ));
+  sl.registerFactory(() => DiagnosisResultAprendizCubit(
+    acceptGuidedActionUseCase: sl(),
+  ));
 }

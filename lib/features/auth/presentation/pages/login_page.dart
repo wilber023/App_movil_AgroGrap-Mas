@@ -19,6 +19,7 @@ import '../widgets/auth_buttons.dart';
 import '../widgets/auth_text_field.dart';
 import 'register_page.dart';
 import '../../../../main.dart';
+import '../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -114,6 +115,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (state.profileType == ProfileType.agricultor) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      } else if (state.profileType == ProfileType.aprendizAgricola) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AprendizMainShell()),
         );
       }
     } else if (state is AuthFeatureNotReady) {

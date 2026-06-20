@@ -10,12 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../domain/entities/profile_type.dart';
 import '../bloc/splash_cubit.dart';
 import 'select_profile_page.dart';
 import '../../../../main.dart';
+import '../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -49,50 +47,11 @@ class _SplashPageState extends State<SplashPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SelectProfilePage()),
       );
-    } else if (state is SplashFeatureNotReadyYet) {
-      _showComingSoonDialog(context, state.profileType);
+    } else if (state is SplashNavigateToAprendizHome) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AprendizMainShell()),
+      );
     }
-  }
-
-  void _showComingSoonDialog(BuildContext context, ProfileType profileType) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.info_outline_rounded, color: AppColors.warmAmber),
-            const SizedBox(width: 8),
-            Text(
-              'Próximamente',
-              style: AppTypography.headlineMd.copyWith(fontSize: 18),
-            ),
-          ],
-        ),
-        content: Text(
-          'El perfil ${profileType.displayName} estará disponible muy pronto. Estamos preparando tu experiencia guiada.',
-          style: AppTypography.bodyMd,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              // Despues de darle entendido, como es Splash y no hay atras, 
-              // lo mandamos a seleccionar perfil para que no quede atascado.
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const SelectProfilePage()),
-              );
-            },
-            child: Text(
-              'Entendido',
-              style: AppTypography.labelMd.copyWith(color: AppColors.forestGreen),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

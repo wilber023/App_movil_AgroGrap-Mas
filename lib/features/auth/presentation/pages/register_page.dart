@@ -20,6 +20,7 @@ import '../widgets/auth_buttons.dart';
 import '../widgets/auth_text_field.dart';
 import 'login_page.dart';
 import '../../../../main.dart';
+import '../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
 
 class RegisterPage extends StatefulWidget {
   final ProfileType profileType;
@@ -172,6 +173,10 @@ class _RegisterPageState extends State<RegisterPage> {
       if (state.profileType == ProfileType.agricultor) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      } else if (state.profileType == ProfileType.aprendizAgricola) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AprendizMainShell()),
         );
       }
     } else if (state is AuthFeatureNotReady) {

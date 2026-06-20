@@ -10,7 +10,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
-import '../../domain/entities/profile_type.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -64,16 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthFailureState(message: failure.message)),
       (user) {
-        // Rutar segun ProfileType seleccionado
-        if (event.profileType == ProfileType.agricultor) {
-          emit(AuthAuthenticated(user: user, profileType: event.profileType));
-        } else {
-          // Aprendiz Agricola — feature aun no implementado
-          emit(AuthFeatureNotReady(
-            profileType: event.profileType,
-            user: user,
-          ));
-        }
+        emit(AuthAuthenticated(user: user, profileType: event.profileType));
       },
     );
   }
@@ -98,16 +88,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthFailureState(message: failure.message)),
       (user) {
-        // Rutar segun ProfileType seleccionado
-        if (event.profileType == ProfileType.agricultor) {
-          emit(AuthAuthenticated(user: user, profileType: event.profileType));
-        } else {
-          // Registro exitoso, pero el feature no esta listo aun
-          emit(AuthFeatureNotReady(
-            profileType: event.profileType,
-            user: user,
-          ));
-        }
+        emit(AuthAuthenticated(user: user, profileType: event.profileType));
       },
     );
   }

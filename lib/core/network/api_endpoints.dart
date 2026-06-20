@@ -39,6 +39,9 @@ abstract final class ApiEndpoints {
 
   // -- SYNC (Offline-First) --
   static const SyncEndpoints sync = SyncEndpoints._();
+
+  // -- APRENDIZ (Aprendiz Agrícola) --
+  static const AprendizEndpoints aprendiz = AprendizEndpoints._();
 }
 
 class AuthEndpoints {
@@ -113,5 +116,17 @@ class SyncEndpoints {
   String get push => '/sync/push';
   String get pull => '/sync/pull';
   String get conflicts => '/sync/conflicts';
+}
+
+class AprendizEndpoints {
+  const AprendizEndpoints._();
+  
+  // TODO: Agregar y documentar en el README de usuarios/API del backend
+  String get cropPlan => '/aprendiz/crop-plan';
+  String get cropHealth => '/aprendiz/crop-health';
+  String activityStatus(String activityId) => '/aprendiz/crop-plan/activities/$activityId';
+  
+  // TODO: Documentar en backend el endpoint de historial (Pieza 2)
+  String get history => '/aprendiz/history';
 }
 
