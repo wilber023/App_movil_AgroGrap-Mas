@@ -2,15 +2,18 @@
 // Feature: Auth -- Cubit de la Pantalla Splash
 // =============================================================================
 // Capa: Presentation / Bloc
-// Maneja la logica de inicializacion y decide el destino de navegacion
-// basado en la sesion y perfil guardados.
+// Decide el destino de navegación al iniciar la app basándose en la sesión
+// cacheada localmente y el rol real del usuario (no en una preferencia guardada).
+//
+// Cambio de diseño:
+//   Antes: usaba getSelectedProfileType() (preferencia manual guardada).
+//   Ahora: usa user.role del cache (fuente de verdad del backend), lo que
+//   garantiza que el destino siempre coincide con el tipo de cuenta real.
 // =============================================================================
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
-import '../../domain/entities/profile_type.dart';
-import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/get_saved_session_usecase.dart';
 
 sealed class SplashState {}
@@ -25,15 +28,11 @@ class SplashNavigateToAprendizHome extends SplashState {}
 
 class SplashCubit extends Cubit<SplashState> {
   final GetSavedSessionUseCase getSavedSessionUseCase;
-  final AuthRepository authRepository;
 
-  SplashCubit({
-    required this.getSavedSessionUseCase,
-    required this.authRepository,
-  }) : super(SplashInitial());
+  SplashCubit({required this.getSavedSessionUseCase}) : super(SplashInitial());
 
   Future<void> checkSession() async {
-    // Garantizar al menos 2.5 segundos de duracion del splash
+    // Garantizar al menos 2.5 s de duración del splash.
     final minDelay = Future.delayed(const Duration(milliseconds: 2500));
 
     final sessionResult = await getSavedSessionUseCase(const NoParams());
@@ -41,30 +40,23 @@ class SplashCubit extends Cubit<SplashState> {
     await minDelay;
 
     sessionResult.fold(
-      (failure) {
-        emit(SplashNavigateToProfileSelect());
-      },
-      (user) async {
+      (_) => emit(SplashNavigateToProfileSelect()),
+      (user) {
         if (!user.isAuthenticated) {
           emit(SplashNavigateToProfileSelect());
           return;
         }
 
-        final profileResult = await authRepository.getSelectedProfileType();
-        profileResult.fold(
-          (failure) {
-            emit(SplashNavigateToProfileSelect());
-          },
-          (profileType) {
-            if (profileType == ProfileType.agricultor) {
-              emit(SplashNavigateToAgricultorHome());
-            } else if (profileType == ProfileType.aprendizAgricola) {
-              emit(SplashNavigateToAprendizHome());
-            } else {
-              emit(SplashNavigateToProfileSelect());
-            }
-          },
-        );
+        // Usar el rol real del backend (guardado en cache) como única fuente
+        // de verdad para el destino de navegación.
+        if (user.isAgricultor) {
+          emit(SplashNavigateToAgricultorHome());
+        } else if (user.isAprendiz) {
+          emit(SplashNavigateToAprendizHome());
+        } else {
+          // Rol desconocido, admin, o usuario sin rol definido → profile select.
+          emit(SplashNavigateToProfileSelect());
+        }
       },
     );
   }

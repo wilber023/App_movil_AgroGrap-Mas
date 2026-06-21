@@ -45,6 +45,9 @@ class UserEntity extends Equatable {
   /// Fecha de creacion de la cuenta.
   final DateTime? createdAt;
 
+  /// Rol del usuario en el sistema: "agricultor", "aprendiz_agricola" o "admin".
+  final String? role;
+
   const UserEntity({
     required this.id,
     required this.fullName,
@@ -56,6 +59,7 @@ class UserEntity extends Equatable {
     this.refreshToken,
     this.isLocalOnly = false,
     this.createdAt,
+    this.role,
   });
 
   /// Usuario vacio para estados iniciales.
@@ -65,11 +69,13 @@ class UserEntity extends Equatable {
     username: '',
   );
 
-  /// Verifica si el usuario esta autenticado (tiene token valido).
   bool get isAuthenticated => accessToken != null && accessToken!.isNotEmpty;
 
-  /// Verifica si el usuario tiene datos completos.
   bool get isEmpty => id.isEmpty;
+
+  bool get isAgricultor => role == 'agricultor';
+  bool get isAprendiz => role == 'aprendiz_agricola';
+  bool get isAdmin => role == 'admin';
 
   @override
   List<Object?> get props => [
@@ -83,5 +89,6 @@ class UserEntity extends Equatable {
         refreshToken,
         isLocalOnly,
         createdAt,
+        role,
       ];
 }

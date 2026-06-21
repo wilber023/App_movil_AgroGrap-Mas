@@ -2,14 +2,21 @@
 // Feature: Auth -- BLoC Principal
 // =============================================================================
 // Capa: Presentation
-// Regla: El BLoC no tiene logica de negocio propia. Delega a los
-//        UseCases del dominio y transforma el resultado (Either) en
-//        estados de la UI.
+// El BLoC no tiene lógica de negocio propia. Delega en los UseCases del
+// dominio y transforma el resultado (Either) en estados de la UI.
+//
+// Reglas de acceso por rol:
+//   • El login valida que el rol devuelto por la API coincida con el perfil
+//     seleccionado en la UI. Acceso cruzado = error, nunca éxito.
+//   • El registro NO inicia sesión automáticamente: limpia la sesión
+//     recién creada y emite [AuthRegistrationSuccess] para que la UI
+//     redirija al Login.
 // =============================================================================
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
+import '../../domain/entities/profile_type.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -17,11 +24,6 @@ import '../../domain/usecases/register_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
-/// BLoC que gestiona el flujo de autenticacion de la aplicacion.
-///
-/// Maneja los eventos de login, registro, verificacion de sesion y logout.
-/// Cada handler delega al UseCase correspondiente y emite el estado
-/// resultante para que la UI reaccione.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
   final RegisterUseCase _registerUseCase;
@@ -46,7 +48,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthProfileTypeSelected>(_onProfileTypeSelected);
   }
 
-  /// Maneja el evento de login.
+  // ---------------------------------------------------------------------------
+  // Login — valida que el rol de la API coincida con el perfil seleccionado
+  // ---------------------------------------------------------------------------
+
   Future<void> _onLoginRequested(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
@@ -54,21 +59,42 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     final result = await _loginUseCase(
-      LoginParams(
-        username: event.username,
-        password: event.password,
-      ),
+      LoginParams(username: event.username, password: event.password),
     );
 
     result.fold(
       (failure) => emit(AuthFailureState(message: failure.message)),
       (user) {
-        emit(AuthAuthenticated(user: user, profileType: event.profileType));
+        // Convertir el rol real de la API a ProfileType.
+        final actualProfileType = _roleToProfileType(user.role);
+
+        // Rol desconocido (ej. admin) → no compatible con el app móvil.
+        if (actualProfileType == null) {
+          emit(const AuthFailureState(
+            message: 'Este tipo de cuenta no puede acceder desde la app móvil.',
+          ));
+          return;
+        }
+
+        // Acceso cruzado de perfiles → bloquear con mensaje claro.
+        if (actualProfileType != event.profileType) {
+          final actualName = actualProfileType.displayName;
+          emit(AuthFailureState(
+            message:
+                'Esta cuenta es de tipo "$actualName". Selecciona el perfil correcto para iniciar sesión.',
+          ));
+          return;
+        }
+
+        emit(AuthAuthenticated(user: user, profileType: actualProfileType));
       },
     );
   }
 
-  /// Maneja el evento de registro.
+  // ---------------------------------------------------------------------------
+  // Register — NO inicia sesión; limpia la sesión y redirige al Login
+  // ---------------------------------------------------------------------------
+
   Future<void> _onRegisterRequested(
     AuthRegisterRequested event,
     Emitter<AuthState> emit,
@@ -80,20 +106,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         fullName: event.fullName,
         username: event.username,
         password: event.password,
+        profileType: event.profileType,
         email: event.email,
         phone: event.phone,
       ),
     );
 
-    result.fold(
-      (failure) => emit(AuthFailureState(message: failure.message)),
-      (user) {
-        emit(AuthAuthenticated(user: user, profileType: event.profileType));
+    await result.fold(
+      (failure) async => emit(AuthFailureState(message: failure.message)),
+      (user) async {
+        // Limpiar la sesión persistida por el registro: el usuario debe
+        // autenticarse manualmente. Esto también invalida los tokens en
+        // el servidor (blacklist) para mayor seguridad.
+        await _logoutUseCase(const NoParams());
+        emit(AuthRegistrationSuccess(fullName: user.fullName));
       },
     );
   }
 
-  /// Maneja la verificacion de sesion al iniciar la app.
+  // ---------------------------------------------------------------------------
+  // Check session (splash)
+  // ---------------------------------------------------------------------------
+
   Future<void> _onCheckSessionRequested(
     AuthCheckSessionRequested event,
     Emitter<AuthState> emit,
@@ -108,7 +142,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  /// Maneja el cierre de sesion.
+  // ---------------------------------------------------------------------------
+  // Logout
+  // ---------------------------------------------------------------------------
+
   Future<void> _onLogoutRequested(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
@@ -123,21 +160,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  /// Maneja el refresco de sesion (placeholder para futuro uso).
+  // ---------------------------------------------------------------------------
+  // Handlers sin lógica activa (extensión futura)
+  // ---------------------------------------------------------------------------
+
   Future<void> _onRefreshSessionRequested(
     AuthRefreshSessionRequested event,
     Emitter<AuthState> emit,
   ) async {
-    // El refresco de token se manejara via interceptor de Dio.
-    // Este handler queda como punto de extension.
+    // El refresco automático se maneja vía AuthInterceptor de Dio.
+    // Este handler queda como punto de extensión para casos explícitos.
   }
 
-  /// Maneja la seleccion de tipo de perfil.
   Future<void> _onProfileTypeSelected(
     AuthProfileTypeSelected event,
     Emitter<AuthState> emit,
   ) async {
-    // Solo persiste la seleccion — no cambia estado de autenticacion.
-    // La UI navega directamente al formulario de registro/login correspondiente.
+    // La UI navega directamente al formulario correcto.
+    // Sin cambio de estado de autenticación.
   }
+
+  // ---------------------------------------------------------------------------
+  // Helper: convierte el rol del backend a ProfileType del dominio
+  // ---------------------------------------------------------------------------
+
+  ProfileType? _roleToProfileType(String? role) => switch (role) {
+        'agricultor' => ProfileType.agricultor,
+        'aprendiz_agricola' => ProfileType.aprendizAgricola,
+        _ => null, // 'admin' u otro rol no soportado en mobile
+      };
 }

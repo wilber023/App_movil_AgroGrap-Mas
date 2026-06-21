@@ -1,18 +1,17 @@
 // =============================================================================
-// Feature: Auth -- Modelo de Usuario (Serializacion JSON)
+// Feature: Auth -- Modelo de Usuario (Serialización JSON)
 // =============================================================================
 // Capa: Data
-// Regla: Los modelos extienden las entidades del dominio y agregan
-//        logica de serializacion (fromJson/toJson). Esto mantiene la
-//        capa de dominio libre de dependencias de infraestructura.
+// Mapea el contrato exacto del backend (snake_case) a [UserEntity].
+// Forma del JSON (login / register / refresh / GET /users/me):
+// {
+//   "id", "full_name", "username", "email", "phone", "avatar_url",
+//   "access_token", "refresh_token", "is_local_only", "created_at", "role"
+// }
 // =============================================================================
 
 import '../../domain/entities/user_entity.dart';
 
-/// Modelo de datos para [UserEntity] con soporte de serializacion JSON.
-///
-/// Se usa en la comunicacion con el backend (API REST) y en la
-/// persistencia local (Hive como cache offline).
 class UserModel extends UserEntity {
   const UserModel({
     required super.id,
@@ -25,25 +24,9 @@ class UserModel extends UserEntity {
     super.refreshToken,
     super.isLocalOnly,
     super.createdAt,
+    super.role,
   });
 
-  /// Crea una instancia desde un mapa JSON (respuesta del backend).
-  ///
-  /// Estructura esperada del JSON:
-  /// ```json
-  /// {
-  ///   "id": "uuid-v4",
-  ///   "full_name": "Wilber Hernandez",
-  ///   "username": "wil_hdz",
-  ///   "email": "wil@example.com",
-  ///   "phone": "+52 123 456 7890",
-  ///   "avatar_url": "https://...",
-  ///   "access_token": "eyJhbGci...",
-  ///   "refresh_token": "dGhpcyBp...",
-  ///   "is_local_only": false,
-  ///   "created_at": "2026-06-05T03:51:09.010663Z"
-  /// }
-  /// ```
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String? ?? '',
@@ -58,10 +41,11 @@ class UserModel extends UserEntity {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
+      role: json['role'] as String?,
     );
   }
 
-  /// Convierte la instancia a un mapa JSON para enviar al backend.
+  /// JSON para enviar al backend (solo campos de perfil, sin tokens).
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -70,15 +54,13 @@ class UserModel extends UserEntity {
       if (email != null) 'email': email,
       if (phone != null) 'phone': phone,
       if (avatarUrl != null) 'avatar_url': avatarUrl,
-      if (accessToken != null) 'access_token': accessToken,
-      if (refreshToken != null) 'refresh_token': refreshToken,
       'is_local_only': isLocalOnly,
       if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      if (role != null) 'role': role,
     };
   }
 
-  /// Convierte la instancia a un mapa JSON para almacenar en Hive (cache local).
-  /// Incluye TODOS los campos, incluyendo tokens, para persistencia offline.
+  /// JSON para persistir en Hive (incluye tokens para restaurar sesión offline).
   Map<String, dynamic> toCacheJson() {
     return {
       'id': id,
@@ -91,10 +73,10 @@ class UserModel extends UserEntity {
       'refresh_token': refreshToken,
       'is_local_only': isLocalOnly,
       'created_at': createdAt?.toIso8601String(),
+      'role': role,
     };
   }
 
-  /// Crea un [UserModel] desde la entidad de dominio.
   factory UserModel.fromEntity(UserEntity entity) {
     return UserModel(
       id: entity.id,
@@ -107,6 +89,7 @@ class UserModel extends UserEntity {
       refreshToken: entity.refreshToken,
       isLocalOnly: entity.isLocalOnly,
       createdAt: entity.createdAt,
+      role: entity.role,
     );
   }
 }

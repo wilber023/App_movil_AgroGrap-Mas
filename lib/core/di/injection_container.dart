@@ -5,6 +5,10 @@ import 'package:hive/hive.dart';
 import '../network/api_endpoints.dart';
 import '../network/api_client.dart';
 import '../network/network_info.dart';
+import '../network/interceptors/auth_interceptor.dart';
+import '../network/interceptors/error_interceptor.dart';
+import '../network/interceptors/logging_interceptor.dart';
+import '../storage/token_storage.dart';
 
 // -- Auth --
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -103,23 +107,57 @@ Future<void> initDependencies() async {
 // =============================================================================
 
 Future<void> _initCore() async {
-  // -- HTTP Client --
-  sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
-    baseUrl: ApiEndpoints.baseUrl,
-    connectTimeout: Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
-    receiveTimeout: Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
-    headers: {'Content-Type': 'application/json'},
-  )));
+  // -- Local Storage: Hive Box compartida para Auth y TokenStorage --
+  final authBox = await Hive.openBox<String>('auth_box');
+  sl.registerLazySingleton<Box<String>>(() => authBox, instanceName: 'authBox');
+
+  // -- Token Storage: acceso rápido a access/refresh token para el interceptor --
+  sl.registerLazySingleton<TokenStorage>(
+    () => TokenStorageImpl(sl<Box<String>>(instanceName: 'authBox')),
+  );
+
+  // -- Dio dedicado para renovar tokens (sin interceptores → evita loop) --
+  final refreshDio = Dio(
+    BaseOptions(
+      baseUrl: ApiEndpoints.baseUrl,
+      connectTimeout: const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+      receiveTimeout: const Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
+      headers: {'Content-Type': 'application/json'},
+    ),
+  );
+
+  // -- Dio principal con interceptores --
+  sl.registerLazySingleton<Dio>(() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout:
+            const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+        receiveTimeout:
+            const Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
+
+    dio.interceptors.addAll([
+      // 1. Enriquece mensajes de error antes de que lleguen a los datasources.
+      ErrorInterceptor(),
+      // 2. Inyecta el Bearer token y maneja el flujo 401 → refresh → retry.
+      AuthInterceptor(
+        tokenStorage: sl<TokenStorage>(),
+        refreshDio: refreshDio,
+      ),
+      // 3. Log de requests/responses (solo en debug).
+      LoggingInterceptor(),
+    ]);
+
+    return dio;
+  });
 
   sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
 
   // -- Connectivity Monitor (offline-first) --
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl());
-
-  // -- Local Storage: Hive Box para Auth --
-  final authBox = await Hive.openBox<String>('auth_box');
-  sl.registerLazySingleton<Box<String>>(() => authBox,
-      instanceName: 'authBox');
 }
 
 // =============================================================================
@@ -144,6 +182,7 @@ void _initAuthFeature() {
       remoteDataSource: sl(),
       localDataSource: sl(),
       networkInfo: sl(),
+      tokenStorage: sl(),
     ),
   );
 
@@ -166,7 +205,6 @@ void _initAuthFeature() {
   
   sl.registerFactory(() => SplashCubit(
     getSavedSessionUseCase: sl(),
-    authRepository: sl(),
   ));
 }
 

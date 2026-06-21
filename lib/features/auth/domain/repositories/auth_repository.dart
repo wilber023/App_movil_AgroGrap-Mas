@@ -29,12 +29,16 @@ abstract interface class AuthRepository {
 
   /// Registra un nuevo usuario en la plataforma.
   ///
-  /// Los campos [email] y [phone] son opcionales, respetando el diseno
-  /// "Sin correo obligatorio" del flujo de Stitch.
+  /// [profileType] determina el endpoint de registro:
+  ///   - [ProfileType.agricultor]      → POST /auth/register/agricultor
+  ///   - [ProfileType.aprendizAgricola] → POST /auth/register/aprendiz
+  ///
+  /// Los campos [email] y [phone] son opcionales.
   Future<Either<Failure, UserEntity>> register({
     required String fullName,
     required String username,
     required String password,
+    required ProfileType profileType,
     String? email,
     String? phone,
   });

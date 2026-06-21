@@ -8,8 +8,10 @@
 abstract final class ApiEndpoints {
   ApiEndpoints._();
 
-  // -- CONFIGURACION BASE --
-  static const String baseUrl = 'https://api.agrograph-mas.com/v1';
+  // Base URL del microservicio de usuarios (incluye prefijo /api/v1).
+  // Dev: http://localhost:8000/api/v1
+  // Prod: http://174.129.218.190/api/v1
+  static const String baseUrl = 'http://174.129.218.190/api/v1';
   static const int defaultTimeoutMs = 30000;
   static const int connectTimeoutMs = 15000;
 
@@ -46,11 +48,25 @@ abstract final class ApiEndpoints {
 
 class AuthEndpoints {
   const AuthEndpoints._();
+
+  // Endpoints publicos (no requieren Authorization header)
   String get login => '/auth/login';
-  String get register => '/auth/register';
+  String get registerAgricultor => '/auth/register/agricultor';
+  String get registerAprendiz => '/auth/register/aprendiz';
   String get refreshToken => '/auth/refresh';
   String get logout => '/auth/logout';
-  String get forgotPassword => '/auth/forgot-password';
+
+  // Endpoint protegido: requiere rol admin
+  String get registerAdmin => '/auth/register/admin';
+
+  // Lista de paths publicos usada por el AuthInterceptor para omitir el header.
+  List<String> get publicPaths => [
+        login,
+        registerAgricultor,
+        registerAprendiz,
+        refreshToken,
+        logout,
+      ];
 }
 
 class SubscriptionEndpoints {

@@ -19,8 +19,6 @@ import '../bloc/auth_state.dart';
 import '../widgets/auth_buttons.dart';
 import '../widgets/auth_text_field.dart';
 import 'login_page.dart';
-import '../../../../main.dart';
-import '../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
 
 class RegisterPage extends StatefulWidget {
   final ProfileType profileType;
@@ -169,38 +167,115 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _handleAuthStateChange(BuildContext context, AuthState state) {
-    if (state is AuthAuthenticated) {
-      if (state.profileType == ProfileType.agricultor) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainShell()),
+    if (state is AuthRegistrationSuccess) {
+      _showSuccessToast(context, state.fullName);
+      // Redirigir al Login tras un breve instante visible del toast.
+      // Se usa pushAndRemoveUntil para limpiar el stack de navegación.
+      Future.delayed(const Duration(milliseconds: 1400), () {
+        if (!context.mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => BlocProvider(
+              create: (_) => GetIt.instance<AuthBloc>(),
+              child: const LoginPage(),
+            ),
+          ),
+          (route) => false, // elimina todo el stack anterior
         );
-      } else if (state.profileType == ProfileType.aprendizAgricola) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AprendizMainShell()),
-        );
-      }
+      });
     } else if (state is AuthFeatureNotReady) {
       _showComingSoonDialog(context, state.profileType);
     } else if (state is AuthFailureState) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showErrorToast(context, state.message);
+    }
+  }
+
+  void _showSuccessToast(BuildContext context, String fullName) {
+    final firstName = fullName.split(' ').first;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '¡Bienvenido, $firstName!',
+                      style: AppTypography.labelMd.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cuenta creada exitosamente.',
+                      style: AppTypography.etiquetaSm.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.forestGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 3),
+          elevation: 6,
+        ),
+      );
+  }
+
+  void _showErrorToast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  state.message,
-                  style: AppTypography.bodyMd.copyWith(color: Colors.white),
+                  message,
+                  style: AppTypography.labelMd.copyWith(color: Colors.white),
                 ),
               ),
             ],
           ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 4),
+          elevation: 6,
         ),
       );
-    }
   }
 
   void _showComingSoonDialog(BuildContext context, ProfileType profileType) {

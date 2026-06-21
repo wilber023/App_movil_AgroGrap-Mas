@@ -68,3 +68,14 @@ final class AuthFeatureNotReady extends AuthState {
   @override
   List<Object?> get props => [profileType, user];
 }
+
+/// Estado de registro exitoso: cuenta creada, sesión NO iniciada.
+/// La UI debe redirigir al Login para que el usuario autentique manualmente.
+final class AuthRegistrationSuccess extends AuthState {
+  final String fullName;
+
+  const AuthRegistrationSuccess({required this.fullName});
+
+  @override
+  List<Object?> get props => [fullName];
+}

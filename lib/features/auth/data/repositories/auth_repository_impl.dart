@@ -1,12 +1,16 @@
 // =============================================================================
-// Feature: Auth -- Implementacion del Repositorio
+// Feature: Auth -- Implementación del Repositorio
 // =============================================================================
 // Capa: Data
-// Regla: Implementa el contrato de dominio [AuthRepository].
-//        Coordina entre RemoteDataSource y LocalDataSource.
-//        Convierte excepciones (ServerException, CacheException) en
-//        Failures (ServerFailure, CacheFailure, NetworkFailure).
-//        Verifica conectividad antes de llamar al backend.
+// Coordina entre RemoteDataSource, LocalDataSource y TokenStorage.
+// Convierte excepciones en Failures y aplica la estrategia Offline-First.
+//
+// Escritura dual al autenticar:
+//   1. localDataSource.cacheUser()  → sesión completa para Offline-First.
+//   2. tokenStorage.saveTokens()    → tokens aislados para el AuthInterceptor.
+//
+// Esto garantiza que el interceptor siempre lea tokens frescos sin
+// depender de la estructura completa de UserModel.
 // =============================================================================
 
 import 'package:dartz/dartz.dart';
@@ -14,6 +18,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../core/storage/token_storage.dart';
 import '../../domain/entities/profile_type.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -21,22 +26,22 @@ import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/user_model.dart';
 
-/// Implementacion concreta de [AuthRepository].
-///
-/// Estrategia Offline-First:
-///   1. Si hay red: intenta primero con el backend, cachea el resultado.
-///   2. Si no hay red: retorna datos cacheados si existen.
-///   3. Si no hay red ni cache: retorna [NetworkFailure].
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
+  final TokenStorage tokenStorage;
 
   const AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
+    required this.tokenStorage,
   });
+
+  // ---------------------------------------------------------------------------
+  // Login
+  // ---------------------------------------------------------------------------
 
   @override
   Future<Either<Failure, UserEntity>> login({
@@ -44,93 +49,113 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     if (await networkInfo.isConnected) {
-      return _remoteLoginAndCache(username: username, password: password);
-    } else {
-      // En modo offline, se intenta recuperar la sesion local.
-      return _getLocalUser();
+      try {
+        final user = await remoteDataSource.login(
+          username: username,
+          password: password,
+        );
+        await _persistSession(user);
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+      }
     }
+    return _getLocalUser();
   }
+
+  // ---------------------------------------------------------------------------
+  // Register
+  // ---------------------------------------------------------------------------
 
   @override
   Future<Either<Failure, UserEntity>> register({
     required String fullName,
     required String username,
     required String password,
+    required ProfileType profileType,
     String? email,
     String? phone,
   }) async {
     if (await networkInfo.isConnected) {
-      return _remoteRegisterAndCache(
-        fullName: fullName,
-        username: username,
-        password: password,
-        email: email,
-        phone: phone,
-      );
-    } else {
-      // Registro offline: crea usuario local marcado como isLocalOnly.
-      return _registerOffline(
-        fullName: fullName,
-        username: username,
-        password: password,
-        email: email,
-        phone: phone,
-      );
+      try {
+        final user = await remoteDataSource.register(
+          fullName: fullName,
+          username: username,
+          password: password,
+          profileType: profileType,
+          email: email,
+          phone: phone,
+        );
+        await _persistSession(user);
+        return Right(user);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+      }
     }
+    // Modo offline: crea un usuario local temporal.
+    return _registerOffline(
+      fullName: fullName,
+      username: username,
+      email: email,
+      phone: phone,
+    );
   }
 
+  // ---------------------------------------------------------------------------
+  // Get current user (desde cache)
+  // ---------------------------------------------------------------------------
+
   @override
-  Future<Either<Failure, UserEntity>> getCurrentUser() async {
-    return _getLocalUser();
-  }
+  Future<Either<Failure, UserEntity>> getCurrentUser() => _getLocalUser();
+
+  // ---------------------------------------------------------------------------
+  // Logout
+  // ---------------------------------------------------------------------------
 
   @override
   Future<Either<Failure, void>> logout() async {
     try {
-      // Intentar cerrar sesion en el servidor si hay red.
       if (await networkInfo.isConnected) {
         try {
-          final cachedUser = await localDataSource.getLastUser();
-          if (cachedUser.accessToken != null) {
-            await remoteDataSource.logout(
-              accessToken: cachedUser.accessToken!,
-            );
-          }
+          final accessToken = await tokenStorage.getAccessToken();
+          final refreshToken = await tokenStorage.getRefreshToken();
+          await remoteDataSource.logout(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          );
         } on ServerException {
-          // Si falla el logout remoto, igual limpiamos el cache local.
-        } on CacheException {
-          // Si no hay usuario cacheado, no hay nada que invalidar remotamente.
+          // Si el servidor falla, igual limpiamos local para no dejar al
+          // usuario atrapado.
         }
       }
-
-      // Siempre limpiar el cache local.
       await localDataSource.clearCache();
+      await tokenStorage.clearTokens();
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Refresh session (llamada explícita desde BLoC si se necesita)
+  // ---------------------------------------------------------------------------
+
   @override
   Future<Either<Failure, UserEntity>> refreshSession() async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure());
-    }
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
 
     try {
-      final cachedUser = await localDataSource.getLastUser();
-
-      if (cachedUser.refreshToken == null) {
+      final refreshToken = await tokenStorage.getRefreshToken();
+      if (refreshToken == null) {
         return const Left(
           AuthFailure(message: 'No hay token de refresco disponible.'),
         );
       }
 
       final refreshedUser = await remoteDataSource.refreshToken(
-        refreshToken: cachedUser.refreshToken!,
+        refreshToken: refreshToken,
       );
-
-      await localDataSource.cacheUser(refreshedUser);
+      await _persistSession(refreshedUser);
       return Right(refreshedUser);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
@@ -139,8 +164,13 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Profile type
+  // ---------------------------------------------------------------------------
+
   @override
-  Future<Either<Failure, void>> saveSelectedProfileType(ProfileType profileType) async {
+  Future<Either<Failure, void>> saveSelectedProfileType(
+      ProfileType profileType) async {
     try {
       await localDataSource.cacheSelectedProfileType(profileType.key);
       return const Right(null);
@@ -161,54 +191,32 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Metodos privados
+  // Helpers privados
   // ---------------------------------------------------------------------------
 
-  /// Ejecuta login remoto y cachea el resultado localmente.
-  Future<Either<Failure, UserEntity>> _remoteLoginAndCache({
-    required String username,
-    required String password,
-  }) async {
-    try {
-      final user = await remoteDataSource.login(
-        username: username,
-        password: password,
+  /// Persiste el usuario autenticado en cache local Y los tokens en TokenStorage.
+  Future<void> _persistSession(UserModel user) async {
+    await localDataSource.cacheUser(user);
+    if (user.accessToken != null && user.refreshToken != null) {
+      await tokenStorage.saveTokens(
+        accessToken: user.accessToken!,
+        refreshToken: user.refreshToken!,
       );
-      await localDataSource.cacheUser(user);
-      return Right(user);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     }
   }
 
-  /// Ejecuta registro remoto y cachea el resultado localmente.
-  Future<Either<Failure, UserEntity>> _remoteRegisterAndCache({
-    required String fullName,
-    required String username,
-    required String password,
-    String? email,
-    String? phone,
-  }) async {
+  Future<Either<Failure, UserEntity>> _getLocalUser() async {
     try {
-      final user = await remoteDataSource.register(
-        fullName: fullName,
-        username: username,
-        password: password,
-        email: email,
-        phone: phone,
-      );
-      await localDataSource.cacheUser(user);
-      return Right(user);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+      final cachedUser = await localDataSource.getLastUser();
+      return Right(cachedUser);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
     }
   }
 
-  /// Crea un usuario local en modo offline.
   Future<Either<Failure, UserEntity>> _registerOffline({
     required String fullName,
     required String username,
-    required String password,
     String? email,
     String? phone,
   }) async {
@@ -222,19 +230,8 @@ class AuthRepositoryImpl implements AuthRepository {
         isLocalOnly: true,
         createdAt: DateTime.now(),
       );
-
       await localDataSource.cacheUser(localUser);
       return Right(localUser);
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    }
-  }
-
-  /// Recupera el usuario desde el cache local.
-  Future<Either<Failure, UserEntity>> _getLocalUser() async {
-    try {
-      final cachedUser = await localDataSource.getLastUser();
-      return Right(cachedUser);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     }

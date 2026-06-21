@@ -9,13 +9,10 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../entities/profile_type.dart';
 import '../entities/user_entity.dart';
 import '../repositories/auth_repository.dart';
 
-/// Ejecuta el registro de un nuevo usuario en AgroGraph-MAS.
-///
-/// El flujo de Stitch indica: "Sin correo obligatorio, tus datos se
-/// guardan localmente", por lo que [email] y [phone] son opcionales.
 class RegisterUseCase implements UseCase<UserEntity, RegisterParams> {
   final AuthRepository repository;
 
@@ -27,17 +24,18 @@ class RegisterUseCase implements UseCase<UserEntity, RegisterParams> {
       fullName: params.fullName,
       username: params.username,
       password: params.password,
+      profileType: params.profileType,
       email: params.email,
       phone: params.phone,
     );
   }
 }
 
-/// Parametros requeridos para el caso de uso de registro.
 class RegisterParams extends Equatable {
   final String fullName;
   final String username;
   final String password;
+  final ProfileType profileType;
   final String? email;
   final String? phone;
 
@@ -45,10 +43,18 @@ class RegisterParams extends Equatable {
     required this.fullName,
     required this.username,
     required this.password,
+    required this.profileType,
     this.email,
     this.phone,
   });
 
   @override
-  List<Object?> get props => [fullName, username, password, email, phone];
+  List<Object?> get props => [
+        fullName,
+        username,
+        password,
+        profileType,
+        email,
+        phone,
+      ];
 }
