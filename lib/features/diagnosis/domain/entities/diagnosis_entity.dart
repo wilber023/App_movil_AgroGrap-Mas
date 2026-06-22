@@ -1,12 +1,14 @@
 import 'package:equatable/equatable.dart';
 
+import '../../data/services/cnn_engine/cnn_result.dart';
+
 class DiagnosisEntity extends Equatable {
   final String id;
   final String diseaseName;
   final String scientificName;
   final String cropName;
   final String? parcelName;
-  final String severity; // Critica, Moderada, Leve, Saludable
+  final String severity;
   final double confidence;
   final String description;
   final List<String> symptoms;
@@ -18,7 +20,9 @@ class DiagnosisEntity extends Equatable {
   final bool isPendingSync;
   final double? treatmentProgress;
   final String? treatmentStep;
-  final String statusLabel; // En tratamiento, Seguimiento, Completado, etc.
+  final String statusLabel;
+  // Top-K predicciones del CNN (solo se mantiene en sesión, no se persiste en Hive)
+  final List<TopKPrediction> topK;
 
   const DiagnosisEntity({
     required this.id,
@@ -39,6 +43,7 @@ class DiagnosisEntity extends Equatable {
     this.treatmentProgress,
     this.treatmentStep,
     required this.statusLabel,
+    this.topK = const [],
   });
 
   @override

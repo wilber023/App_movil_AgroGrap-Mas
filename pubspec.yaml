@@ -56,6 +56,12 @@ dependencies:
   camera: ^0.11.1
   image_picker: ^1.1.2
 
+  # CNN inference local (TFLite)
+  tflite_flutter: ^0.10.4
+
+  # Procesamiento de imagen en Dart (preprocessing CNN)
+  image: ^4.1.0
+
   # Google Fonts (Inter)
   google_fonts: ^6.2.1
 
@@ -87,6 +93,7 @@ flutter:
 
   assets:
     - lib/img/
+    - assets/models/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

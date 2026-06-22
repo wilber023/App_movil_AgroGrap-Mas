@@ -111,6 +111,9 @@ Future<void> _initCore() async {
   final authBox = await Hive.openBox<String>('auth_box');
   sl.registerLazySingleton<Box<String>>(() => authBox, instanceName: 'authBox');
 
+  final diagnosisBox = await Hive.openBox<String>('diagnosis_history');
+  sl.registerLazySingleton<Box<String>>(() => diagnosisBox, instanceName: 'diagnosisBox');
+
   // -- Token Storage: acceso rápido a access/refresh token para el interceptor --
   sl.registerLazySingleton<TokenStorage>(
     () => TokenStorageImpl(sl<Box<String>>(instanceName: 'authBox')),
@@ -284,7 +287,9 @@ void _initDiagnosisFeature() {
   sl.registerLazySingleton(() => AnalyzeCropUseCase(sl()));
   sl.registerLazySingleton(() => GetDiagnosisHistoryUseCase(sl()));
 
-  sl.registerFactory(() => DiagnosisBloc());
+  sl.registerFactory(() => DiagnosisBloc(
+        historyBox: sl<Box<String>>(instanceName: 'diagnosisBox'),
+      ));
 }
 
 // =============================================================================

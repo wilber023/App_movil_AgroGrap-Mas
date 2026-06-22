@@ -7,42 +7,16 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../bloc/diagnosis_bloc.dart';
 import 'diagnosis_processing_page.dart';
 import 'diagnosis_history_page.dart';
 
 // =============================================================================
-// AgroGraph-MAS -- Camara de Diagnostico (fullscreen)
-// =============================================================================
-// Pantalla principal del tab Diagnostico. Preview de camara a pantalla completa
-// con controles flotantes, selector de cultivo con contexto de parcelas,
-// marco de enfoque animado con corner brackets, panel de descripcion y
-// chips de sintomas rapidos.
+// AgroGraph-MAS -- Cámara de Diagnóstico
+// Captura imagen → CNN detecta cultivo + enfermedad + confianza (offline)
 // =============================================================================
 
-const Color _textPrimary = Color(0xFF1B2D27);
-const Color _textSecondary = Color(0xFF6B8F71);
-const Color _hintColor = Color(0xFFADB5BD);
-const Color _chipGreenBg = Color(0xFFEAF3DE);
-const Color _chipGreenText = Color(0xFF2D6A4F);
-const Color _chipNeutralBg = Color(0xFFF1F1F1);
-const Color _chipNeutralText = Color(0xFF888888);
 const Color _bracketGreen = Color(0xFF52B788);
-const Color _trackGrey = Color(0xFFE2EBE6);
-
-/// Modelo local para un chip de cultivo en el selector.
-class _CropChip {
-  final String label;
-  final String? parcelName; // null = secondary fallback chip
-  final bool isPrimary;
-
-  const _CropChip({
-    required this.label,
-    this.parcelName,
-    this.isPrimary = false,
-  });
-}
 
 class DiagnosisPage extends StatefulWidget {
   const DiagnosisPage({super.key});
@@ -52,48 +26,40 @@ class DiagnosisPage extends StatefulWidget {
 }
 
 class _DiagnosisPageState extends State<DiagnosisPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  // ── Cámara ────────────────────────────────────────────────────────────────
   CameraController? _cameraController;
   bool _isCameraReady = false;
+  int _flashState = 0; // 0=off 1=on 2=auto
 
-  // Flash state: 0=off, 1=on, 2=auto
-  int _flashState = 0;
-
-  // Crop selection
+  // ── Selección de cultivo (contexto opcional, CNN detecta automáticamente) ──
   int _selectedCropIndex = 0;
 
+  static const List<String> _cropLabels = [
+    'Calabaza', 'Frijol', 'Manzana', 'Mora', 'Cereza',
+    'Maíz', 'Durazno', 'Uva', 'Naranja', 'Pimienta',
+    'Papa', 'Frambuesa', 'Soja', 'Fresa', 'Tomate',
+  ];
 
-
-  // Description panel
-  final _descController = TextEditingController();
-  final Set<int> _selectedSymptoms = {};
-
-  // Corner bracket pulse animation
+  // ── Animaciones ────────────────────────────────────────────────────────────
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Simulated parcel-linked crops (primary) and fallback crops (secondary)
-  static const List<_CropChip> _crops = [
-    _CropChip(label: 'Maiz', parcelName: 'Milpa Norte', isPrimary: true),
-    _CropChip(label: 'Jitomate', parcelName: 'Huerta Baja', isPrimary: true),
-    _CropChip(label: 'Frijol'),
-    _CropChip(label: 'Chile'),
-    _CropChip(label: 'Papa'),
-    _CropChip(label: 'Calabaza'),
+  // ── Mensajes guía ciclicos ─────────────────────────────────────────────────
+  static const List<String> _guideMessages = [
+    'Centra bien la hoja o fruto',
+    'Evita sombras fuertes',
+    'Acércate un poco más al cultivo',
+    'La imagen clara mejora el diagnóstico',
   ];
+  int _guideIndex = 0;
+  Timer? _guideTimer;
 
-  static const List<String> _symptomLabels = [
-    'Manchas amarillas',
-    'Hojas secas',
-    'Tallo podrido',
-    'Insectos visibles',
-    'Raiz afectada',
-    'Color anormal',
-  ];
-
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initCamera();
     _pulseController = AnimationController(
       vsync: this,
@@ -102,31 +68,60 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.04).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-  }
-
-  Future<void> _initCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        _cameraController = CameraController(
-          cameras.first,
-          ResolutionPreset.high,
-          enableAudio: false,
-        );
-        await _cameraController!.initialize();
-        if (mounted) setState(() => _isCameraReady = true);
-      }
-    } catch (e) {
-      debugPrint('Error al inicializar camara: $e');
-    }
+    _startGuideTimer();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _guideTimer?.cancel();
     _cameraController?.dispose();
     _pulseController.dispose();
-    _descController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_cameraController == null) return;
+    if (state == AppLifecycleState.inactive) {
+      _cameraController?.dispose();
+      _cameraController = null;
+      if (mounted) setState(() => _isCameraReady = false);
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
+  }
+
+  // ── Cámara ────────────────────────────────────────────────────────────────
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) return;
+      final controller = CameraController(
+        cameras.first,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+      _cameraController?.dispose();
+      setState(() {
+        _cameraController = controller;
+        _isCameraReady = true;
+      });
+    } catch (e) {
+      debugPrint('[DiagnosisPage] Error cámara: $e');
+    }
+  }
+
+  Future<void> _reinitCamera() async {
+    setState(() => _isCameraReady = false);
+    await _cameraController?.dispose();
+    _cameraController = null;
+    await _initCamera();
   }
 
   void _toggleFlash() async {
@@ -134,21 +129,18 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       return;
     }
     try {
-      final nextState = (_flashState + 1) % 3;
-      switch (nextState) {
+      final next = (_flashState + 1) % 3;
+      switch (next) {
         case 0:
           await _cameraController!.setFlashMode(FlashMode.off);
-          break;
         case 1:
           await _cameraController!.setFlashMode(FlashMode.torch);
-          break;
         case 2:
           await _cameraController!.setFlashMode(FlashMode.auto);
-          break;
       }
-      setState(() => _flashState = nextState);
+      setState(() => _flashState = next);
     } catch (e) {
-      debugPrint('Error al configurar flash: $e');
+      debugPrint('[DiagnosisPage] Error flash: $e');
     }
   }
 
@@ -157,92 +149,75 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       return;
     }
     if (_cameraController!.value.isTakingPicture) return;
-
     try {
       final image = await _cameraController!.takePicture();
       if (mounted) {
+        _guideTimer?.cancel();
         _pulseController.stop();
         context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
       }
     } catch (e) {
-      debugPrint('Error al capturar foto: $e');
+      debugPrint('[DiagnosisPage] Error captura: $e');
     }
   }
 
   Future<void> _pickFromGallery() async {
     try {
-      final image =
-          await ImagePicker().pickImage(source: ImageSource.gallery);
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image != null && mounted) {
+        _guideTimer?.cancel();
         _pulseController.stop();
         context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
       }
     } catch (e) {
-      debugPrint('Error al seleccionar imagen de galeria: $e');
+      debugPrint('[DiagnosisPage] Error galería: $e');
     }
   }
 
-  void _retakePhoto() {
-    setState(() {
-      _descController.clear();
-      _selectedSymptoms.clear();
-    });
-    _pulseController.repeat(reverse: true);
+  Future<void> _retakePhoto() async {
     context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
+    await _reinitCamera();
+    _pulseController.repeat(reverse: true);
+    _startGuideTimer();
   }
 
   void _processWithAI() {
-    final selectedCrop = _crops[_selectedCropIndex];
-    final symptoms = _selectedSymptoms.map((i) => _symptomLabels[i]).toList();
-    
     context.read<DiagnosisBloc>().add(DiagnosisProcessRequested(
-      cropName: selectedCrop.label,
-      parcelName: selectedCrop.parcelName,
-      description: _descController.text.trim(),
-      symptoms: symptoms,
-    ));
-    
+          cropName: _cropLabels[_selectedCropIndex],
+          description: '',
+          symptoms: const [],
+        ));
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const DiagnosisProcessingPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const DiagnosisProcessingPage()),
     );
   }
 
-  void _appendSymptom(int index) {
-    final symptom = _symptomLabels[index];
-    setState(() {
-      if (_selectedSymptoms.contains(index)) {
-        _selectedSymptoms.remove(index);
-      } else {
-        _selectedSymptoms.add(index);
-        final current = _descController.text;
-        if (current.isNotEmpty && !current.endsWith('. ') && !current.endsWith('.')) {
-          _descController.text = '$current. $symptom';
-        } else if (current.isNotEmpty) {
-          _descController.text = '$current $symptom';
-        } else {
-          _descController.text = symptom;
-        }
-        _descController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _descController.text.length),
-        );
+  void _startGuideTimer() {
+    _guideTimer?.cancel();
+    _guideTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
+      if (mounted) {
+        setState(() {
+          _guideIndex = (_guideIndex + 1) % _guideMessages.length;
+        });
       }
     });
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<DiagnosisBloc, DiagnosisState>(
       builder: (context, state) {
-        final bool isCaptured = state is DiagnosisCaptured || state is DiagnosisProcessing || state is DiagnosisResult;
-        
+        final isCaptured = state is DiagnosisCaptured ||
+            state is DiagnosisProcessing ||
+            state is DiagnosisResult;
+
         return Scaffold(
           backgroundColor: Colors.black,
           body: Stack(
             children: [
-              // Camara fullscreen o imagen capturada
+              // Fondo: imagen capturada o preview de cámara
               if (isCaptured && state is DiagnosisCaptured)
                 Positioned.fill(
                   child: Image.file(
@@ -259,23 +234,16 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                   ),
                 ),
 
-              // Capa oscura si esta capturada
               if (isCaptured)
                 Positioned.fill(
-                  child: Container(color: Colors.black.withValues(alpha: 0.3)),
+                  child: Container(color: Colors.black.withValues(alpha: 0.35)),
                 ),
 
-              // Top bar con selector de cultivo y flash
+              if (!isCaptured) _buildVignette(),
+
               _buildTopBar(),
-
-              // Marco de enfoque animado
               _buildFocusFrame(isCaptured),
-
-              // Bottom bar con controles de captura
               _buildBottomBar(isCaptured),
-
-              // Panel de descripcion (solo cuando hay foto capturada)
-              if (isCaptured) _buildDescriptionPanel(),
             ],
           ),
         );
@@ -283,9 +251,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // TOP BAR: Back, crop selector, flash
-  // ---------------------------------------------------------------------------
+  // ── Top bar ────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Positioned(
       top: MediaQuery.of(context).padding.top,
@@ -297,20 +263,18 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         color: Colors.black.withValues(alpha: 0.55),
         child: Row(
           children: [
-            // Back
             GestureDetector(
               onTap: () => Navigator.maybePop(context),
               child: const SizedBox(
                 width: 48,
                 height: 48,
-                child: Icon(Icons.arrow_back_outlined, color: Colors.white, size: 20),
+                child: Icon(Icons.arrow_back_outlined,
+                    color: Colors.white, size: 20),
               ),
             ),
             const SizedBox(width: 4),
-            // Crop selector
             Expanded(child: _buildCropSelector()),
             const SizedBox(width: 4),
-            // Flash
             GestureDetector(
               onTap: _toggleFlash,
               child: Container(
@@ -326,7 +290,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                       : _flashState == 1
                           ? Icons.flash_on_outlined
                           : Icons.flash_auto_outlined,
-                  color: _flashState == 1 ? AppColors.warmAmber : Colors.white,
+                  color:
+                      _flashState == 1 ? AppColors.warmAmber : Colors.white,
                   size: 18,
                 ),
               ),
@@ -338,77 +303,35 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   }
 
   Widget _buildCropSelector() {
-    // Separate primary and secondary
-    final primaryCrops = _crops.where((c) => c.isPrimary).toList();
-    final secondaryCrops = _crops.where((c) => !c.isPrimary).toList();
-
     return SizedBox(
       height: 32,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: _crops.length + (primaryCrops.isNotEmpty && secondaryCrops.isNotEmpty ? 1 : 0),
-        itemBuilder: (context, index) {
-          // Separator between primary and secondary
-          if (primaryCrops.isNotEmpty &&
-              secondaryCrops.isNotEmpty &&
-              index == primaryCrops.length) {
-            return Container(
-              width: 1,
-              height: 20,
-              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-              color: Colors.white.withValues(alpha: 0.2),
-            );
-          }
-
-          final cropIndex = index > primaryCrops.length && primaryCrops.isNotEmpty
-              ? index - 1
-              : index;
-          if (cropIndex >= _crops.length) return const SizedBox.shrink();
-
-          final crop = _crops[cropIndex];
-          final isSelected = cropIndex == _selectedCropIndex;
-
+        itemCount: _cropLabels.length,
+        itemBuilder: (context, i) {
+          final isSelected = i == _selectedCropIndex;
           return GestureDetector(
-            onTap: () => setState(() => _selectedCropIndex = cropIndex),
+            onTap: () => setState(() => _selectedCropIndex = i),
             child: Container(
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: 6),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.forestGreen
-                    : crop.isPrimary
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.4),
+                    : Colors.black.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (crop.isPrimary) ...[
-                    Icon(
-                      Icons.eco_outlined,
-                      size: 10,
-                      color: isSelected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.8),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(
-                    crop.isPrimary ? (crop.parcelName ?? crop.label) : crop.label,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected
-                          ? Colors.white
-                          : crop.isPrimary
-                              ? Colors.white.withValues(alpha: 0.8)
-                              : Colors.white.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
+              child: Text(
+                _cropLabels[i],
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.65),
+                ),
               ),
             ),
           );
@@ -417,54 +340,67 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // FOCUS FRAME: animated corner brackets
-  // ---------------------------------------------------------------------------
+  Widget _buildVignette() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 0.85,
+              colors: [
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.45),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFocusFrame(bool isCaptured) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final frameWidth = screenWidth * 0.75;
-    final frameHeight = screenHeight * 0.55;
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+    final fw = sw * 0.75;
+    final fh = sh * 0.50;
 
     return Positioned.fill(
       child: Center(
         child: AnimatedBuilder(
           animation: _pulseAnimation,
-          builder: (context, child) {
+          builder: (context, _) {
             final scale = isCaptured ? 1.0 : _pulseAnimation.value;
-            final bracketColor = isCaptured ? AppColors.warmAmber : _bracketGreen;
+            final bracketColor =
+                isCaptured ? AppColors.warmAmber : _bracketGreen;
             return Transform.scale(
               scale: scale,
               child: SizedBox(
-                width: frameWidth,
-                height: frameHeight,
+                width: fw,
+                height: fh,
                 child: CustomPaint(
                   painter: _CornerBracketPainter(
                     color: bracketColor.withValues(
                       alpha: isCaptured ? 1.0 : _pulseAnimation.value,
                     ),
-                    armLength: 24,
+                    armLength: 26,
                     strokeWidth: 3,
                   ),
                   child: !isCaptured
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.camera_alt_outlined,
-                              size: 24,
-                              color: Colors.white.withValues(alpha: 0.25),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Enfoca la hoja o tallo afectado',
+                      ? Center(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            child: Text(
+                              _guideMessages[_guideIndex],
+                              key: ValueKey(_guideIndex),
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: Colors.white.withValues(alpha: 0.75),
                               ),
                             ),
-                          ],
+                          ),
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -476,9 +412,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // BOTTOM BAR: Historial, shutter, Galeria
-  // ---------------------------------------------------------------------------
   Widget _buildBottomBar(bool isCaptured) {
     return Positioned(
       bottom: 0,
@@ -493,12 +426,11 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Left: Historial / Repetir
             GestureDetector(
               onTap: isCaptured ? _retakePhoto : _openHistory,
               child: SizedBox(
-                width: 48,
-                height: 48,
+                width: 56,
+                height: 56,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -522,25 +454,20 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 ),
               ),
             ),
-            // Center: Shutter / Analizar
             isCaptured ? _buildAnalyzeButton() : _buildShutterButton(),
-            // Right: Galeria
             GestureDetector(
               onTap: _pickFromGallery,
               child: SizedBox(
-                width: 48,
-                height: 48,
+                width: 56,
+                height: 56,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.photo_outlined,
-                      color: Colors.white.withValues(alpha: 0.7),
-                      size: 22,
-                    ),
+                    Icon(Icons.photo_outlined,
+                        color: Colors.white.withValues(alpha: 0.7), size: 22),
                     const SizedBox(height: 4),
                     Text(
-                      'Galeria',
+                      'Galería',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 10,
@@ -565,10 +492,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         height: 72,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 3,
-          ),
+          border:
+              Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
         ),
         child: Container(
           margin: const EdgeInsets.all(4),
@@ -588,15 +513,16 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 62,
+            height: 62,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.warmAmber,
             ),
-            child: const Icon(Icons.check_outlined, color: Colors.white, size: 22),
+            child: const Icon(Icons.search_outlined,
+                color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           const Text(
             'Analizar',
             style: TextStyle(
@@ -610,179 +536,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // DESCRIPTION PANEL (bottom sheet after capture)
-  // ---------------------------------------------------------------------------
-  Widget _buildDescriptionPanel() {
-    return Positioned(
-      bottom: 100 + MediaQuery.of(context).padding.bottom,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 260,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: _trackGrey,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                'Describe el problema (opcional)',
-                style: AppTypography.labelMd.copyWith(
-                  color: _textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Anadir contexto mejora la precision del diagnostico.',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: _textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Textarea
-              Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.forestGreen, width: 0.5),
-                ),
-                child: Stack(
-                  children: [
-                    TextField(
-                      controller: _descController,
-                      maxLines: 3,
-                      maxLength: 200,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: _textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText:
-                            'Ej. Las hojas se estan poniendo amarillas desde hace 3 dias, aparecen manchas oscuras en los bordes...',
-                        hintStyle: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          color: _hintColor,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-                        counterText: '',
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 8,
-                      child: Text(
-                        '${_descController.text.length} / 200',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 10,
-                          color: _hintColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Quick context chips
-              Text(
-                'Sintomas visibles:',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 10,
-                  color: _textSecondary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: List.generate(_symptomLabels.length, (i) {
-                  final isSelected = _selectedSymptoms.contains(i);
-                  return GestureDetector(
-                    onTap: () => _appendSymptom(i),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected ? _chipGreenBg : _chipNeutralBg,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        _symptomLabels[i],
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? _chipGreenText : _chipNeutralText,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 12),
-              // CTA
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _processWithAI,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forestGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.memory_outlined, size: 16),
-                      SizedBox(width: 8),
-                      Text(
-                        'Procesar diagnostico con IA',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _openHistory() {
     showModalBottomSheet(
       context: context,
@@ -792,7 +545,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         initialChildSize: 0.7,
         maxChildSize: 0.95,
         minChildSize: 0.4,
-        builder: (context, scrollController) {
+        builder: (ctx, scrollController) {
           return DiagnosisHistorySheet(scrollController: scrollController);
         },
       ),
@@ -801,14 +554,14 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 }
 
 // =============================================================================
-// Corner bracket painter (animated corners only, no full rectangle)
+// Corner bracket painter
 // =============================================================================
 class _CornerBracketPainter extends CustomPainter {
   final Color color;
   final double armLength;
   final double strokeWidth;
 
-  _CornerBracketPainter({
+  const _CornerBracketPainter({
     required this.color,
     required this.armLength,
     required this.strokeWidth,
@@ -826,24 +579,20 @@ class _CornerBracketPainter extends CustomPainter {
     final h = size.height;
     final a = armLength;
 
-    // Top-left
-    canvas.drawLine(Offset(0, a), const Offset(0, 0), paint);
-    canvas.drawLine(const Offset(0, 0), Offset(a, 0), paint);
+    canvas.drawLine(Offset(0, a), Offset.zero, paint);
+    canvas.drawLine(Offset.zero, Offset(a, 0), paint);
 
-    // Top-right
     canvas.drawLine(Offset(w - a, 0), Offset(w, 0), paint);
     canvas.drawLine(Offset(w, 0), Offset(w, a), paint);
 
-    // Bottom-left
     canvas.drawLine(Offset(0, h - a), Offset(0, h), paint);
     canvas.drawLine(Offset(0, h), Offset(a, h), paint);
 
-    // Bottom-right
     canvas.drawLine(Offset(w, h - a), Offset(w, h), paint);
     canvas.drawLine(Offset(w - a, h), Offset(w, h), paint);
   }
 
   @override
-  bool shouldRepaint(covariant _CornerBracketPainter oldDelegate) =>
-      color != oldDelegate.color;
+  bool shouldRepaint(covariant _CornerBracketPainter old) =>
+      color != old.color;
 }

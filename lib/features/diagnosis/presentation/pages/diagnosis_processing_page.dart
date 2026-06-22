@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -71,14 +73,25 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
               builder: (_) => DiagnosisResultPage(diagnosis: state.diagnosis),
             ),
           );
+        } else if (state is DiagnosisError) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: const Color(0xFFA32D2D),
+              duration: const Duration(seconds: 4),
+            ),
+          );
         }
       },
       builder: (context, state) {
         String displayCrop = '';
+        String? capturedImagePath;
         if (state is DiagnosisProcessing) {
           displayCrop = state.parcelName != null
               ? '${state.cropName} \u00B7 ${state.parcelName}'
               : state.cropName;
+          capturedImagePath = state.imagePath;
         }
 
         return Scaffold(
@@ -92,7 +105,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Captured photo circular
+                        // Foto capturada en c\u00EDrculo
                         Container(
                           width: 120,
                           height: 120,
@@ -101,10 +114,20 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                             border: Border.all(color: Colors.white, width: 3),
                             color: Colors.white.withValues(alpha: 0.1),
                           ),
-                          child: const Icon(
-                            Icons.eco_outlined,
-                            color: Colors.white,
-                            size: 48,
+                          child: ClipOval(
+                            child: capturedImagePath != null &&
+                                    File(capturedImagePath).existsSync()
+                                ? Image.file(
+                                    File(capturedImagePath),
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                  )
+                                : const Icon(
+                                    Icons.eco_outlined,
+                                    color: Colors.white,
+                                    size: 48,
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
