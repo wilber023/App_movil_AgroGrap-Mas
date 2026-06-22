@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:camera/camera.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -18,6 +20,23 @@ import 'diagnosis_history_page.dart';
 
 const Color _bracketGreen = Color(0xFF52B788);
 
+// Top-level: corre en isolate separado vía compute() para no bloquear la UI
+Future<String> _compressToJpeg(String sourcePath) async {
+  try {
+    final rawBytes = await File(sourcePath).readAsBytes();
+    final decoded = img.decodeImage(rawBytes);
+    if (decoded == null) return sourcePath;
+    // Redimensiona solo si supera 1280px de ancho
+    final output =
+        decoded.width > 1280 ? img.copyResize(decoded, width: 1280) : decoded;
+    final jpegBytes = img.encodeJpg(output, quality: 82);
+    await File(sourcePath).writeAsBytes(jpegBytes);
+    return sourcePath;
+  } catch (_) {
+    return sourcePath; // Si falla la compresión, se usa la imagen original
+  }
+}
+
 class DiagnosisPage extends StatefulWidget {
   const DiagnosisPage({super.key});
 
@@ -30,6 +49,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   // ── Cámara ────────────────────────────────────────────────────────────────
   CameraController? _cameraController;
   bool _isCameraReady = false;
+  bool _isCapturing = false;       // Previene capturas simultáneas
+  bool _isReinitializing = false;  // Previene reinits simultáneos
   int _flashState = 0; // 0=off 1=on 2=auto
 
   // ── Selección de cultivo (contexto opcional, CNN detecta automáticamente) ──
@@ -80,52 +101,69 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     super.dispose();
   }
 
+  // Control de ciclo de vida: pausa y reanuda la cámara correctamente
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_cameraController == null) return;
-    if (state == AppLifecycleState.inactive) {
-      _cameraController?.dispose();
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      final stale = _cameraController;
       _cameraController = null;
       if (mounted) setState(() => _isCameraReady = false);
+      stale?.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
+      if (!_isReinitializing) _initCamera();
     }
   }
 
   // ── Cámara ────────────────────────────────────────────────────────────────
+
+  // Resolución MEDIUM para evitar congelamiento de la UI y fugas de memoria
   Future<void> _initCamera() async {
+    if (!mounted) return;
     try {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
+      if (cameras.isEmpty || !mounted) return;
       final controller = CameraController(
         cameras.first,
-        ResolutionPreset.high,
+        ResolutionPreset.medium, // era .high — reducido para mejor rendimiento
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
       );
       await controller.initialize();
       if (!mounted) {
-        controller.dispose();
+        await controller.dispose();
         return;
       }
-      _cameraController?.dispose();
+      // Descarta cualquier controlador residual antes de asignar el nuevo
+      final old = _cameraController;
       setState(() {
         _cameraController = controller;
         _isCameraReady = true;
       });
+      if (old != null) {
+        try { await old.dispose(); } catch (_) {}
+      }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error cámara: $e');
     }
   }
 
+  // Reinit robusto: snapshottea el controlador viejo antes de borrar referencia
   Future<void> _reinitCamera() async {
-    setState(() => _isCameraReady = false);
-    await _cameraController?.dispose();
-    _cameraController = null;
+    if (!mounted) return;
+    final stale = _cameraController;
+    setState(() {
+      _cameraController = null;
+      _isCameraReady = false;
+    });
+    try { await stale?.dispose(); } catch (_) {}
     await _initCamera();
   }
 
   void _toggleFlash() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+    if (_cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       return;
     }
     try {
@@ -144,41 +182,68 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     }
   }
 
+  // Captura asíncrona + compresión en isolate de fondo para no bloquear el UI
   Future<void> _takePicture() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+    if (_cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       return;
     }
-    if (_cameraController!.value.isTakingPicture) return;
+    if (_cameraController!.value.isTakingPicture || _isCapturing) return;
+
+    setState(() => _isCapturing = true);
     try {
       final image = await _cameraController!.takePicture();
+      // Compresión JPG en isolate separado (no bloquea el hilo principal)
+      final compressedPath = await compute(_compressToJpeg, image.path);
       if (mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
+        context
+            .read<DiagnosisBloc>()
+            .add(DiagnosisPhotoCaptured(compressedPath));
       }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error captura: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
     }
   }
 
   Future<void> _pickFromGallery() async {
+    if (_isCapturing) return;
     try {
-      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final image =
+          await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82);
       if (image != null && mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
+        context
+            .read<DiagnosisBloc>()
+            .add(DiagnosisPhotoCaptured(image.path));
       }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error galería: $e');
     }
   }
 
+  // Retake robusto con guardia para evitar el bug de "cámara pegada"
   Future<void> _retakePhoto() async {
-    context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
-    await _reinitCamera();
-    _pulseController.repeat(reverse: true);
-    _startGuideTimer();
+    if (_isReinitializing) return;
+    setState(() => _isReinitializing = true);
+    try {
+      context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
+      await _reinitCamera();
+      if (mounted) {
+        _pulseController.repeat(reverse: true);
+        _startGuideTimer();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isReinitializing = false);
+      }
+    }
   }
 
   void _processWithAI() {
@@ -228,15 +293,31 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               else if (_isCameraReady && _cameraController != null)
                 Positioned.fill(child: CameraPreview(_cameraController!))
               else
-                const Positioned.fill(
+                Positioned.fill(
                   child: Center(
-                    child: CircularProgressIndicator(color: _bracketGreen),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(color: _bracketGreen),
+                        if (_isReinitializing) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            'Reiniciando cámara...',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
 
               if (isCaptured)
                 Positioned.fill(
-                  child: Container(color: Colors.black.withValues(alpha: 0.35)),
+                  child: Container(
+                      color: Colors.black.withValues(alpha: 0.35)),
                 ),
 
               if (!isCaptured) _buildVignette(),
@@ -244,6 +325,17 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               _buildTopBar(),
               _buildFocusFrame(isCaptured),
               _buildBottomBar(isCaptured),
+
+              // Indicador de captura en proceso
+              if (_isCapturing)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+                ),
             ],
           ),
         );
@@ -290,8 +382,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                       : _flashState == 1
                           ? Icons.flash_on_outlined
                           : Icons.flash_auto_outlined,
-                  color:
-                      _flashState == 1 ? AppColors.warmAmber : Colors.white,
+                  color: _flashState == 1
+                      ? AppColors.warmAmber
+                      : Colors.white,
                   size: 18,
                 ),
               ),
@@ -427,7 +520,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             GestureDetector(
-              onTap: isCaptured ? _retakePhoto : _openHistory,
+              onTap: (isCaptured && !_isReinitializing)
+                  ? _retakePhoto
+                  : (isCaptured ? null : _openHistory),
               child: SizedBox(
                 width: 56,
                 height: 56,
@@ -486,20 +581,24 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 
   Widget _buildShutterButton() {
     return GestureDetector(
-      onTap: _takePicture,
-      child: Container(
-        width: 72,
-        height: 72,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border:
-              Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
-        ),
+      onTap: _isCapturing ? null : _takePicture,
+      child: AnimatedOpacity(
+        opacity: _isCapturing ? 0.4 : 1.0,
+        duration: const Duration(milliseconds: 150),
         child: Container(
-          margin: const EdgeInsets.all(4),
-          decoration: const BoxDecoration(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35), width: 3),
+          ),
+          child: Container(
+            margin: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
           ),
         ),
       ),

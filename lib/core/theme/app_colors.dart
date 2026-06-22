@@ -176,4 +176,59 @@ abstract final class AppColors {
 
   /// Navegacion -- estado activo.
   static const Color navActive = Color(0xFF2D6A4F);
+
+  // ---------------------------------------------------------------------------
+  // STITCH APRENDIZ -- Tokens del feature aprendiz (Project 6524313850803988866)
+  // Palette distinta a la del agricultor. Solo usar dentro de features/aprendiz.
+  // ---------------------------------------------------------------------------
+
+  static const Color aPrimary = Color(0xFF012D1D);
+  static const Color aPrimaryContainer = Color(0xFF1B4332);
+  static const Color aOnPrimary = Color(0xFFFFFFFF);
+  static const Color aOnPrimaryContainer = Color(0xFF86AF99);
+  static const Color aOnPrimaryFixed = Color(0xFF002114);
+  static const Color aOnPrimaryFixedVariant = Color(0xFF274E3D);
+  static const Color aPrimaryFixed = Color(0xFFC1ECD4);
+  static const Color aPrimaryFixedDim = Color(0xFFA5D0B9);
+
+  static const Color aSecondary = Color(0xFF2C694E);
+  static const Color aSecondaryContainer = Color(0xFFAEEECB);
+  static const Color aOnSecondaryContainer = Color(0xFF316E52);
+
+  /// Naranja CTA — botones primarios y acciones urgentes del feature aprendiz.
+  static const Color aOrange = Color(0xFFF4845F);
+
+  /// Naranja acento — indicador activo del tab bar y resaltados.
+  static const Color aOrangeAccent = Color(0xFFF88762);
+
+  /// Fondo mint — background principal del feature aprendiz.
+  static const Color aMint = Color(0xFFF0FAF3);
+
+  static const Color aLightGreen = Color(0xFFD8F3DC);
+
+  static const Color aSurface = Color(0xFFFCF9F8);
+  static const Color aOnSurface = Color(0xFF1C1B1B);
+  static const Color aSurfaceVariant = Color(0xFFE5E2E1);
+  static const Color aOnSurfaceVariant = Color(0xFF414844);
+  static const Color aSurfaceContainerLowest = Color(0xFFFFFFFF);
+  static const Color aSurfaceContainerLow = Color(0xFFF6F3F2);
+  static const Color aSurfaceContainer = Color(0xFFF0EDED);
+  static const Color aSurfaceContainerHigh = Color(0xFFEAE7E7);
+
+  static const Color aOutline = Color(0xFF717973);
+  static const Color aOutlineVariant = Color(0xFFC1C8C2);
+
+  static const Color aTertiaryFixed = Color(0xFFFFDBD0);
+  static const Color aOnTertiaryFixed = Color(0xFF390B00);
+  static const Color aOnTertiaryFixedVariant = Color(0xFF7E2B0D);
+
+  /// Fondo de tarjeta de advertencia (amarillo).
+  static const Color aWarningBg = Color(0xFFFFF3CD);
+  static const Color aWarningBorder = Color(0xFFFFE5A3);
+  static const Color aWarningText = Color(0xFFB45309);
+
+  /// Fondo de tarjeta de enfermedad (rojo suave).
+  static const Color aDiseaseCardBg = Color(0xFFFFE5E5);
+  static const Color aDiseaseCardBorder = Color(0xFFFFB4B4);
+  static const Color aDiseaseCardText = Color(0xFF93000A);
 }

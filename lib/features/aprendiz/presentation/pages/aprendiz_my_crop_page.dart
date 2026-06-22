@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/error_state_widget.dart';
-import '../../domain/entities/crop_activity_entity.dart';
-import '../../domain/entities/crop_plan_entity.dart';
 import '../bloc/aprendiz_my_crop_cubit.dart';
-import 'aprendiz_crop_register_page.dart';
-import 'diagnosis_camera_aprendiz_page.dart';
 
 class AprendizMyCropPage extends StatelessWidget {
   const AprendizMyCropPage({super.key});
@@ -28,299 +23,258 @@ class _AprendizMyCropView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: BlocBuilder<AprendizMyCropCubit, AprendizMyCropState>(
-          builder: (context, state) {
-            if (state is AprendizMyCropLoaded) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: AppColors.aSurface,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Header with back arrow
+            Container(
+              height: 56,
+              color: AppColors.aPrimaryContainer,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
                 children: [
-                  Text('Mi Cultivo · ${state.plan.cropName}', style: AppTypography.tituloMd),
-                  Text('Milpa Norte', style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant)), // Hardcodeado parcela
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Estado de mi cultivo',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
                 ],
-              );
-            }
-            return const Text('Mi Cultivo');
-          },
+              ),
+            ),
+
+            Expanded(
+              child: BlocBuilder<AprendizMyCropCubit, AprendizMyCropState>(
+                builder: (context, state) {
+                  if (state is AprendizMyCropLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.aSecondary),
+                    );
+                  }
+                  final week = state is AprendizMyCropLoaded ? state.plan.currentWeek : 6;
+                  return _CropStatusContent(currentWeek: week);
+                },
+              ),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: 'Agregar otro cultivo',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AprendizCropRegisterPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: BlocBuilder<AprendizMyCropCubit, AprendizMyCropState>(
-        builder: (context, state) {
-          if (state is AprendizMyCropLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.forestGreen));
-          }
-          if (state is AprendizMyCropError) {
-            return ErrorStateWidget(
-              message: state.message,
-              onRetry: () => context.read<AprendizMyCropCubit>().loadPlan(),
-            );
-          }
-          if (state is AprendizMyCropLoaded) {
-            return _buildContent(context, state.plan, state.isOffline);
-          }
-          return const SizedBox.shrink();
-        },
       ),
     );
   }
+}
 
-  Widget _buildContent(BuildContext context, CropPlanEntity plan, bool isOffline) {
-    final completed = plan.activities.where((a) => a.status == ActivityStatus.completed).length;
-    final pending = plan.activities.where((a) => a.status == ActivityStatus.pending).length;
-    final postponed = plan.activities.where((a) => a.status == ActivityStatus.postponed).length;
+class _CropStatusContent extends StatelessWidget {
+  final int currentWeek;
+  const _CropStatusContent({required this.currentWeek});
 
-    // Supongamos 18 semanas total como dice el diseño
-    final totalWeeks = 18; 
-    
-    // Obtener la fecha de cosecha (ejemplo agregando 18 semanas a start date)
-    final harvestDate = plan.startDate.add(const Duration(days: 18 * 7));
+  @override
+  Widget build(BuildContext context) {
+    // TODO: wire to CropHealthEntity from a dedicated health cubit
+    const healthPercent = 0.85;
+    final factors = [
+      (Icons.shield_outlined, 'Enfermedades', 0.90),
+      (Icons.check_circle_outline, 'Cumplimiento', 0.80),
+      (Icons.visibility_outlined, 'Inspecciones', 0.75),
+      (Icons.trending_up, 'Seguimientos', 0.85),
+    ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (isOffline)
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(8),
+          const SizedBox(height: 20),
+
+          // Health ring
+          _HealthRing(percent: healthPercent),
+          const SizedBox(height: 16),
+
+          // Crop name + week badge
+          const Text(
+            'Maíz · Milpa Norte',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.aOnSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.aSurfaceContainerLow,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.aOutlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.calendar_month, size: 16, color: AppColors.aOnSurfaceVariant),
+                const SizedBox(width: 6),
+                Text(
+                  'Semana $currentWeek',
+                  style: const TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Factors card
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
               decoration: BoxDecoration(
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.1),
+                color: AppColors.aSurfaceContainerLowest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.aSurfaceContainerHigh),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2)),
+                ],
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: factors.map((f) {
+                  final icon = f.$1;
+                  final label = f.$2;
+                  final value = f.$3;
+                  final isLast = f == factors.last;
+
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(icon, color: AppColors.aSecondary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                label,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.aOnSurface,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${(value * 100).toInt()}%',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.aPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: value,
+                            minHeight: 10,
+                            backgroundColor: AppColors.aSurfaceVariant,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.aSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Info footer
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.aSurfaceContainerLow,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              padding: const EdgeInsets.all(16),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.cloud_off_rounded, size: 16, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: 8),
+                  Icon(Icons.info_outline, color: AppColors.aSecondary, size: 20),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Modo fuera de línea - Cambios se sincronizarán pronto',
-                      style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+                      'Los indicadores se actualizan con base en las últimas sincronizaciones y reportes ingresados por los técnicos de campo.',
+                      style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant, height: 1.5),
                     ),
                   ),
                 ],
               ),
             ),
-          
-          // Resumen Circular
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.surfaceVariant),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 64,
-                          height: 64,
-                          child: CircularProgressIndicator(
-                            value: plan.progressPercentage / 100,
-                            strokeWidth: 6,
-                            backgroundColor: AppColors.surfaceVariant,
-                            color: AppColors.forestGreen,
-                          ),
-                        ),
-                        Text(
-                          '${plan.progressPercentage.toInt()}%',
-                          style: AppTypography.tituloMd.copyWith(color: AppColors.forestGreen),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Semana ${plan.currentWeek} de $totalWeeks', style: AppTypography.tituloMd),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.onSurfaceVariant),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Cosecha: ${_formatDate(harvestDate)}',
-                                style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildPill('$completed COMPLETADAS', AppColors.forestGreen),
-                    _buildPill('$pending PENDIENTES', AppColors.onSurfaceVariant),
-                    _buildPill('$postponed POSPUESTA(S)', AppColors.error),
-                  ],
-                ),
-              ],
-            ),
           ),
-          const SizedBox(height: 32),
-          
-          Text(
-            'RUTA DE INSPECCIÓN',
-            style: AppTypography.etiquetaBold.copyWith(color: AppColors.onSurfaceVariant),
-          ),
-          const SizedBox(height: 16),
-          
-          // Agrupamos actividades
-          _buildActivitiesList(context, plan),
+          const SizedBox(height: 80),
         ],
       ),
     );
   }
+}
 
-  Widget _buildPill(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        text,
-        style: AppTypography.etiquetaSm.copyWith(color: color, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
+class _HealthRing extends StatelessWidget {
+  final double percent;
+  const _HealthRing({required this.percent});
 
-  Widget _buildActivitiesList(BuildContext context, CropPlanEntity plan) {
-    // Simulamos un agrupador por rango de semanas.
-    // Para simplificar, mostraremos la actividad activa (si hay) y un grupo colapsado de siguientes.
-    
-    final activeActivities = plan.activities.where((a) => a.weekNumber == plan.currentWeek && a.status == ActivityStatus.pending).toList();
-    final pastActivities = plan.activities.where((a) => a.weekNumber < plan.currentWeek || a.status != ActivityStatus.pending).toList();
-    final futureActivities = plan.activities.where((a) => a.weekNumber > plan.currentWeek && a.status == ActivityStatus.pending).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Pasadas colapsables
-        if (pastActivities.isNotEmpty)
-          ExpansionTile(
-            title: Text('Semanas anteriores (1-${plan.currentWeek > 1 ? plan.currentWeek - 1 : 1})'),
-            children: pastActivities.map((a) => _buildActivityItem(context, a, isActive: false)).toList(),
-          ),
-        
-        // Activas
-        if (activeActivities.isNotEmpty)
-          ...activeActivities.map((a) => _buildActivityItem(context, a, isActive: true)),
-
-        // Futuras colapsables
-        if (futureActivities.isNotEmpty)
-          ExpansionTile(
-            title: Text('${futureActivities.length} actividades pendientes · semanas ${plan.currentWeek + 1} a 18'),
-            children: futureActivities.map((a) => _buildActivityItem(context, a, isActive: false)).toList(),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem(BuildContext context, CropActivityEntity activity, {required bool isActive}) {
-    IconData icon;
-    Color iconColor;
-    
-    switch (activity.status) {
-      case ActivityStatus.completed:
-        icon = Icons.check_circle_rounded;
-        iconColor = AppColors.forestGreen;
-        break;
-      case ActivityStatus.pending:
-        icon = Icons.radio_button_unchecked_rounded;
-        iconColor = AppColors.onSurfaceVariant;
-        break;
-      case ActivityStatus.postponed:
-        icon = Icons.watch_later_rounded;
-        iconColor = AppColors.error;
-        break;
-    }
-
-    if (isActive) {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.warmAmber.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.warmAmber),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.radio_button_checked_rounded, color: AppColors.warmAmber),
-                const SizedBox(width: 8),
-                Text('HOY · SEMANA ${activity.weekNumber}', style: AppTypography.etiquetaBold.copyWith(color: AppColors.warmAmber)),
-              ],
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 120,
+            height: 120,
+            child: CircularProgressIndicator(
+              value: percent,
+              strokeWidth: 8,
+              strokeCap: StrokeCap.round,
+              backgroundColor: AppColors.aSurfaceVariant,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.aSecondary),
             ),
-            const SizedBox(height: 8),
-            Text(activity.title, style: AppTypography.tituloMd),
-            const SizedBox(height: 4),
-            Text(
-              activity.description ?? 'Monitorear aparición de hojas nuevas, control de maleza.',
-              style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => DiagnosisCameraAprendizPage(
-                        weekNumber: activity.weekNumber,
-                        activityId: activity.id,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.camera_alt_rounded, color: Colors.white),
-                label: Text('Realizar inspección ahora →', style: AppTypography.labelMd.copyWith(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondaryDs2,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${(percent * 100).toInt()}%',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.aPrimary,
                 ),
               ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(activity.title, style: AppTypography.labelMd),
-      subtitle: Text('Semana ${activity.weekNumber}'),
+              const Text(
+                'SALUD',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.aOutline,
+                  letterSpacing: 0.08,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }

@@ -28,14 +28,16 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
+  // ── Lógica intacta ─────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
@@ -51,65 +53,99 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   }
 
   ProfileType get _currentProfileType =>
-      _tabController.index == 0 ? ProfileType.agricultor : ProfileType.aprendizAgricola;
+      _tabController.index == 0
+          ? ProfileType.agricultor
+          : ProfileType.aprendizAgricola;
 
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceDs2,
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8, top: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.85),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded,
+                  color: AppColors.onSurface, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
         ),
       ),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: _handleAuthStateChange,
-        builder: (context, state) {
-          final isLoading = state is AuthLoading;
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFBCE8D2),
+              Color(0xFFDCF3E8),
+              Color(0xFFF4FBF7),
+              Colors.white,
+            ],
+            stops: [0.0, 0.18, 0.45, 1.0],
+          ),
+        ),
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: _handleAuthStateChange,
+          builder: (context, state) {
+            final isLoading = state is AuthLoading;
 
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    _buildHeader(),
-                    const SizedBox(height: 32),
-                    _buildTabs(),
-                    const SizedBox(height: 32),
-                    _buildUsernameField(),
-                    const SizedBox(height: 20),
-                    _buildPasswordField(),
-                    const SizedBox(height: 8),
-                    _buildForgotPassword(),
-                    const SizedBox(height: 32),
-                    AuthPrimaryButton(
-                      text: 'Iniciar sesión',
-                      icon: Icons.login_rounded,
-                      isLoading: isLoading,
-                      onPressed: isLoading ? null : _onLoginPressed,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildDivider(),
-                    const SizedBox(height: 24),
-                    _buildRegisterLink(),
-                    const SizedBox(height: 32),
-                  ],
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildTabs(),
+                      const SizedBox(height: 28),
+                      _buildUsernameField(),
+                      const SizedBox(height: 18),
+                      _buildPasswordField(),
+                      const SizedBox(height: 6),
+                      _buildForgotPassword(),
+                      const SizedBox(height: 28),
+                      _buildLoginButton(isLoading),
+                      const SizedBox(height: 28),
+                      _buildDivider(),
+                      const SizedBox(height: 24),
+                      _buildRegisterLink(),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
+  // ── Manejador de estados BLoC (sin cambios) ────────────────────────────────
   void _handleAuthStateChange(BuildContext context, AuthState state) {
     if (state is AuthAuthenticated) {
       if (state.profileType == ProfileType.agricultor) {
@@ -130,12 +166,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.white, size: 22),
+                const Icon(Icons.error_outline_rounded,
+                    color: Colors.white, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     state.message,
-                    style: AppTypography.labelMd.copyWith(color: Colors.white),
+                    style:
+                        AppTypography.labelMd.copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -158,10 +196,12 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.info_outline_rounded, color: AppColors.warmAmber),
+            const Icon(Icons.info_outline_rounded,
+                color: AppColors.warmAmber),
             const SizedBox(width: 8),
             Text(
               'Próximamente',
@@ -178,7 +218,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Entendido',
-              style: AppTypography.labelMd.copyWith(color: AppColors.forestGreen),
+              style: AppTypography.labelMd
+                  .copyWith(color: AppColors.forestGreen),
             ),
           ),
         ],
@@ -186,37 +227,50 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
+  // ── Widgets visuales ───────────────────────────────────────────────────────
+
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Ícono con gradiente y sombra verde
         Container(
-          width: 56,
-          height: 56,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
-            color: AppColors.forestGreen.withValues(alpha: 0.1),
+            gradient: const LinearGradient(
+              colors: [AppColors.forestGreen, Color(0xFF1B5E3B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.forestGreen.withValues(alpha: 0.38),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          child: const Icon(
-            Icons.lock_open_rounded,
-            color: AppColors.forestGreen,
-            size: 28,
-          ),
+          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 32),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         Text(
           'Inicia sesión',
           style: AppTypography.headlineMd.copyWith(
-            color: const Color(0xFF1B2D27),
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
+            color: AppColors.onSurface,
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           'Accede a tus parcelas, diagnósticos y agenda.',
           style: AppTypography.etiquetaSm.copyWith(
-            color: const Color(0xFF6B8F71),
+            color: AppColors.onSurfaceVariant,
+            fontSize: 14,
+            height: 1.4,
           ),
         ),
       ],
@@ -227,20 +281,44 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: AppColors.outlineVariant.withValues(alpha: 0.6), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.forestGreen.withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: TabBar(
         controller: _tabController,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: AppColors.forestGreen.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.forestGreen.withValues(alpha: 0.13),
+              AppColors.primary.withValues(alpha: 0.07),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.forestGreen.withValues(alpha: 0.22),
+            width: 1.5,
+          ),
         ),
         labelColor: AppColors.forestGreen,
-        unselectedLabelColor: const Color(0xFF6B8F71),
-        labelStyle: AppTypography.labelMd.copyWith(fontWeight: FontWeight.w600),
-        unselectedLabelStyle: AppTypography.labelMd.copyWith(fontWeight: FontWeight.w400),
+        unselectedLabelColor: AppColors.onSurfaceVariant,
+        labelStyle:
+            AppTypography.labelMd.copyWith(fontWeight: FontWeight.w700),
+        unselectedLabelStyle:
+            AppTypography.labelMd.copyWith(fontWeight: FontWeight.w400),
         tabs: const [
           Tab(text: 'Agricultor'),
           Tab(text: 'Aprendiz'),
@@ -250,42 +328,49 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   }
 
   Widget _buildUsernameField() {
-    return AuthTextField(
-      controller: _usernameController,
-      label: 'Usuario',
-      hintText: 'Ej: wil_hdz',
-      prefixIcon: Icons.person_outline_rounded,
-      keyboardType: TextInputType.text,
-      textInputAction: TextInputAction.next,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) return 'Ingresa tu usuario';
-        if (value.trim().length < 3) return 'Debe tener al menos 3 caracteres';
-        return null;
-      },
+    return _FieldShadowWrap(
+      child: AuthTextField(
+        controller: _usernameController,
+        label: 'Usuario',
+        hintText: 'Ej: wil_hdz',
+        prefixIcon: Icons.person_outline_rounded,
+        keyboardType: TextInputType.text,
+        textInputAction: TextInputAction.next,
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) return 'Ingresa tu usuario';
+          if (value.trim().length < 3) return 'Debe tener al menos 3 caracteres';
+          return null;
+        },
+      ),
     );
   }
 
   Widget _buildPasswordField() {
-    return AuthTextField(
-      controller: _passwordController,
-      label: 'Contraseña',
-      hintText: 'Ingresa tu contraseña',
-      prefixIcon: Icons.lock_outline_rounded,
-      obscureText: _obscurePassword,
-      textInputAction: TextInputAction.done,
-      suffixIcon: IconButton(
-        icon: Icon(
-          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-          color: const Color(0xFF6B8F71),
-          size: 22,
+    return _FieldShadowWrap(
+      child: AuthTextField(
+        controller: _passwordController,
+        label: 'Contraseña',
+        hintText: 'Ingresa tu contraseña',
+        prefixIcon: Icons.lock_outline_rounded,
+        obscureText: _obscurePassword,
+        textInputAction: TextInputAction.done,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            color: const Color(0xFF6B8F71),
+            size: 22,
+          ),
+          onPressed: () =>
+              setState(() => _obscurePassword = !_obscurePassword),
         ),
-        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Ingresa tu contraseña';
+          if (value.length < 6) return 'Mínimo 6 caracteres';
+          return null;
+        },
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) return 'Ingresa tu contraseña';
-        if (value.length < 6) return 'Mínimo 6 caracteres';
-        return null;
-      },
     );
   }
 
@@ -309,18 +394,73 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
+  Widget _buildLoginButton(bool isLoading) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.warmAmber.withValues(alpha: 0.32),
+            blurRadius: 20,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: AuthPrimaryButton(
+        text: 'Iniciar sesión',
+        icon: Icons.login_rounded,
+        isLoading: isLoading,
+        onPressed: isLoading ? null : _onLoginPressed,
+      ),
+    );
+  }
+
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Container(height: 0.5, color: AppColors.cardBorder)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'o',
-            style: AppTypography.etiquetaSm.copyWith(color: const Color(0xFF6B8F71)),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  AppColors.outlineVariant.withValues(alpha: 0.8),
+                ],
+              ),
+            ),
           ),
         ),
-        Expanded(child: Container(height: 0.5, color: AppColors.cardBorder)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+            ),
+            child: Text(
+              'o',
+              style: AppTypography.etiquetaSm.copyWith(
+                  color: AppColors.onSurfaceVariant, fontSize: 12),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.outlineVariant.withValues(alpha: 0.8),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -338,38 +478,71 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             ),
           );
         },
-        child: RichText(
-          text: TextSpan(
-            style: AppTypography.etiquetaSm.copyWith(
-              color: const Color(0xFF6B8F71),
-              fontSize: 13,
-            ),
-            children: [
-              const TextSpan(text: '¿No tienes cuenta? '),
-              TextSpan(
-                text: 'Crear cuenta',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.forestGreen,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+                color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+          ),
+          child: RichText(
+            text: TextSpan(
+              style: AppTypography.etiquetaSm.copyWith(
+                color: AppColors.onSurfaceVariant,
+                fontSize: 13,
               ),
-            ],
+              children: [
+                const TextSpan(text: '¿No tienes cuenta?  '),
+                TextSpan(
+                  text: 'Crear cuenta →',
+                  style: AppTypography.labelMd.copyWith(
+                    color: AppColors.forestGreen,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ── Lógica de negocio (sin cambios) ───────────────────────────────────────
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-        AuthLoginRequested(
-          username: _usernameController.text.trim(),
-          password: _passwordController.text,
-          profileType: _currentProfileType,
-        ),
-      );
+            AuthLoginRequested(
+              username: _usernameController.text.trim(),
+              password: _passwordController.text,
+              profileType: _currentProfileType,
+            ),
+          );
     }
+  }
+}
+
+// Wrapper de sombra suave para cada campo de texto
+class _FieldShadowWrap extends StatelessWidget {
+  final Widget child;
+  const _FieldShadowWrap({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.forestGreen.withValues(alpha: 0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 }
