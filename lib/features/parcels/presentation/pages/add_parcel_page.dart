@@ -8,10 +8,9 @@ import '../../../../core/di/injection_container.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
 
 // =============================================================================
-// AgroGraph-MAS -- Agregar Parcela (formulario de un solo paso - MVP Simplificado)
-// =============================================================================
+// AgroGraph-MAS -- Nueva Parcela / Cultivo
 // Colores clave: primary #2D6A4F, accent #F4A261, bg #F8FAF5.
-// Formulario compacto, sin multi-step, offline-first, sin sombras.
+// Sin GPS. Región manual. Grid visual de cultivos. Offline-first.
 // =============================================================================
 
 const Color _bg = Color(0xFFF8FAF5);
@@ -29,24 +28,36 @@ class AddParcelPage extends StatefulWidget {
 class _AddParcelPageState extends State<AddParcelPage> {
   final _nameController = TextEditingController();
   final _areaController = TextEditingController();
-  final _locationController = TextEditingController();
+  final _regionController = TextEditingController();
 
   String _selectedUnit = 'Hectáreas';
   int _selectedCropIndex = -1;
   DateTime? _selectedDate;
 
-  // Campos adicionales opcionales (Acordeón)
   bool _isAdditionalExpanded = false;
   int _selectedTerrenoIndex = -1;
   final Set<int> _selectedSueloConditions = {};
   final Set<int> _selectedMalezaTypes = {};
 
-  // Conectividad
   StreamSubscription? _connectivitySubscription;
   bool _isConnected = true;
 
-  static const List<String> _crops = [
-    'Maíz', 'Frijol', 'Jitomate', 'Chile', 'Papa', 'Calabaza', 'Otro',
+  static const List<Map<String, String>> _crops = [
+    {'name': 'Calabaza',   'emoji': '🎃'},
+    {'name': 'Frijol',     'emoji': '🫘'},
+    {'name': 'Manzana',    'emoji': '🍎'},
+    {'name': 'Mora',       'emoji': '🫐'},
+    {'name': 'Cereza',     'emoji': '🍒'},
+    {'name': 'Maíz',       'emoji': '🌽'},
+    {'name': 'Durazno',    'emoji': '🍑'},
+    {'name': 'Uva',        'emoji': '🍇'},
+    {'name': 'Naranja',    'emoji': '🍊'},
+    {'name': 'Pimienta',   'emoji': '🌶️'},
+    {'name': 'Papa',       'emoji': '🥔'},
+    {'name': 'Frambuesa',  'emoji': '🍓'},
+    {'name': 'Soja',       'emoji': '🌱'},
+    {'name': 'Fresa',      'emoji': '🍓'},
+    {'name': 'Tomate',     'emoji': '🍅'},
   ];
 
   static const List<String> _terrenoOptions = [
@@ -54,11 +65,11 @@ class _AddParcelPageState extends State<AddParcelPage> {
   ];
 
   static const List<String> _sueloOptions = [
-    'Suelo seco', 'Suelo húmedo', 'Pedregoso', 'Compactado', 'Buen drenaje', 'No estoy seguro',
+    'Seco', 'Húmedo', 'Pedregoso', 'Arcilloso', 'Bien drenado', 'No estoy seguro',
   ];
 
   static const List<String> _malezaOptions = [
-    'Hoja ancha', 'Pastos', 'Ciperáceas', 'Mixta', 'No sé',
+    'Hoja ancha', 'Pastos', 'Ciperáceas', 'Mixta', 'No hay / No sé',
   ];
 
   @override
@@ -66,16 +77,16 @@ class _AddParcelPageState extends State<AddParcelPage> {
     super.initState();
     _nameController.addListener(_updateState);
     _areaController.addListener(_updateState);
-    _locationController.addListener(_updateState);
+    _regionController.addListener(_updateState);
 
     _checkInitialConnection();
     _connectivitySubscription = sl<NetworkInfo>().onConnectivityChanged.listen((results) {
       if (mounted) {
         setState(() {
-          _isConnected = results.any((result) =>
-              result == ConnectivityResult.wifi ||
-              result == ConnectivityResult.mobile ||
-              result == ConnectivityResult.ethernet);
+          _isConnected = results.any((r) =>
+              r == ConnectivityResult.wifi ||
+              r == ConnectivityResult.mobile ||
+              r == ConnectivityResult.ethernet);
         });
       }
     });
@@ -83,11 +94,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
 
   Future<void> _checkInitialConnection() async {
     final connected = await sl<NetworkInfo>().isConnected;
-    if (mounted) {
-      setState(() {
-        _isConnected = connected;
-      });
-    }
+    if (mounted) setState(() => _isConnected = connected);
   }
 
   @override
@@ -95,32 +102,25 @@ class _AddParcelPageState extends State<AddParcelPage> {
     _connectivitySubscription?.cancel();
     _nameController.dispose();
     _areaController.dispose();
-    _locationController.dispose();
+    _regionController.dispose();
     super.dispose();
   }
 
-  void _updateState() {
-    setState(() {});
-  }
+  void _updateState() => setState(() {});
 
   bool get _isValid =>
       _nameController.text.trim().isNotEmpty &&
       _areaController.text.trim().isNotEmpty &&
-      _locationController.text.trim().isNotEmpty &&
+      _regionController.text.trim().isNotEmpty &&
       _selectedCropIndex != -1 &&
       _selectedDate != null;
 
   String _estimatePhenologicalStage(DateTime date) {
-    final daysPassed = DateTime.now().difference(date).inDays;
-    if (daysPassed < 15) {
-      return 'Emergencia';
-    } else if (daysPassed < 45) {
-      return 'Vegetativa';
-    } else if (daysPassed < 90) {
-      return 'Floración';
-    } else {
-      return 'Cosecha';
-    }
+    final days = DateTime.now().difference(date).inDays;
+    if (days < 15) return 'Emergencia';
+    if (days < 45) return 'Vegetativa';
+    if (days < 90) return 'Floración';
+    return 'Cosecha';
   }
 
   void _pickDate() async {
@@ -130,28 +130,18 @@ class _AddParcelPageState extends State<AddParcelPage> {
       initialDate: now,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2D6A4F),
-              onPrimary: Colors.white,
-              onSurface: _textPrimary,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF2D6A4F),
+            onPrimary: Colors.white,
+            onSurface: _textPrimary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-    if (date != null && mounted) {
-      setState(() => _selectedDate = date);
-    }
-  }
-
-  void _useCurrentLocation() {
-    setState(() {
-      _locationController.text = 'Tuxtla Gutiérrez, Chiapas';
-    });
+    if (date != null && mounted) setState(() => _selectedDate = date);
   }
 
   void _save() {
@@ -164,6 +154,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _SuccessOverlay(
+        cropName: _crops[_selectedCropIndex]['name']!,
         onDiagnosis: () {
           Navigator.of(ctx).pop();
           Navigator.of(context).pushReplacement(
@@ -191,7 +182,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Nueva Parcela',
+          'Nueva Parcela / Cultivo',
           style: AppTypography.labelMd.copyWith(
             color: Colors.white,
             fontSize: 15,
@@ -208,7 +199,6 @@ class _AddParcelPageState extends State<AddParcelPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Subtítulo
                   Padding(
                     padding: const EdgeInsets.only(top: 12, bottom: 16),
                     child: Text(
@@ -221,21 +211,12 @@ class _AddParcelPageState extends State<AddParcelPage> {
                     ),
                   ),
 
-                  // Contenedor principal de campos requeridos
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _hintColor.withValues(alpha: 0.3),
-                        width: 0.5,
-                      ),
-                    ),
+                  // ── Campos obligatorios ──────────────────────────────────
+                  _buildCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Campo 1: Nombre de la parcela
+                        // Nombre de la parcela
                         _buildFieldLabel('Nombre de la parcela'),
                         const SizedBox(height: 4),
                         _buildInput(
@@ -245,7 +226,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Campo 2: Superficie
+                        // Superficie
                         _buildFieldLabel('Superficie'),
                         const SizedBox(height: 4),
                         Row(
@@ -262,141 +243,45 @@ class _AddParcelPageState extends State<AddParcelPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               flex: 35,
-                              child: Container(
-                                height: 48,
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: _hintColor.withValues(alpha: 0.3),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedUnit,
-                                    isExpanded: true,
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      color: _textPrimary,
-                                      fontSize: 13,
-                                    ),
-                                    items: ['Hectáreas', 'm²']
-                                        .map((e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(e),
-                                            ))
-                                        .toList(),
-                                    onChanged: (v) {
-                                      if (v != null) setState(() => _selectedUnit = v);
-                                    },
-                                  ),
-                                ),
-                              ),
+                              child: _buildUnitDropdown(),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
 
-                        // Campo 3: Municipio y estado
-                        _buildFieldLabel('Municipio y estado'),
+                        // Región / Comunidad (reemplaza GPS)
+                        _buildFieldLabel('Región / Comunidad'),
                         const SizedBox(height: 4),
                         _buildInput(
-                          controller: _locationController,
+                          controller: _regionController,
                           hint: 'Ej. Tuxtla Gutiérrez, Chiapas',
-                          icon: Icons.map_outlined,
+                          icon: Icons.place_outlined,
                         ),
-                        const SizedBox(height: 6),
-                        GestureDetector(
-                          onTap: _useCurrentLocation,
-                          behavior: HitTestBehavior.opaque,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.my_location_outlined,
-                                    color: Color(0xFF2D6A4F), size: 14),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Usar mi ubicación',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: Color(0xFF2D6A4F),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Escribe tu comunidad o región para mejorar recomendaciones agrícolas.',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            color: _hintColor,
+                            height: 1.3,
                           ),
                         ),
                         const SizedBox(height: 12),
 
-                        // Campo 4: Cultivo principal
+                        // Cultivo principal — grid visual
                         _buildFieldLabel('Cultivo principal'),
-                        const SizedBox(height: 6),
-                        _buildSingleSelector(
-                          items: _crops,
-                          selectedIndex: _selectedCropIndex,
-                          onSelected: (i) => setState(() => _selectedCropIndex = i),
-                        ),
+                        const SizedBox(height: 8),
+                        _buildCropGrid(),
                         const SizedBox(height: 12),
 
-                        // Campo 5: Fecha de siembra
+                        // Fecha de siembra
                         _buildFieldLabel('Fecha de siembra'),
                         const SizedBox(height: 4),
-                        GestureDetector(
-                          onTap: _pickDate,
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: _hintColor.withValues(alpha: 0.3),
-                                  width: 0.5),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today_outlined,
-                                    color: _textSecondary, size: 16),
-                                const SizedBox(width: 10),
-                                Text(
-                                  _selectedDate != null
-                                      ? '${_selectedDate!.day.toString().padLeft(2, '0')} / ${_selectedDate!.month.toString().padLeft(2, '0')} / ${_selectedDate!.year}'
-                                      : 'DD / MM / AAAA',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: _selectedDate != null
-                                        ? _textPrimary
-                                        : _hintColor,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        _buildDatePicker(),
                         if (_selectedDate != null) ...[
                           const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEAF3DE),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'Etapa estimada: ${_estimatePhenologicalStage(_selectedDate!)}',
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 10,
-                                color: Color(0xFF27500A),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                          _buildStagePill(_estimatePhenologicalStage(_selectedDate!)),
                         ],
                       ],
                     ),
@@ -404,47 +289,11 @@ class _AddParcelPageState extends State<AddParcelPage> {
 
                   const SizedBox(height: 12),
 
-                  // ACORDEÓN: INFORMACIÓN ADICIONAL (OPCIONAL)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _hintColor.withValues(alpha: 0.3),
-                        width: 0.5,
-                      ),
-                    ),
+                  // ── Información adicional (acordeón) ────────────────────
+                  _buildCard(
                     child: Column(
                       children: [
-                        GestureDetector(
-                          onTap: () => setState(() =>
-                              _isAdditionalExpanded = !_isAdditionalExpanded),
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Información adicional (opcional)',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF1B2D27),
-                                  ),
-                                ),
-                                Icon(
-                                  _isAdditionalExpanded
-                                      ? Icons.keyboard_arrow_up_outlined
-                                      : Icons.keyboard_arrow_down_outlined,
-                                  color: const Color(0xFF1B2D27),
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        _buildAccordionHeader(),
                         if (_isAdditionalExpanded) ...[
                           const Divider(height: 1, thickness: 0.5),
                           Padding(
@@ -452,58 +301,50 @@ class _AddParcelPageState extends State<AddParcelPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Campo 6: Tipo de terreno
                                 _buildOptionalHeader(
                                   title: 'Tipo de terreno',
-                                  subtitle: 'Ayuda a interpretar el comportamiento del cultivo y las aplicaciones.',
+                                  subtitle: 'Ayuda a interpretar el comportamiento del cultivo.',
                                 ),
                                 const SizedBox(height: 6),
                                 _buildSingleSelector(
                                   items: _terrenoOptions,
                                   selectedIndex: _selectedTerrenoIndex,
-                                  onSelected: (i) => setState(() => _selectedTerrenoIndex = i),
+                                  onSelected: (i) =>
+                                      setState(() => _selectedTerrenoIndex = i),
                                 ),
                                 const SizedBox(height: 16),
 
-                                // Campo 7: Condición del suelo
                                 _buildOptionalHeader(
                                   title: 'Condición del suelo',
-                                  subtitle: 'Selecciona la opción que mejor describa la parcela.',
+                                  subtitle:
+                                      'La IA usará esto para recomendar cultivos compatibles y mejorar el diagnóstico.',
                                 ),
                                 const SizedBox(height: 6),
                                 _buildMultiSelector(
                                   items: _sueloOptions,
                                   selectedIndices: _selectedSueloConditions,
-                                  onTap: (i) {
-                                    setState(() {
-                                      if (_selectedSueloConditions.contains(i)) {
-                                        _selectedSueloConditions.remove(i);
-                                      } else {
-                                        _selectedSueloConditions.add(i);
-                                      }
-                                    });
-                                  },
+                                  onTap: (i) => setState(() {
+                                    _selectedSueloConditions.contains(i)
+                                        ? _selectedSueloConditions.remove(i)
+                                        : _selectedSueloConditions.add(i);
+                                  }),
                                 ),
                                 const SizedBox(height: 16),
 
-                                // Campo 8: Maleza predominante
                                 _buildOptionalHeader(
-                                  title: 'Maleza predominante',
-                                  subtitle: 'Puede ayudar a mejorar recomendaciones futuras.',
+                                  title: 'Malezas predominantes',
+                                  subtitle:
+                                      'Ayuda a mejorar la inferencia agronómica y predicción de plagas.',
                                 ),
                                 const SizedBox(height: 6),
                                 _buildMultiSelector(
                                   items: _malezaOptions,
                                   selectedIndices: _selectedMalezaTypes,
-                                  onTap: (i) {
-                                    setState(() {
-                                      if (_selectedMalezaTypes.contains(i)) {
-                                        _selectedMalezaTypes.remove(i);
-                                      } else {
-                                        _selectedMalezaTypes.add(i);
-                                      }
-                                    });
-                                  },
+                                  onTap: (i) => setState(() {
+                                    _selectedMalezaTypes.contains(i)
+                                        ? _selectedMalezaTypes.remove(i)
+                                        : _selectedMalezaTypes.add(i);
+                                  }),
                                 ),
                               ],
                             ),
@@ -515,7 +356,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
 
                   const SizedBox(height: 12),
 
-                  // INFORMATION HINT
+                  // Hint IA
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -542,7 +383,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
                     ),
                   ),
 
-                  // OFFLINE NOTE
+                  // Offline note
                   if (!_isConnected) ...[
                     const SizedBox(height: 8),
                     Container(
@@ -553,7 +394,8 @@ class _AddParcelPageState extends State<AddParcelPage> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.wifi_off_outlined, color: Color(0xFFADB5BD), size: 16),
+                          Icon(Icons.wifi_off_outlined,
+                              color: Color(0xFFADB5BD), size: 16),
                           SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -570,13 +412,13 @@ class _AddParcelPageState extends State<AddParcelPage> {
                     ),
                   ],
 
-                  const SizedBox(height: 100), // Espacio para el CTA fijo
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
 
-          // CTA FIJO (SMART CTA BEHAVIOR)
+          // ── CTA fijo ──────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -623,6 +465,141 @@ class _AddParcelPageState extends State<AddParcelPage> {
     );
   }
 
+  // ── Builders ────────────────────────────────────────────────────────────────
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _hintColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildAccordionHeader() {
+    return GestureDetector(
+      onTap: () =>
+          setState(() => _isAdditionalExpanded = !_isAdditionalExpanded),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Información adicional (opcional)',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: _textPrimary,
+              ),
+            ),
+            Icon(
+              _isAdditionalExpanded
+                  ? Icons.keyboard_arrow_up_outlined
+                  : Icons.keyboard_arrow_down_outlined,
+              color: _textPrimary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnitDropdown() {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _hintColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedUnit,
+          isExpanded: true,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            color: _textPrimary,
+            fontSize: 13,
+          ),
+          items: ['Hectáreas', 'm²']
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) setState(() => _selectedUnit = v);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return GestureDetector(
+      onTap: _pickDate,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: _hintColor.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined,
+                color: _textSecondary, size: 16),
+            const SizedBox(width: 10),
+            Text(
+              _selectedDate != null
+                  ? '${_selectedDate!.day.toString().padLeft(2, '0')} / '
+                      '${_selectedDate!.month.toString().padLeft(2, '0')} / '
+                      '${_selectedDate!.year}'
+                  : 'DD / MM / AAAA',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                color: _selectedDate != null ? _textPrimary : _hintColor,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStagePill(String stage) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF3DE),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        'Etapa estimada: $stage',
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 10,
+          color: Color(0xFF27500A),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   Widget _buildFieldLabel(String text) {
     return Text(
       text,
@@ -635,7 +612,10 @@ class _AddParcelPageState extends State<AddParcelPage> {
     );
   }
 
-  Widget _buildOptionalHeader({required String title, required String subtitle}) {
+  Widget _buildOptionalHeader({
+    required String title,
+    required String subtitle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -679,14 +659,15 @@ class _AddParcelPageState extends State<AddParcelPage> {
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(
+          hintStyle: const TextStyle(
             fontFamily: 'Inter',
             color: _hintColor,
             fontSize: 13,
           ),
           prefixIcon: Icon(icon, color: _textSecondary, size: 16),
           filled: false,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
@@ -713,6 +694,67 @@ class _AddParcelPageState extends State<AddParcelPage> {
     );
   }
 
+  Widget _buildCropGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.15,
+      ),
+      itemCount: _crops.length,
+      itemBuilder: (context, i) {
+        final isSelected = i == _selectedCropIndex;
+        final crop = _crops[i];
+        return GestureDetector(
+          onTap: () => setState(() => _selectedCropIndex = i),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  crop['emoji']!,
+                  style: const TextStyle(fontSize: 26),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  crop['name']!,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? const Color(0xFF2D6A4F)
+                        : const Color(0xFF888888),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSingleSelector({
     required List<String> items,
     required int selectedIndex,
@@ -730,7 +772,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEAF3DE) : const Color(0xFFF1F1F1),
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF1F1F1),
               borderRadius: BorderRadius.circular(10),
               border: isSelected
                   ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5)
@@ -742,7 +786,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
                 fontFamily: 'Inter',
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF888888),
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : const Color(0xFF888888),
               ),
             ),
           ),
@@ -768,7 +814,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEAF3DE) : const Color(0xFFF1F1F1),
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF1F1F1),
               borderRadius: BorderRadius.circular(10),
               border: isSelected
                   ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5)
@@ -780,7 +828,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
                 fontFamily: 'Inter',
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF888888),
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : const Color(0xFF888888),
               ),
             ),
           ),
@@ -794,10 +844,12 @@ class _AddParcelPageState extends State<AddParcelPage> {
 // Overlay de éxito post-guardado
 // =============================================================================
 class _SuccessOverlay extends StatelessWidget {
+  final String cropName;
   final VoidCallback onDiagnosis;
   final VoidCallback onViewParcels;
 
   const _SuccessOverlay({
+    required this.cropName,
     required this.onDiagnosis,
     required this.onViewParcels,
   });
@@ -838,7 +890,7 @@ class _SuccessOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ahora puedes realizar tu primer diagnóstico cuando lo necesites.',
+                  'Tu cultivo de $cropName ha sido guardado. Puedes realizar tu primer diagnóstico cuando lo necesites.',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
