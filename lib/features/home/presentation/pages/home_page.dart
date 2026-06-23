@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
+import '../../../parcels/domain/entities/parcel_entity.dart';
+import '../../../parcels/presentation/bloc/parcel_bloc.dart';
 import '../../../subscription/presentation/pages/subscription_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,18 +16,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Fondo verde menta palido (si background no es suficientemente claro, usamos un color fijo suave)
       backgroundColor: const Color(0xFFF2F8F4),
       body: SafeArea(
         child: Column(
           children: [
-            // 1. BANNER SUPERIOR DE ESTADO (Offline)
-            _buildOfflineBanner(),
-
-            // 2. ENCABEZADO PRINCIPAL
-            _buildHeader(),
-
-            // CUERPO DESLIZABLE
+            _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -30,20 +28,13 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 2.5 BANNER PREMIUM DISCRETO
                     _buildPremiumBanner(context),
                     const SizedBox(height: 24),
-
-                    // 3. TARJETA ACCION DE CAMARA
                     _buildCameraActionCard(context),
                     const SizedBox(height: 24),
-
-                    // 4. TARJETA DE ALERTA SANITARIA
+                    _buildMyParcelsSection(context),
+                    const SizedBox(height: 24),
                     _buildRegionalAlertCard(),
-                    const SizedBox(height: 16),
-
-                    // 5. TARJETA DE RECORDATORIO
-                    _buildReminderCard(),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -55,92 +46,64 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// 1. Banner superior gris oscuro para estado Offline
-  Widget _buildOfflineBanner() {
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFF4A4A4A), // Gris oscuro / marron
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.wifi_off_rounded,
-            color: Colors.white,
-            size: 14,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Sin conexion \u00B7 2 elementos en cola',
-            style: AppTypography.etiquetaSm.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 2. Encabezado principal simulando el AppBar
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      color: AppColors.forestGreen, // Verde oscuro
-      child: Row(
-        children: [
-          // Izquierda: Saludo
-          Text(
-            'Hola, Wil 👋',
-            style: AppTypography.tituloMd.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Centro: Etiqueta PLAN FREE
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.statusHealthyBg, // Verde claro
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'PLAN FREE',
-              style: AppTypography.etiquetaSm.copyWith(
-                color: AppColors.forestGreen,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+  Widget _buildHeader(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      buildWhen: (prev, curr) => curr is AuthAuthenticated || curr is AuthUnauthenticated,
+      builder: (context, state) {
+        final firstName = state is AuthAuthenticated
+            ? state.user.fullName.split(' ').first
+            : '';
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          color: AppColors.forestGreen,
+          child: Row(
+            children: [
+              Text(
+                firstName.isNotEmpty ? 'Hola, $firstName' : 'Bienvenido',
+                style: AppTypography.tituloMd.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.statusHealthyBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'PLAN FREE',
+                  style: AppTypography.etiquetaSm.copyWith(
+                    color: AppColors.forestGreen,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ],
           ),
-          const Spacer(),
-
-          // Derecha: Icono de campana
-          const Icon(
-            Icons.notifications_none_rounded,
-            color: Colors.white,
-            size: 26,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 2.5 Banner Premium Discreto (Sutil)
-  Widget _buildPremiumBanner(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SubscriptionPage()),
         );
       },
+    );
+  }
+
+  Widget _buildPremiumBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.primaryContainer.withValues(alpha: 0.4), // Verde menta muy suave
+          color: AppColors.primaryContainer.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppColors.primaryContainer.withValues(alpha: 0.8),
@@ -149,11 +112,7 @@ class HomePage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.stars_rounded,
-              color: AppColors.warmAmber,
-              size: 20,
-            ),
+            const Icon(Icons.stars_rounded, color: AppColors.warmAmber, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: RichText(
@@ -163,9 +122,9 @@ class HomePage extends StatelessWidget {
                     height: 1.4,
                   ),
                   children: [
-                    const TextSpan(text: 'Obten diagnosticos ilimitados y alertas avanzadas. '),
+                    const TextSpan(text: 'Obtén diagnósticos ilimitados y alertas avanzadas. '),
                     TextSpan(
-                      text: 'Mejorar a Pro \u2192',
+                      text: 'Mejorar a Pro →',
                       style: AppTypography.etiquetaSm.copyWith(
                         color: AppColors.forestGreen,
                         fontWeight: FontWeight.bold,
@@ -181,25 +140,19 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// 3. Gran banner verde para la accion de camara
   Widget _buildCameraActionCard(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DiagnosisPage()),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DiagnosisPage()),
+      ),
       child: Container(
         height: 180,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.primary.withValues(alpha: 0.8),
-            ],
+            colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -214,21 +167,15 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Boton circular blanco translucido
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 28),
             ),
             const Spacer(),
-            // Titulo principal
             Text(
               'Tomar foto del cultivo',
               style: AppTypography.tituloLg.copyWith(
@@ -237,9 +184,8 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            // Subtitulo tenue
             Text(
-              'Diagnostico en segundos \u00B7 funciona sin senal',
+              'Diagnóstico en segundos · funciona sin señal',
               style: AppTypography.bodyMd.copyWith(
                 color: Colors.white.withValues(alpha: 0.8),
               ),
@@ -250,26 +196,195 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// 4. Tarjeta de alerta sanitaria regional
+  Widget _buildMyParcelsSection(BuildContext context) {
+    return BlocBuilder<ParcelBloc, ParcelState>(
+      builder: (context, state) {
+        final parcels = state is ParcelLoaded ? state.parcels : <ParcelEntity>[];
+        final isLoading = state is ParcelLoading || state is ParcelInitial;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Mis Cultivos Activos',
+                    style: AppTypography.labelMd.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (parcels.isNotEmpty)
+                    Text(
+                      '${parcels.length} ${parcels.length == 1 ? 'parcela' : 'parcelas'}',
+                      style: AppTypography.etiquetaSm.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (isLoading)
+                const SizedBox(
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.forestGreen,
+                      ),
+                    ),
+                  ),
+                )
+              else if (parcels.isEmpty)
+                _buildEmptyParcels()
+              else
+                Column(
+                  children: [
+                    for (final p in parcels.take(3)) ...[
+                      _buildParcelRow(p),
+                      if (p != parcels.take(3).last)
+                        Divider(
+                          height: 1,
+                          thickness: 0.5,
+                          color: AppColors.outlineVariant.withValues(alpha: 0.4),
+                        ),
+                    ],
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyParcels() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF3DE),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.local_florist_outlined, color: Color(0xFF52B788), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Aún no tienes parcelas',
+                  style: AppTypography.bodyMd.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  'Registra tu primer cultivo en la pestaña Mis Parcelas',
+                  style: AppTypography.etiquetaSm.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParcelRow(ParcelEntity p) {
+    final statusColor = _statusColor(p.status);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.name,
+                  style: AppTypography.bodyMd.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '${p.cropName} · ${p.stageName}',
+                  style: AppTypography.etiquetaSm.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              p.status,
+              style: AppTypography.etiquetaSm.copyWith(
+                color: statusColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRegionalAlertCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED), // Crema/Naranja muy claro
+        color: const Color(0xFFFFF7ED),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.burntOrange.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado de la alerta
           Row(
             children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: AppColors.burntOrange,
-                size: 20,
-              ),
+              const Icon(Icons.warning_amber_rounded, color: AppColors.burntOrange, size: 20),
               const SizedBox(width: 8),
               Text(
                 'ALERTA REGIONAL',
@@ -282,100 +397,31 @@ class HomePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Titulo principal
           Text(
-            'Tizon tardio',
+            'Tizón tardío',
             style: AppTypography.tituloLg.copyWith(
               color: AppColors.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
-          // Subtitulo descriptivo
           Text(
-            '3 km \u00B7 4 casos confirmados en tu zona',
-            style: AppTypography.bodyMd.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
+            '3 km · 4 casos confirmados en tu zona',
+            style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
       ),
     );
   }
 
-  /// 5. Tarjeta de recordatorio (Segunda aplicacion)
-  Widget _buildReminderCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5), width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Fila superior: Icono, titulo y etiqueta
-          Row(
-            children: [
-              const Icon(
-                Icons.access_time_rounded,
-                color: AppColors.onSurfaceVariant,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'SEGUNDA APLICACION',
-                  style: AppTypography.labelMd.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh, // Gris claro
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'MANANA',
-                  style: AppTypography.etiquetaSm.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Titulo principal
-          Text(
-            'Gusano cogollero',
-            style: AppTypography.tituloMd.copyWith(
-              color: AppColors.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Subtitulo
-          Text(
-            'Lote Norte \u00B7 Revisar efectividad',
-            style: AppTypography.bodyMd.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Alerta':
+        return AppColors.burntOrange;
+      case 'Seguimiento':
+        return AppColors.warmAmber;
+      default:
+        return AppColors.forestGreen;
+    }
   }
 }

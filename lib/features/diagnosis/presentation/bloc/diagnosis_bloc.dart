@@ -10,8 +10,8 @@ import '../../domain/entities/diagnosis_entity.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- DiagnosisBloc
-// Inferencia CNN real vía TFLite (EfficientNet-B4, 50 clases, 96.69% accuracy).
-// Sin mocks, sin delays artificiales, sin datos hardcodeados.
+// Inferencia CNN real vía TFLite (EfficientNet-B4).
+// El modelo detecta cultivo y enfermedad directamente del rawLabel.
 // =============================================================================
 
 // -- Events ------------------------------------------------------------------
@@ -34,20 +34,7 @@ final class DiagnosisPhotoCaptured extends DiagnosisEvent {
 }
 
 final class DiagnosisProcessRequested extends DiagnosisEvent {
-  final String cropName;
-  final String? parcelName;
-  final String description;
-  final List<String> symptoms;
-
-  const DiagnosisProcessRequested({
-    required this.cropName,
-    this.parcelName,
-    required this.description,
-    required this.symptoms,
-  });
-
-  @override
-  List<Object?> get props => [cropName, parcelName, description, symptoms];
+  const DiagnosisProcessRequested();
 }
 
 final class DiagnosisHistoryRequested extends DiagnosisEvent {
@@ -85,12 +72,10 @@ final class DiagnosisCaptured extends DiagnosisState {
 }
 
 final class DiagnosisProcessing extends DiagnosisState {
-  final String cropName;
-  final String? parcelName;
   final String imagePath;
-  const DiagnosisProcessing(this.cropName, this.parcelName, this.imagePath);
+  const DiagnosisProcessing(this.imagePath);
   @override
-  List<Object?> get props => [cropName, parcelName, imagePath];
+  List<Object?> get props => [imagePath];
 }
 
 final class DiagnosisResult extends DiagnosisState {
@@ -152,31 +137,20 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     final current = state;
     if (current is! DiagnosisCaptured) return;
 
-    emit(DiagnosisProcessing(event.cropName, event.parcelName, current.imagePath));
+    emit(DiagnosisProcessing(current.imagePath));
 
     try {
-      // Inferencia CNN real: preprocessing (isolate) + TFLite (hilo principal)
       final cnn = await CnnEngine.analyze(current.imagePath);
 
       final entity = DiagnosisEntity(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         diseaseName: cnn.diseaseName,
-        scientificName: cnn.scientificName,
-        // El CNN detecta el cultivo directamente; el campo cropName del evento
-        // se usa solo si el usuario lo especificó explícitamente.
-        cropName: event.cropName.isNotEmpty ? event.cropName : cnn.cropName,
-        parcelName: event.parcelName,
-        severity: cnn.severity,
+        cropName: cnn.cropName,
         confidence: cnn.confidence,
-        description: event.description,
-        symptoms: event.symptoms.isNotEmpty ? event.symptoms : const [],
-        recommendationsWhatIs: cnn.whatIs,
-        recommendationsWhatToDo: cnn.whatToDo,
-        recommendationsNoAction: cnn.ifNoAction,
         imagePath: current.imagePath,
         diagnosedAt: DateTime.now(),
         isPendingSync: true,
-        statusLabel: _statusForSeverity(cnn.severity),
+        statusLabel: _statusForDisease(cnn.diseaseName),
         topK: cnn.topK,
       );
 
@@ -210,15 +184,16 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     switch (event.filter) {
       case 'Con alerta':
         filtered = current.allItems
-            .where((e) => e.severity == 'Critica' || e.severity == 'Moderada')
+            .where((e) => e.statusLabel != 'Saludable')
             .toList();
       case 'En tratamiento':
         filtered = current.allItems
             .where((e) => e.statusLabel == 'En tratamiento')
             .toList();
       case 'Saludable':
-        filtered =
-            current.allItems.where((e) => e.severity == 'Saludable').toList();
+        filtered = current.allItems
+            .where((e) => e.statusLabel == 'Saludable')
+            .toList();
     }
 
     emit(DiagnosisHistoryLoaded(
@@ -234,18 +209,10 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
 
   // -- Helpers ---------------------------------------------------------------
 
-  String _statusForSeverity(String severity) {
-    switch (severity) {
-      case 'Critica':
-      case 'Moderada':
-        return 'En tratamiento';
-      case 'Leve':
-        return 'Seguimiento';
-      case 'Saludable':
-        return 'Saludable';
-      default:
-        return 'Seguimiento';
-    }
+  /// Deriva el statusLabel directamente del nombre de enfermedad detectado.
+  String _statusForDisease(String diseaseName) {
+    if (diseaseName.toLowerCase().contains('saludable')) return 'Saludable';
+    return 'Seguimiento';
   }
 
   Future<void> _persistDiagnosis(DiagnosisEntity entity) async {
@@ -253,16 +220,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
       final encoded = jsonEncode({
         'id': entity.id,
         'diseaseName': entity.diseaseName,
-        'scientificName': entity.scientificName,
         'cropName': entity.cropName,
-        'parcelName': entity.parcelName,
-        'severity': entity.severity,
         'confidence': entity.confidence,
-        'description': entity.description,
-        'symptoms': entity.symptoms,
-        'recommendationsWhatIs': entity.recommendationsWhatIs,
-        'recommendationsWhatToDo': entity.recommendationsWhatToDo,
-        'recommendationsNoAction': entity.recommendationsNoAction,
         'imagePath': entity.imagePath,
         'diagnosedAt': entity.diagnosedAt.toIso8601String(),
         'isPendingSync': entity.isPendingSync,
@@ -292,18 +251,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     return DiagnosisEntity(
       id: m['id'] as String? ?? '',
       diseaseName: m['diseaseName'] as String? ?? '',
-      scientificName: m['scientificName'] as String? ?? '',
       cropName: m['cropName'] as String? ?? '',
-      parcelName: m['parcelName'] as String?,
-      severity: m['severity'] as String? ?? 'Leve',
       confidence: (m['confidence'] as num?)?.toDouble() ?? 0.0,
-      description: m['description'] as String? ?? '',
-      symptoms: (m['symptoms'] as List?)?.cast<String>() ?? [],
-      recommendationsWhatIs:
-          (m['recommendationsWhatIs'] as List?)?.cast<String>() ?? [],
-      recommendationsWhatToDo:
-          (m['recommendationsWhatToDo'] as List?)?.cast<String>() ?? [],
-      recommendationsNoAction: m['recommendationsNoAction'] as String? ?? '',
       imagePath: m['imagePath'] as String?,
       diagnosedAt:
           DateTime.tryParse(m['diagnosedAt'] as String? ?? '') ?? DateTime.now(),

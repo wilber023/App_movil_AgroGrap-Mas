@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../domain/entities/parcel_entity.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- Detalle de Parcela
-// =============================================================================
-// Vista completa con hero card, acciones rapidas, alerta activa, tratamiento
-// activo y datos registrados. Sin sombras, 0.5px bordes, offline-first.
 // =============================================================================
 
 const Color _bg = Color(0xFFF8FAF5);
@@ -21,12 +19,11 @@ const Color _chipAlertText = Color(0xFFA32D2D);
 const Color _chipBlueBg = Color(0xFFE6F1FB);
 const Color _chipBlueText = Color(0xFF0C447C);
 const Color _trackGrey = Color(0xFFE2EBE6);
-const Color _alertBorder = Color(0xFFF09595);
 
 class ParcelDetailPage extends StatelessWidget {
-  final String parcelName;
+  final ParcelEntity parcel;
 
-  const ParcelDetailPage({super.key, required this.parcelName});
+  const ParcelDetailPage({super.key, required this.parcel});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +38,7 @@ class ParcelDetailPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          parcelName,
+          parcel.name,
           style: AppTypography.labelMd.copyWith(
             color: Colors.white,
             fontSize: 15,
@@ -66,10 +63,6 @@ class ParcelDetailPage extends StatelessWidget {
             const SizedBox(height: 8),
             _buildQuickActions(),
             const SizedBox(height: 8),
-            _buildActiveAlert(),
-            const SizedBox(height: 8),
-            _buildTreatmentCard(),
-            const SizedBox(height: 8),
             _buildParcelDataCard(),
             const SizedBox(height: 32),
           ],
@@ -79,9 +72,13 @@ class ParcelDetailPage extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Hero Card
+  // Hero Card con datos reales
   // ---------------------------------------------------------------------------
+
   Widget _buildHeroCard() {
+    final statusBg = _statusBg(parcel.status);
+    final statusText = _statusText(parcel.status);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -92,7 +89,6 @@ class ParcelDetailPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Fila 1: Nombre + chips + status
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -101,7 +97,7 @@ class ParcelDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Milpa Norte',
+                      parcel.name,
                       style: AppTypography.labelMd.copyWith(
                         color: _textPrimary,
                         fontSize: 17,
@@ -113,38 +109,38 @@ class ParcelDetailPage extends StatelessWidget {
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        _pill('Maiz', _chipGreenBg, _chipGreenText),
-                        _pill('2.5 ha', _hintColor.withValues(alpha: 0.15), _textSecondary),
-                        _pill('Floracion', _chipBlueBg, _chipBlueText),
+                        _pill(parcel.cropName, _chipGreenBg, _chipGreenText),
+                        _pill(
+                          '${parcel.areaSize.toStringAsFixed(1)} ${parcel.areaUnit}',
+                          _hintColor.withValues(alpha: 0.15),
+                          _textSecondary,
+                        ),
+                        _pill(parcel.stageName, _chipBlueBg, _chipBlueText),
                       ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Tuxtla Gutierrez, Chiapas',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        color: _textSecondary,
+                    if (parcel.region.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        parcel.region,
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: _textSecondary),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-              _pill('Alerta', _chipAlertBg, _chipAlertText),
+              if (parcel.status != 'Sin diagnostico')
+                _pill(parcel.status, statusBg, statusText),
             ],
           ),
           const SizedBox(height: 12),
-          // Barra fenologica
-          _buildDetailPhenologicalBar(),
+          _buildPhenologicalBar(),
         ],
       ),
     );
   }
 
-  Widget _buildDetailPhenologicalBar() {
+  Widget _buildPhenologicalBar() {
     const stages = ['Siembra', 'Vegetativo', 'Floracion', 'Cosecha'];
-    const currentStageIndex = 2; // Floracion
-    const progress = 0.60;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,24 +149,22 @@ class ParcelDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Ciclo \u00B7 Siembra: 15 mar 2026',
-              style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: _textSecondary),
-            ),
-            Text(
-              'Cosecha estimada: 15 ago 2026',
-              style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: _hintColor),
+              parcel.fechaSiembra != null
+                  ? 'Ciclo · Siembra: ${_formatDate(parcel.fechaSiembra!)}'
+                  : 'Ciclo fenológico',
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: _textSecondary),
             ),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: const SizedBox(
+          child: SizedBox(
             height: 8,
             child: LinearProgressIndicator(
-              value: progress,
+              value: parcel.stageProgress,
               backgroundColor: _trackGrey,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
             ),
           ),
         ),
@@ -178,8 +172,8 @@ class ParcelDetailPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(stages.length, (i) {
-            final isCurrent = i == currentStageIndex;
-            final reached = i <= currentStageIndex;
+            final isCurrent = i == parcel.stageIndex;
+            final reached = i <= parcel.stageIndex;
             return Column(
               children: [
                 Container(
@@ -192,7 +186,7 @@ class ParcelDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isCurrent ? '${stages[i]}\u25CF' : stages[i],
+                  isCurrent ? '${stages[i]}●' : stages[i],
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 8,
@@ -209,8 +203,9 @@ class ParcelDetailPage extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Acciones rapidas
+  // Acciones rápidas
   // ---------------------------------------------------------------------------
+
   Widget _buildQuickActions() {
     return Row(
       children: [
@@ -235,14 +230,7 @@ class ParcelDetailPage extends StatelessWidget {
           children: [
             Icon(icon, color: iconColor, size: 20),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10,
-                color: _textPrimary,
-              ),
-            ),
+            Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: _textPrimary)),
           ],
         ),
       ),
@@ -250,132 +238,9 @@ class ParcelDetailPage extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Alerta activa
+  // Datos registrados reales
   // ---------------------------------------------------------------------------
-  Widget _buildActiveAlert() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _chipAlertBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _alertBorder, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.burntOrange, size: 16),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Tizón tardío \u00B7 91% confianza',
-                  style: AppTypography.labelMd.copyWith(
-                    color: _chipAlertText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              _pill('Urgente', AppColors.burntOrange, Colors.white),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Intervención recomendada en las próximas 24 horas.',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 11,
-              color: _chipAlertText,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 36,
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.burntOrange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Ver diagnóstico',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 11),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ---------------------------------------------------------------------------
-  // Tratamiento activo
-  // ---------------------------------------------------------------------------
-  Widget _buildTreatmentCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tratamiento activo',
-                style: AppTypography.etiquetaSm.copyWith(
-                  color: _textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              _pill('Paso 1 de 3', AppColors.warmAmber.withValues(alpha: 0.2), AppColors.warmAmber),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: const SizedBox(
-              height: 6,
-              child: LinearProgressIndicator(
-                value: 0.33,
-                backgroundColor: _trackGrey,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined, color: AppColors.warmAmber, size: 12),
-              const SizedBox(width: 6),
-              Text(
-                'Próximo: Segunda aplicación \u00B7 10 jun',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: _textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Datos registrados
-  // ---------------------------------------------------------------------------
   Widget _buildParcelDataCard() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -392,24 +257,27 @@ class ParcelDetailPage extends StatelessWidget {
             children: [
               Text(
                 'Datos registrados',
-                style: AppTypography.etiquetaSm.copyWith(
-                  color: _textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTypography.etiquetaSm.copyWith(color: _textPrimary, fontWeight: FontWeight.w500),
               ),
               const Icon(Icons.edit_outlined, color: _textSecondary, size: 14),
             ],
           ),
           const SizedBox(height: 8),
-          _dataRow('Tipo de terreno', 'Pendiente ligera', null),
+          _dataRow('Cultivo', parcel.cropName),
           _divider(),
-          _dataRow('Condición del suelo', 'Buen drenaje', null),
+          _dataRow('Superficie', '${parcel.areaSize.toStringAsFixed(1)} ${parcel.areaUnit}'),
+          if (parcel.region.isNotEmpty) ...[
+            _divider(),
+            _dataRow('Región', parcel.region),
+          ],
+          if (parcel.fechaSiembra != null) ...[
+            _divider(),
+            _dataRow('Fecha de siembra', _formatDate(parcel.fechaSiembra!)),
+          ],
           _divider(),
-          _dataRow('Maleza predominante', 'Pastos', null),
+          _dataRow('Etapa actual', parcel.stageName),
           _divider(),
-          _dataRow('Siembra', '15 mar 2026', null),
-          _divider(),
-          _dataRow('Etapa actual', 'Floración', null),
+          _dataRow('Estado de salud', parcel.status),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(8),
@@ -424,11 +292,7 @@ class ParcelDetailPage extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Estos datos ayudan a contextualizar diagnósticos y futuras recomendaciones.',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10,
-                      color: Color(0xFFADB5BD),
-                    ),
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: Color(0xFFADB5BD)),
                   ),
                 ),
               ],
@@ -439,56 +303,60 @@ class ParcelDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _dataRow(String label, String value, Color? valueColor) {
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  Widget _dataRow(String label, String value) {
     return SizedBox(
       height: 34,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: _textSecondary),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 11,
-              color: valueColor ?? _textPrimary,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: _textSecondary)),
+          Text(value, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: _textPrimary)),
         ],
       ),
     );
   }
 
-  Widget _divider() {
-    return Divider(
-      height: 1,
-      thickness: 0.5,
-      color: _hintColor.withValues(alpha: 0.2),
-    );
-  }
+  Widget _divider() => Divider(height: 1, thickness: 0.5, color: _hintColor.withValues(alpha: 0.2));
 
-  // ---------------------------------------------------------------------------
-  // Pill reutilizable
-  // ---------------------------------------------------------------------------
   Widget _pill(String label, Color bg, Color text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(10),
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: text,
-        ),
+        style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w500, color: text),
       ),
     );
+  }
+
+  Color _statusBg(String status) {
+    switch (status) {
+      case 'Alerta':
+        return _chipAlertBg;
+      case 'Seguimiento':
+        return const Color(0xFFFFF3E0);
+      default:
+        return _chipGreenBg;
+    }
+  }
+
+  Color _statusText(String status) {
+    switch (status) {
+      case 'Alerta':
+        return _chipAlertText;
+      case 'Seguimiento':
+        return const Color(0xFF7B4A10);
+      default:
+        return _chipGreenText;
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }

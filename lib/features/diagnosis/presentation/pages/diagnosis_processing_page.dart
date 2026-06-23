@@ -85,12 +85,8 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
         }
       },
       builder: (context, state) {
-        String displayCrop = '';
         String? capturedImagePath;
         if (state is DiagnosisProcessing) {
-          displayCrop = state.parcelName != null
-              ? '${state.cropName} \u00B7 ${state.parcelName}'
-              : state.cropName;
           capturedImagePath = state.imagePath;
         }
 
@@ -158,36 +154,6 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                             textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Crop context
-                        if (displayCrop.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.eco_outlined,
-                                  size: 14,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  displayCrop,
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 11,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                       ],
                     ),
                   ),

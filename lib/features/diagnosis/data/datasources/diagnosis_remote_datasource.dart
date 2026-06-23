@@ -43,13 +43,10 @@ class DiagnosisRemoteDataSourceImpl implements DiagnosisRemoteDataSource {
     return DiagnosisEntity(
       id: json['id'] ?? '',
       diseaseName: json['diseaseName'] ?? 'Desconocida',
-      scientificName: json['scientificName'] ?? '',
       cropName: json['cropName'] ?? '',
-      severity: json['severity'] ?? 'Leve',
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
-      description: json['description'] ?? '',
       diagnosedAt: json['diagnosedAt'] != null ? DateTime.parse(json['diagnosedAt']) : DateTime.now(),
-      statusLabel: json['statusLabel'] ?? 'Pendiente',
+      statusLabel: json['statusLabel'] ?? 'Seguimiento',
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/injection_container.dart';
@@ -38,7 +40,7 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHealthy = diagnosis.severity.toLowerCase() == 'saludable';
+    final isHealthy = diagnosis.statusLabel == 'Saludable';
 
     return BlocListener<DiagnosisResultAprendizCubit, DiagnosisResultAprendizState>(
       listener: (context, state) {
@@ -95,13 +97,13 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
                       // Analyzed image
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: diagnosis.imagePath != null
-                            ? Image.asset(
-                                diagnosis.imagePath!,
+                        child: diagnosis.imagePath != null &&
+                                File(diagnosis.imagePath!).existsSync()
+                            ? Image.file(
+                                File(diagnosis.imagePath!),
                                 height: 200,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _ImagePlaceholder(),
                               )
                             : _ImagePlaceholder(),
                       ),
@@ -141,9 +143,9 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text(
-                                    'Maíz (Zea mays)',
-                                    style: TextStyle(
+                                  Text(
+                                    diagnosis.cropName,
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.aOnSurface,
@@ -282,13 +284,13 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
                                         height: 1.2,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      diagnosis.description,
+                                      'Cultivo: ${diagnosis.cropName}',
                                       style: const TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 13,
                                         color: AppColors.aOnSurfaceVariant,
-                                        height: 1.5,
+                                        height: 1.4,
                                       ),
                                     ),
                                   ],
@@ -300,71 +302,58 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        // What to do section
-                        if (diagnosis.recommendationsWhatToDo.isNotEmpty) ...[
-                          const Text(
-                            '¿QUÉ HACER AHORA?',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.aOnSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.05,
-                            ),
+                        // Confianza del modelo
+                        const Text(
+                          '¿QUÉ HACER AHORA?',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.aOnSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.05,
                           ),
-                          const SizedBox(height: 10),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.aSurfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.aOutlineVariant),
-                            ),
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              children: diagnosis.recommendationsWhatToDo
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (e) => Padding(
-                                      padding: EdgeInsets.only(bottom: e.key < diagnosis.recommendationsWhatToDo.length - 1 ? 10 : 0),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            width: 20, height: 20,
-                                            margin: const EdgeInsets.only(top: 1),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.aSecondaryContainer,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                '${e.key + 1}',
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppColors.aSecondary,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              e.value,
-                                              style: const TextStyle(fontSize: 14, color: AppColors.aOnSurface, height: 1.4),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.aSurfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.aOutlineVariant),
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 20, height: 20,
+                                margin: const EdgeInsets.only(top: 1),
+                                decoration: BoxDecoration(
+                                  color: AppColors.aSecondaryContainer,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    '1',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.aSecondary,
                                     ),
-                                  )
-                                  .toList(),
-                            ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  'Revisa la hoja o fruto afectado y compara con las guías de tu instructor.',
+                                  style: TextStyle(fontSize: 14, color: AppColors.aOnSurface, height: 1.4),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                        ],
+                        ),
+                        const SizedBox(height: 16),
 
-                        // Risk if no action
+                        // Aviso de riesgo genérico
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.aWarningBg,
@@ -372,15 +361,15 @@ class _DiagnosisResultAprendizView extends StatelessWidget {
                             border: Border.all(color: AppColors.aWarningBorder),
                           ),
                           padding: const EdgeInsets.all(14),
-                          child: Row(
+                          child: const Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.error_outline, color: AppColors.aOrange, size: 20),
-                              const SizedBox(width: 10),
+                              Icon(Icons.error_outline, color: AppColors.aOrange, size: 20),
+                              SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  diagnosis.recommendationsNoAction,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.aWarningText, height: 1.5),
+                                  'Sin atención oportuna, la enfermedad puede propagarse al resto del cultivo.',
+                                  style: TextStyle(fontSize: 13, color: AppColors.aWarningText, height: 1.5),
                                 ),
                               ),
                             ],

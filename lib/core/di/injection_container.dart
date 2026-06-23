@@ -10,6 +10,16 @@ import '../network/interceptors/error_interceptor.dart';
 import '../network/interceptors/logging_interceptor.dart';
 import '../storage/token_storage.dart';
 
+// -- Parcelas/Cultivos --
+import '../../features/parcels/data/datasources/cultivos_remote_datasource.dart';
+import '../../features/parcels/data/repositories/parcel_repository_impl.dart';
+import '../../features/parcels/domain/repositories/parcel_repository.dart';
+import '../../features/parcels/domain/usecases/get_parcels_usecase.dart';
+import '../../features/parcels/domain/usecases/add_parcel_usecase.dart';
+import '../../features/parcels/domain/usecases/delete_parcel_usecase.dart';
+import '../../features/parcels/domain/usecases/get_cultivo_catalog_usecase.dart';
+import '../../features/parcels/presentation/bloc/parcel_bloc.dart';
+
 // -- Auth --
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -113,6 +123,9 @@ Future<void> _initCore() async {
 
   final diagnosisBox = await Hive.openBox<String>('diagnosis_history');
   sl.registerLazySingleton<Box<String>>(() => diagnosisBox, instanceName: 'diagnosisBox');
+
+  final seleccionesBox = await Hive.openBox<String>('selecciones_box');
+  sl.registerLazySingleton<Box<String>>(() => seleccionesBox, instanceName: 'seleccionesBox');
 
   // -- Token Storage: acceso rápido a access/refresh token para el interceptor --
   sl.registerLazySingleton<TokenStorage>(
@@ -319,37 +332,73 @@ void _initTreatmentFeature() {
 }
 
 // =============================================================================
-// FEATURE: PARCELS (Mis Parcelas)
-// Stitch screen: 55e30d29...
+// FEATURE: PARCELS/CULTIVOS (Mis Parcelas)
+// Microservicio: http://3.217.217.227:8001/api/v1
+// Mismo JWT del microservicio de Usuarios (clave compartida JWT_SECRET_KEY).
 // =============================================================================
 
 void _initParcelsFeature() {
-  // -- DataSources --
-  // sl.registerLazySingleton<ParcelsRemoteDataSource>(
-  //   () => ParcelsRemoteDataSourceImpl(client: sl()),
-  // );
-  // sl.registerLazySingleton<ParcelsLocalDataSource>(
-  //   () => ParcelsLocalDataSourceImpl(storage: sl()),
-  // );
+  // -- Dio dedicado al microservicio de cultivos (baseUrl distinto) --
+  // Comparte los mismos interceptores que el Dio principal para que el
+  // AuthInterceptor inyecte el Bearer token en cada request.
+  sl.registerLazySingleton<Dio>(
+    () {
+      final cultivosDio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.cultivosBaseUrl,
+          connectTimeout: const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+          receiveTimeout: const Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+
+      // Reutiliza el refreshDio de usuarios para el flujo 401 → refresh → retry.
+      final refreshDio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          connectTimeout: const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+          receiveTimeout: const Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+
+      cultivosDio.interceptors.addAll([
+        ErrorInterceptor(),
+        AuthInterceptor(tokenStorage: sl<TokenStorage>(), refreshDio: refreshDio),
+        LoggingInterceptor(),
+      ]);
+
+      return cultivosDio;
+    },
+    instanceName: 'cultivosDio',
+  );
+
+  // -- DataSource --
+  sl.registerLazySingleton<CultivosRemoteDataSource>(
+    () => CultivosRemoteDataSourceImpl(
+      client: sl<Dio>(instanceName: 'cultivosDio'),
+      tokenStorage: sl<TokenStorage>(),
+      seleccionesBox: sl<Box<String>>(instanceName: 'seleccionesBox'),
+    ),
+  );
 
   // -- Repository --
-  // sl.registerLazySingleton<ParcelsRepository>(
-  //   () => ParcelsRepositoryImpl(
-  //     remoteDataSource: sl(),
-  //     localDataSource: sl(),
-  //     networkInfo: sl(),
-  //   ),
-  // );
+  sl.registerLazySingleton<ParcelRepository>(
+    () => ParcelRepositoryImpl(remoteDataSource: sl()),
+  );
 
   // -- UseCases --
-  // sl.registerLazySingleton(() => GetParcelsUseCase(sl()));
-  // sl.registerLazySingleton(() => GetParcelHealthUseCase(sl()));
+  sl.registerLazySingleton(() => GetParcelsUseCase(sl()));
+  sl.registerLazySingleton(() => AddParcelUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteParcelUseCase(sl()));
+  sl.registerLazySingleton(() => GetCultivoCatalogUseCase(sl()));
 
-  // -- Bloc --
-  // sl.registerFactory(() => ParcelsBloc(
-  //   getParcelsUseCase: sl(),
-  //   getParcelHealthUseCase: sl(),
-  // ));
+  // -- Bloc (Factory: una instancia compartida via root MultiBlocProvider) --
+  sl.registerFactory(() => ParcelBloc(
+        getParcelsUseCase: sl(),
+        addParcelUseCase: sl(),
+        deleteParcelUseCase: sl(),
+      ));
 }
 
 // =============================================================================

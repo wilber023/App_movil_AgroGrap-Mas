@@ -19,13 +19,6 @@ const Color _trackGrey = Color(0xFFE2EBE6);
 
 const Color _chipGreenBg = Color(0xFFEAF3DE);
 const Color _chipGreenText = Color(0xFF27500A);
-const Color _chipBlueBg = Color(0xFFE6F1FB);
-const Color _chipBlueText = Color(0xFF0C447C);
-
-const Color _badgeAlertBg = Color(0xFFFDECEA);
-const Color _badgeAlertText = Color(0xFFA32D2D);
-const Color _badgeWarnBg = Color(0xFFFFF3E0);
-const Color _badgeWarnText = Color(0xFF7B4A10);
 
 class DiagnosisResultPage extends StatelessWidget {
   final DiagnosisEntity diagnosis;
@@ -81,47 +74,20 @@ class DiagnosisResultPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            diagnosis.diseaseName,
+            style: AppTypography.tituloMd.copyWith(
+              color: _textPrimary,
+              fontWeight: FontWeight.w500,
+              fontSize: 24,
+            ),
+          ),
+          const SizedBox(height: 6),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      diagnosis.diseaseName,
-                      style: AppTypography.tituloMd.copyWith(
-                        color: _textPrimary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      diagnosis.scientificName,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        color: _textSecondary,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        _pill(diagnosis.cropName, _chipGreenBg, _chipGreenText),
-                        if (diagnosis.parcelName != null) ...[
-                          const SizedBox(width: 6),
-                          _pill(
-                              diagnosis.parcelName!, _chipBlueBg, _chipBlueText),
-                        ]
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              _buildSeverityBadge(diagnosis.severity),
+              _pill(diagnosis.cropName, _chipGreenBg, _chipGreenText),
+              const SizedBox(width: 6),
+              _pill(diagnosis.diseaseName, _chipGreenBg, _chipGreenText),
             ],
           ),
           const SizedBox(height: 10),
@@ -214,34 +180,6 @@ class DiagnosisResultPage extends StatelessWidget {
           fontFamily: 'Inter',
           fontSize: 10,
           color: textCol,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeverityBadge(String severity) {
-    Color bg = _badgeAlertBg;
-    Color tc = _badgeAlertText;
-    if (severity == 'Moderada') {
-      bg = _badgeWarnBg;
-      tc = _badgeWarnText;
-    } else if (severity == 'Leve' || severity == 'Saludable') {
-      bg = _chipGreenBg;
-      tc = _chipGreenText;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Text(
-        severity,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: tc,
         ),
       ),
     );

@@ -17,8 +17,6 @@ const Color _textSecondary = Color(0xFF6B8F71);
 const Color _hintColor = Color(0xFFADB5BD);
 const Color _chipGreenBg = Color(0xFFEAF3DE);
 const Color _chipGreenText = Color(0xFF27500A);
-const Color _chipBlueBg = Color(0xFFE6F1FB);
-const Color _chipBlueText = Color(0xFF0C447C);
 const Color _chipWarnBg = Color(0xFFFFF3E0);
 const Color _chipWarnText = Color(0xFF7B4A10);
 const Color _trackGrey = Color(0xFFE2EBE6);
@@ -387,10 +385,6 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
 // Shared: Diagnosis card (used by both sheet and full screen)
 // =============================================================================
 Widget _buildCard(BuildContext context, DiagnosisEntity e) {
-  Color severityDot = AppColors.forestGreen;
-  if (e.severity == 'Critica') severityDot = AppColors.burntOrange;
-  if (e.severity == 'Moderada') severityDot = AppColors.warmAmber;
-
   Color statusBg = _chipGreenBg;
   Color statusText = _chipGreenText;
   if (e.statusLabel == 'En tratamiento' || e.statusLabel == 'Seguimiento') {
@@ -450,22 +444,18 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(
-                        color: severityDot,
+                      decoration: const BoxDecoration(
+                        color: AppColors.forestGreen,
                         shape: BoxShape.circle,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
-                // Row 2: crop + parcel chips
+                // Row 2: crop chip
                 Row(
                   children: [
                     _buildPill(e.cropName, _chipGreenBg, _chipGreenText),
-                    if (e.parcelName != null) ...[
-                      const SizedBox(width: 6),
-                      _buildPill(e.parcelName!, _chipBlueBg, _chipBlueText),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 6),

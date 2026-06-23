@@ -53,15 +53,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   bool _isReinitializing = false;  // Previene reinits simultáneos
   int _flashState = 0; // 0=off 1=on 2=auto
 
-  // ── Selección de cultivo (contexto opcional, CNN detecta automáticamente) ──
-  int _selectedCropIndex = 0;
-
-  static const List<String> _cropLabels = [
-    'Calabaza', 'Frijol', 'Manzana', 'Mora', 'Cereza',
-    'Maíz', 'Durazno', 'Uva', 'Naranja', 'Pimienta',
-    'Papa', 'Frambuesa', 'Soja', 'Fresa', 'Tomate',
-  ];
-
   // ── Animaciones ────────────────────────────────────────────────────────────
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -247,11 +238,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   }
 
   void _processWithAI() {
-    context.read<DiagnosisBloc>().add(DiagnosisProcessRequested(
-          cropName: _cropLabels[_selectedCropIndex],
-          description: '',
-          symptoms: const [],
-        ));
+    context.read<DiagnosisBloc>().add(const DiagnosisProcessRequested());
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const DiagnosisProcessingPage()),
@@ -365,7 +352,19 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               ),
             ),
             const SizedBox(width: 4),
-            Expanded(child: _buildCropSelector()),
+            Expanded(
+              child: Center(
+                child: Text(
+                  'Diagnóstico CNN',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(width: 4),
             GestureDetector(
               onTap: _toggleFlash,
@@ -391,44 +390,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCropSelector() {
-    return SizedBox(
-      height: 32,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _cropLabels.length,
-        itemBuilder: (context, i) {
-          final isSelected = i == _selectedCropIndex;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCropIndex = i),
-            child: Container(
-              margin: const EdgeInsets.only(right: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.forestGreen
-                    : Colors.black.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _cropLabels[i],
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.65),
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

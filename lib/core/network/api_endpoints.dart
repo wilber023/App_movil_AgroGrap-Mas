@@ -9,9 +9,11 @@ abstract final class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL del microservicio de usuarios (incluye prefijo /api/v1).
-  // Dev: http://localhost:8000/api/v1
-  // Prod: http://174.129.218.190/api/v1
   static const String baseUrl = 'http://174.129.218.190/api/v1';
+
+  // Base URL del microservicio de cultivos (Nginx en puerto 80, sin puerto explícito).
+  static const String cultivosBaseUrl = 'http://3.217.217.227/api/v1';
+
   static const int defaultTimeoutMs = 30000;
   static const int connectTimeoutMs = 15000;
 
@@ -32,6 +34,10 @@ abstract final class ApiEndpoints {
 
   // -- PARCELS (Mis Parcelas) --
   static const ParcelsEndpoints parcels = ParcelsEndpoints._();
+
+  // -- CULTIVOS microservicio (catálogo + selecciones) --
+  static const CultivosApiEndpoints cultivosCatalog = CultivosApiEndpoints._();
+  static const SeleccionesApiEndpoints selecciones = SeleccionesApiEndpoints._();
 
   // -- ECONOMICS (Analisis Economico) --
   static const EconomicsEndpoints economics = EconomicsEndpoints._();
@@ -136,13 +142,36 @@ class SyncEndpoints {
 
 class AprendizEndpoints {
   const AprendizEndpoints._();
-  
+
   // TODO: Agregar y documentar en el README de usuarios/API del backend
   String get cropPlan => '/aprendiz/crop-plan';
   String get cropHealth => '/aprendiz/crop-health';
   String activityStatus(String activityId) => '/aprendiz/crop-plan/activities/$activityId';
-  
+
   // TODO: Documentar en backend el endpoint de historial (Pieza 2)
   String get history => '/aprendiz/history';
+}
+
+// =============================================================================
+// CULTIVOS MICROSERVICIO (http://3.217.217.227:8001/api/v1)
+// Usa el mismo JWT emitido por el microservicio de Usuarios.
+// =============================================================================
+
+class CultivosApiEndpoints {
+  const CultivosApiEndpoints._();
+
+  // Catálogo (accesible por todos los roles autenticados).
+  String get catalog => '/cultivos';
+  String byId(int id) => '/cultivos/$id';
+}
+
+class SeleccionesApiEndpoints {
+  const SeleccionesApiEndpoints._();
+
+  // Selección de cultivo: agricultor / aprendiz registran su parcela.
+  String get create => '/selecciones';
+  String get myList => '/selecciones';
+  String byId(int id) => '/selecciones/$id';
+  String currentByUser(String userId) => '/selecciones/usuario/$userId/actual';
 }
 

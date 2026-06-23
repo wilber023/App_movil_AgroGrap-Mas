@@ -15,6 +15,7 @@ import 'features/home/presentation/bloc/home_bloc.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/parcels/presentation/pages/parcels_page.dart';
+import 'features/parcels/presentation/bloc/parcel_bloc.dart';
 import 'features/treatment/presentation/bloc/treatment_bloc.dart';
 import 'features/treatment/presentation/pages/treatment_page.dart';
 
@@ -54,6 +55,9 @@ class AgroGraphApp extends StatelessWidget {
         BlocProvider(create: (_) => sl<DiagnosisBloc>()),
         BlocProvider(
           create: (_) => sl<TreatmentBloc>()..add(const TreatmentAgendaRequested()),
+        ),
+        BlocProvider(
+          create: (_) => sl<ParcelBloc>()..add(const ParcelLoadRequested()),
         ),
       ],
       child: MaterialApp(

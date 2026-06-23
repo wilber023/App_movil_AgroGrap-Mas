@@ -19,17 +19,10 @@ class AprendizDiagnosisRemoteDataSourceImpl implements AprendizDiagnosisRemoteDa
         return DiagnosisEntity(
           id: json['id'] ?? '',
           diseaseName: json['diseaseName'] ?? 'Desconocida',
-          scientificName: json['scientificName'] ?? '',
           cropName: json['cropName'] ?? '',
-          parcelName: json['parcelName'] ?? '',
-          severity: json['severity'] ?? 'Moderada',
           confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
-          description: json['description'] ?? '',
-          recommendationsWhatIs: (json['recommendationsWhatIs'] as List?)?.map((e) => e.toString()).toList() ?? [],
-          recommendationsWhatToDo: (json['recommendationsWhatToDo'] as List?)?.map((e) => e.toString()).toList() ?? [],
-          recommendationsNoAction: json['recommendationsNoAction'] ?? '',
           diagnosedAt: json['diagnosedAt'] != null ? DateTime.parse(json['diagnosedAt']) : DateTime.now(),
-          statusLabel: json['statusLabel'] ?? 'Pendiente',
+          statusLabel: json['statusLabel'] ?? 'Seguimiento',
         );
       },
     );
