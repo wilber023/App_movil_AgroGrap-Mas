@@ -1,15 +1,3 @@
-// =============================================================================
-// Feature: Parcelas/Cultivos -- Fuente de Datos Remota + Caché Local
-// =============================================================================
-// Microservicio: http://3.217.217.227/api/v1  (Nginx puerto 80)
-// Autenticación: Bearer token JWT inyectado automáticamente por AuthInterceptor.
-//
-// El endpoint GET /selecciones/usuario/{id}/actual requiere X-Service-Key
-// (uso servidor-a-servidor) y NO acepta JWT del cliente Flutter.
-// Por eso las selecciones se persisten localmente en Hive luego de cada
-// POST /selecciones exitoso. getMisSelecciones() lee de esa caché.
-// =============================================================================
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -24,10 +12,10 @@ import '../../domain/repositories/parcel_repository.dart';
 
 abstract interface class CultivosRemoteDataSource {
   Future<List<CultivoModel>> getCatalog();
-  Future<CultivoModel> getCultivoById(int id);
+  Future<CultivoModel> getCultivoById(String id);
   Future<List<SeleccionModel>> getMisSelecciones();
   Future<SeleccionModel> crearSeleccion(AddParcelParams params);
-  Future<void> eliminarSeleccion(int seleccionId);
+  Future<void> eliminarSeleccion(String seleccionId);
 }
 
 class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
@@ -42,7 +30,7 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
   });
 
   // ---------------------------------------------------------------------------
-  // Helpers: user ID desde JWT + claves de Hive
+  // Helpers internos
   // ---------------------------------------------------------------------------
 
   Future<String> _getUserId() async {
@@ -59,12 +47,40 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     }
   }
 
-  String _hiveKey(String userId, int seleccionId) => 'sel_${userId}_$seleccionId';
-
+  String _hiveKey(String userId, String seleccionId) => 'sel_${userId}_$seleccionId';
   String _userPrefix(String userId) => 'sel_${userId}_';
 
+  // Desenvuelve `{"data": {...}}` → devuelve el mapa interno.
+  Map<String, dynamic> _unwrapMap(dynamic raw) {
+    if (raw is Map) {
+      final map = Map<String, dynamic>.from(raw);
+      if (map.containsKey('data') && map['data'] is Map) {
+        return Map<String, dynamic>.from(map['data'] as Map);
+      }
+      return map;
+    }
+    return {};
+  }
+
+  // Normaliza respuestas que pueden ser array o `{"data": [...]}`.
+  List<Map<String, dynamic>> _parseListResponse(dynamic data) {
+    List raw = [];
+    if (data is List) {
+      raw = data;
+    } else if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      for (final k in ['data', 'items', 'selecciones', 'results']) {
+        if (map[k] is List) {
+          raw = map[k] as List;
+          break;
+        }
+      }
+    }
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   // ---------------------------------------------------------------------------
-  // Catálogo de cultivos — GET /cultivos
+  // Catálogo de cultivos
   // ---------------------------------------------------------------------------
 
   @override
@@ -74,11 +90,9 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
       return _parseCatalogResponse(response.data);
     } on DioException catch (e) {
       throw _mapError(e);
-    } catch (e) {
+    } catch (_) {
       throw ServerException(
-        message: 'Error al procesar el catálogo de cultivos.',
-        statusCode: null,
-      );
+          message: 'Error al procesar el catálogo de cultivos.', statusCode: null);
     }
   }
 
@@ -91,7 +105,7 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     }
     if (data is Map) {
       final map = Map<String, dynamic>.from(data);
-      for (final key in ['items', 'cultivos', 'data', 'results']) {
+      for (final key in ['data', 'items', 'cultivos', 'results']) {
         if (map[key] is List) {
           return (map[key] as List)
               .whereType<Map>()
@@ -103,24 +117,20 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     return [];
   }
 
-  // ---------------------------------------------------------------------------
-  // Detalle de cultivo — GET /cultivos/{id}
-  // ---------------------------------------------------------------------------
-
   @override
-  Future<CultivoModel> getCultivoById(int id) async {
+  Future<CultivoModel> getCultivoById(String id) async {
     try {
       final response = await client.get(ApiEndpoints.cultivosCatalog.byId(id));
-      return CultivoModel.fromJson(response.data as Map<String, dynamic>);
+      return CultivoModel.fromJson(_unwrapMap(response.data));
     } on DioException catch (e) {
       throw _mapError(e);
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Listar mis selecciones — lee de Hive (caché local)
-  // GET /selecciones/usuario/{id}/actual requiere X-Service-Key (uso interno),
-  // así que persistimos localmente tras cada POST exitoso.
+  // Mis selecciones — GET /selecciones/mis-selecciones (JWT de usuario)
+  // El servidor filtra por el `sub` del token automáticamente.
+  // Devuelve datos completos: cultivo_nombre, nombre_parcela, area_ha, region, etc.
   // ---------------------------------------------------------------------------
 
   @override
@@ -128,28 +138,74 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     final userId = await _getUserId();
     if (userId.isEmpty) return [];
 
+    try {
+      final response = await client.get(ApiEndpoints.selecciones.myList);
+      final items = _parseListResponse(response.data);
+
+      // Si el servidor no incluye cultivo_nombre en la respuesta,
+      // se enriquece con el catálogo (GET /cultivos) para obtener el nombre.
+      final needsEnrichment =
+          items.any((r) => (r['cultivo_nombre']?.toString() ?? '').isEmpty);
+      final catalogMap = needsEnrichment ? await _buildCatalogMap() : <String, String>{};
+
+      final models = <SeleccionModel>[];
+      for (final raw in items) {
+        try {
+          final cultivoId = raw['cultivo_id']?.toString() ?? '';
+          final serverNombre = raw['cultivo_nombre']?.toString() ?? '';
+          // Enriquece con el catálogo si el servidor no devuelve cultivo_nombre
+          final enriched = (serverNombre.isEmpty && catalogMap.containsKey(cultivoId))
+              ? <String, dynamic>{...raw, 'cultivo_nombre': catalogMap[cultivoId]}
+              : Map<String, dynamic>.from(raw);
+
+          final model = SeleccionModel.fromJson(enriched);
+          if (model.seleccionId.isEmpty) continue;
+          // Actualiza caché local (offline fallback)
+          await seleccionesBox.put(
+              _hiveKey(userId, model.seleccionId), json.encode(model.toJson()));
+          models.add(model);
+        } catch (_) {}
+      }
+
+      models.sort((a, b) => b.seleccionId.compareTo(a.seleccionId));
+      return models;
+    } catch (_) {
+      return _readFromHive(userId);
+    }
+  }
+
+  Future<Map<String, String>> _buildCatalogMap() async {
+    try {
+      final response = await client.get(ApiEndpoints.cultivosCatalog.catalog);
+      final cultivos = _parseCatalogResponse(response.data);
+      return {for (final c in cultivos) c.id: c.nombre};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  List<SeleccionModel> _readFromHive(String userId) {
     final prefix = _userPrefix(userId);
     final models = <SeleccionModel>[];
-
     for (final key in seleccionesBox.keys.whereType<String>()) {
       if (!key.startsWith(prefix)) continue;
       final raw = seleccionesBox.get(key);
       if (raw == null) continue;
       try {
         final map = json.decode(raw) as Map<String, dynamic>;
-        models.add(SeleccionModel.fromJson(map));
-      } catch (_) {
-        // Dato corrupto — ignorar
-      }
+        final model = SeleccionModel.fromJson(map);
+        if (model.seleccionId.isEmpty) continue;
+        models.add(model);
+      } catch (_) {}
     }
-
-    // Ordenar por seleccionId descendente (más reciente primero)
     models.sort((a, b) => b.seleccionId.compareTo(a.seleccionId));
     return models;
   }
 
   // ---------------------------------------------------------------------------
-  // Registrar parcela — POST /selecciones + guardar en Hive
+  // Crear selección — POST /selecciones
+  // El servidor ahora persiste todos los campos y los devuelve en la respuesta,
+  // incluyendo cultivo_nombre → no se necesita merge manual.
   // ---------------------------------------------------------------------------
 
   @override
@@ -169,39 +225,57 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     };
 
     try {
-      final response = await client.post(
-        ApiEndpoints.selecciones.create,
-        data: body,
-      );
-      final model = SeleccionModel.fromJson(response.data as Map<String, dynamic>);
+      final response = await client.post(ApiEndpoints.selecciones.create, data: body);
+      final serverData = _unwrapMap(response.data);
 
-      // Persistir en Hive para que getMisSelecciones() lo devuelva sin red
+      // Si el servidor no devuelve cultivo_nombre, se usa el valor del formulario
+      // para que la tarjeta muestre el nombre correcto inmediatamente.
+      if ((serverData['cultivo_nombre']?.toString() ?? '').isEmpty) {
+        serverData['cultivo_nombre'] = params.cultivoNombre;
+      }
+      if ((serverData['nombre_parcela']?.toString() ?? '').isEmpty) {
+        serverData['nombre_parcela'] = params.nombreParcela;
+      }
+      if ((serverData['area_ha'] == null)) {
+        serverData['area_ha'] = params.areaHa;
+      }
+      if ((serverData['region']?.toString() ?? '').isEmpty) {
+        serverData['region'] = params.region;
+      }
+      serverData.putIfAbsent('etapa_fenologica', () => 'Siembra');
+      serverData.putIfAbsent('progreso_etapa', () => 0);
+      serverData.putIfAbsent('estado_salud', () => 'Sin diagnostico');
+
+      final model = SeleccionModel.fromJson(serverData);
+
+      // Guarda en Hive como caché offline
       final userId = await _getUserId();
-      if (userId.isNotEmpty) {
-        final key = _hiveKey(userId, model.seleccionId);
-        await seleccionesBox.put(key, json.encode(model.toJson()));
+      if (userId.isNotEmpty && model.seleccionId.isNotEmpty) {
+        await seleccionesBox.put(
+            _hiveKey(userId, model.seleccionId), json.encode(model.toJson()));
       }
 
       return model;
     } on DioException catch (e) {
       throw _mapError(e);
+    } catch (_) {
+      throw ServerException(
+          message: 'Error al guardar la parcela.', statusCode: null);
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Eliminar parcela — DELETE /selecciones/{id} + borrar de Hive
+  // Eliminar selección — DELETE /selecciones/{id}
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> eliminarSeleccion(int seleccionId) async {
+  Future<void> eliminarSeleccion(String seleccionId) async {
     try {
       await client.delete(ApiEndpoints.selecciones.byId(seleccionId));
     } on DioException catch (e) {
-      // Si el backend devuelve 404, la selección ya no existe — borrar local
       if (e.response?.statusCode != 404) throw _mapError(e);
     }
 
-    // Borrar de Hive independientemente del resultado en red
     final userId = await _getUserId();
     if (userId.isNotEmpty) {
       await seleccionesBox.delete(_hiveKey(userId, seleccionId));
@@ -209,16 +283,18 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
   }
 
   // ---------------------------------------------------------------------------
-  // Mapeo de errores Dio → ServerException
+  // Mapeo de errores Dio
   // ---------------------------------------------------------------------------
 
   ServerException _mapError(DioException e) {
     if (e.response == null) {
-      return ServerException(message: _networkMessage(e.type), statusCode: null);
+      return ServerException(
+          message: _networkMessage(e.type), statusCode: null);
     }
     final code = e.response!.statusCode;
     final detail = _extractDetail(e.response!.data);
-    return ServerException(message: detail ?? _defaultMessage(code), statusCode: code);
+    return ServerException(
+        message: detail ?? _defaultMessage(code), statusCode: code);
   }
 
   String? _extractDetail(dynamic data) {
@@ -229,10 +305,14 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
   }
 
   String _networkMessage(DioExceptionType type) => switch (type) {
-        DioExceptionType.connectionTimeout => 'Sin conexión. Verifica tu red e intenta de nuevo.',
-        DioExceptionType.sendTimeout => 'No se pudo enviar la solicitud. Verifica tu conexión.',
-        DioExceptionType.receiveTimeout => 'El servidor tardó demasiado. Intenta de nuevo.',
-        DioExceptionType.connectionError => 'Sin conexión a internet. Activa tu red e intenta de nuevo.',
+        DioExceptionType.connectionTimeout =>
+          'Sin conexión. Verifica tu red e intenta de nuevo.',
+        DioExceptionType.sendTimeout =>
+          'No se pudo enviar la solicitud. Verifica tu conexión.',
+        DioExceptionType.receiveTimeout =>
+          'El servidor tardó demasiado. Intenta de nuevo.',
+        DioExceptionType.connectionError =>
+          'Sin conexión a internet. Activa tu red e intenta de nuevo.',
         _ => 'No se pudo conectar al servidor de cultivos. Intenta más tarde.',
       };
 

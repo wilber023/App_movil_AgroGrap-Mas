@@ -12,11 +12,11 @@ class CultivoModel extends CultivoEntity {
 
   factory CultivoModel.fromJson(Map<String, dynamic> json) {
     return CultivoModel(
-      id: (json['id'] as num).toInt(),
+      id: json['id']?.toString() ?? '',
       nombre: json['nombre']?.toString() ?? '',
       descripcion: json['descripcion']?.toString(),
-      familia: json['familia']?.toString(),
-      tipoCultivo: (json['tipo_cultivo'] ?? json['tipoCultivo'])?.toString(),
+      familia: (json['familia'] ?? json['categoria'])?.toString(),
+      tipoCultivo: (json['tipo_cultivo'] ?? json['tipoCultivo'] ?? json['categoria'])?.toString(),
       imagenUrl: (json['imagen_url'] ?? json['imagenUrl'])?.toString(),
     );
   }

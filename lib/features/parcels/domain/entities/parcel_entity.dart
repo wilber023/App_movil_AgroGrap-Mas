@@ -2,8 +2,8 @@ import 'package:equatable/equatable.dart';
 
 class ParcelEntity extends Equatable {
   final String id;
-  final int seleccionId;
-  final int cultivoId;
+  final String seleccionId;
+  final String cultivoId;
   final String name;
   final String cropName;
   final double areaSize;

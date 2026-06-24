@@ -82,6 +82,15 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Token disponible solo después del login — recarga con JWT válido
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ParcelBloc>().add(const ParcelLoadRequested());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(

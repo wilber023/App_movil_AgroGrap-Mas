@@ -162,7 +162,7 @@ class CultivosApiEndpoints {
 
   // Catálogo (accesible por todos los roles autenticados).
   String get catalog => '/cultivos';
-  String byId(int id) => '/cultivos/$id';
+  String byId(String id) => '/cultivos/$id';
 }
 
 class SeleccionesApiEndpoints {
@@ -170,8 +170,9 @@ class SeleccionesApiEndpoints {
 
   // Selección de cultivo: agricultor / aprendiz registran su parcela.
   String get create => '/selecciones';
-  String get myList => '/selecciones';
-  String byId(int id) => '/selecciones/$id';
+  String get myList => '/selecciones/mis-selecciones';
+  String get myListAlias => '/selecciones/me';
+  String byId(String id) => '/selecciones/$id';
   String currentByUser(String userId) => '/selecciones/usuario/$userId/actual';
 }
 

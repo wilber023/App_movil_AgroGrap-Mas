@@ -211,7 +211,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
 
   /// Deriva el statusLabel directamente del nombre de enfermedad detectado.
   String _statusForDisease(String diseaseName) {
-    if (diseaseName.toLowerCase().contains('saludable')) return 'Saludable';
+    final lower = diseaseName.toLowerCase();
+    if (lower.contains('saludable') || lower.contains('healthy')) return 'Saludable';
     return 'Seguimiento';
   }
 

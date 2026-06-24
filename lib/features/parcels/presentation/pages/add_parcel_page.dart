@@ -177,6 +177,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
           ParcelAddRequested(
             params: AddParcelParams(
               cultivoId: cultivo.id,
+              cultivoNombre: cultivo.nombre,
               nombreParcela: _nameController.text.trim(),
               areaHa: areaRaw,
               unidadArea: unidad,

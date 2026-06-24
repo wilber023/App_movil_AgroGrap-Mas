@@ -342,16 +342,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         color: Colors.black.withValues(alpha: 0.55),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.maybePop(context),
-              child: const SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.arrow_back_outlined,
-                    color: Colors.white, size: 20),
-              ),
-            ),
-            const SizedBox(width: 4),
+            // Espaciador simétrico al botón de flash del lado derecho
+            const SizedBox(width: 44),
             Expanded(
               child: Center(
                 child: Text(

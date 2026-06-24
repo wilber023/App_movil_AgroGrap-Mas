@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class CultivoEntity extends Equatable {
-  final int id;
+  final String id;
   final String nombre;
   final String? descripcion;
   final String? familia;

@@ -50,38 +50,37 @@ class HomePage extends StatelessWidget {
     return BlocBuilder<AuthBloc, AuthState>(
       buildWhen: (prev, curr) => curr is AuthAuthenticated || curr is AuthUnauthenticated,
       builder: (context, state) {
-        final firstName = state is AuthAuthenticated
-            ? state.user.fullName.split(' ').first
-            : '';
+        final userName = state is AuthAuthenticated ? state.user.fullName : '';
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           color: AppColors.forestGreen,
           child: Row(
             children: [
-              Text(
-                firstName.isNotEmpty ? 'Hola, $firstName' : 'Bienvenido',
-                style: AppTypography.tituloMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (userName.isNotEmpty)
+                      Text(
+                        userName,
+                        style: AppTypography.etiquetaSm.copyWith(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    Text(
+                      'AgroGraph IA',
+                      style: AppTypography.tituloMd.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.statusHealthyBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'PLAN FREE',
-                  style: AppTypography.etiquetaSm.copyWith(
-                    color: AppColors.forestGreen,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const Spacer(),
               const Icon(
                 Icons.notifications_none_rounded,
                 color: Colors.white,

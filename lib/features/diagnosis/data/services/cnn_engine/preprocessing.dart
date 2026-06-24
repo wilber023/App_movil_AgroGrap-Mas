@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
 const int _kImgSize = 380;
@@ -21,33 +21,30 @@ Float32List preprocessImageIsolate(String imagePath) {
     decoded = decoded.convert(format: img.Format.uint8, numChannels: 3);
   }
 
+  // Bicúbico: coincide con PIL BICUBIC que usa torchvision transforms.Resize por defecto.
+  // Bilinear producía píxeles distintos suficientes para cambiar el ranking de predicciones.
   final resized = img.copyResize(
     decoded,
     width: _kImgSize,
     height: _kImgSize,
-    interpolation: img.Interpolation.linear,
+    interpolation: img.Interpolation.cubic,
   );
 
-  final tensor = Float32List(_kImgSize * _kImgSize * 3);
-  int idx = 0;
+  // NCHW layout: [1, 3, 380, 380] — todos los píxeles de R primero, luego G, luego B.
+  // El modelo TFLite mantiene el orden NCHW de PyTorch (sin transpose en la conversión).
+  final pixelCount = _kImgSize * _kImgSize;
+  final tensor = Float32List(pixelCount * 3);
+
   for (int h = 0; h < _kImgSize; h++) {
     for (int w = 0; w < _kImgSize; w++) {
       final pixel = resized.getPixel(w, h);
-      // pixel.r/g/b son int 0-255 en Format.uint8 → /255.0 da [0.0, 1.0]
-      tensor[idx++] = (pixel.r.toDouble() / 255.0 - _meanR) / _stdR;
-      tensor[idx++] = (pixel.g.toDouble() / 255.0 - _meanG) / _stdG;
-      tensor[idx++] = (pixel.b.toDouble() / 255.0 - _meanB) / _stdB;
+      final flat = h * _kImgSize + w;
+      tensor[flat]                = (pixel.r.toDouble() / 255.0 - _meanR) / _stdR;
+      tensor[pixelCount + flat]   = (pixel.g.toDouble() / 255.0 - _meanG) / _stdG;
+      tensor[pixelCount * 2 + flat] = (pixel.b.toDouble() / 255.0 - _meanB) / _stdB;
     }
   }
 
-  // Debug: pixel central para verificar rango esperado (~[-2.1, +2.7])
-  final ci = ((_kImgSize ~/ 2) * _kImgSize + _kImgSize ~/ 2) * 3;
-  debugPrint(
-    '[Preprocessing] pixel_central norm:'
-    ' R=${tensor[ci].toStringAsFixed(3)}'
-    ' G=${tensor[ci + 1].toStringAsFixed(3)}'
-    ' B=${tensor[ci + 2].toStringAsFixed(3)}',
-  );
 
   return tensor;
 }

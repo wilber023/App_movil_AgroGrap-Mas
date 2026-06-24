@@ -23,11 +23,6 @@ class Postprocessing {
     final alreadyNormalized =
         rawSum > 0.98 && rawSum < 1.02 && logits.every((v) => v >= 0.0);
 
-    debugPrint(
-      '[Postprocessing] rawSum=${rawSum.toStringAsFixed(4)}'
-      ' → ${alreadyNormalized ? "softmax OMITIDO (ya normalizado)" : "aplicando softmax"}',
-    );
-
     final probs = alreadyNormalized
         ? logits.map((v) => v.toDouble()).toList()
         : _softmax(logits);

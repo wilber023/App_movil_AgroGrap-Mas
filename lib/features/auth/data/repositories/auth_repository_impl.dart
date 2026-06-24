@@ -208,6 +208,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> _getLocalUser() async {
     try {
       final cachedUser = await localDataSource.getLastUser();
+      // Verify the token is still in TokenStorage — if the interceptor cleared
+      // it due to a refresh failure, we treat the session as invalid so the
+      // user is sent to login instead of landing on a broken home screen.
+      final storedToken = await tokenStorage.getAccessToken();
+      if (storedToken == null || storedToken.isEmpty) {
+        return const Left(
+          CacheFailure(message: 'No hay sesión activa. Vuelve a iniciar sesión.'),
+        );
+      }
       return Right(cachedUser);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));

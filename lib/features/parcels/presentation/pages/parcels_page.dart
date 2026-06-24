@@ -31,6 +31,13 @@ class ParcelsPage extends StatelessWidget {
 
   static const List<String> _stages = ['Siembra', 'Vegetativo', 'Floracion', 'Cosecha'];
 
+  static const Map<String, String> _emojiMap = {
+    'Calabaza': '🎃', 'Frijol': '🫘', 'Manzana': '🍎', 'Mora': '🫐',
+    'Cereza': '🍒', 'Maíz': '🌽', 'Durazno': '🍑', 'Uva': '🍇',
+    'Naranja': '🍊', 'Pimienta': '🌶️', 'Papa': '🥔', 'Frambuesa': '🍓',
+    'Soja': '🌱', 'Fresa': '🍓', 'Tomate': '🍅',
+  };
+
   @override
   Widget build(BuildContext context) {
     return const _ParcelsView();
@@ -179,16 +186,18 @@ class _ParcelsView extends StatelessWidget {
 
   Widget _buildParcelCard(BuildContext context, ParcelEntity p) {
     final statusColors = _statusColors(p.status);
+    final emoji = ParcelsPage._emojiMap[p.cropName] ?? '🌿';
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ParcelDetailPage(parcel: p)),
       ),
-      child: Container(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
           border: Border(
             left: BorderSide(color: statusColors.border, width: 4),
             top: BorderSide(color: _borderLight.withValues(alpha: 0.3), width: 0.5),
@@ -202,10 +211,24 @@ class _ParcelsView extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Emoji avatar
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _chipGreenBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Nombre de la parcela
                       Text(
                         p.name,
                         style: AppTypography.labelMd.copyWith(
@@ -213,8 +236,11 @@ class _ParcelsView extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
+                      // Cultivo + área
                       Row(
                         children: [
                           _chip(p.cropName, _chipGreenBg, _chipGreenText),
@@ -228,13 +254,34 @@ class _ParcelsView extends StatelessWidget {
                           ),
                         ],
                       ),
+                      // Región
+                      if (p.region.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(Icons.place_outlined, size: 11, color: _textSecondary),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                p.region,
+                                style: AppTypography.etiquetaSm.copyWith(
+                                  color: _textSecondary,
+                                  fontSize: 10,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 _buildThreeDotMenu(context, p),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               children: [
                 _statusChip(p.status, statusColors.chipBg, statusColors.chipText, statusColors.icon),
@@ -257,6 +304,7 @@ class _ParcelsView extends StatelessWidget {
             _buildPhenologicalBar(p),
           ],
         ),
+      ),
       ),
     );
   }

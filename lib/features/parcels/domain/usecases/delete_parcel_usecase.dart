@@ -17,7 +17,7 @@ class DeleteParcelUseCase implements UseCase<void, DeleteParcelParams> {
 }
 
 class DeleteParcelParams extends Equatable {
-  final int seleccionId;
+  final String seleccionId;
 
   const DeleteParcelParams({required this.seleccionId});
 

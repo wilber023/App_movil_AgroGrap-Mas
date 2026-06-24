@@ -34,7 +34,7 @@ final class ParcelAddRequested extends ParcelEvent {
 }
 
 final class ParcelDeleteRequested extends ParcelEvent {
-  final int seleccionId;
+  final String seleccionId;
   const ParcelDeleteRequested({required this.seleccionId});
   @override
   List<Object?> get props => [seleccionId];

@@ -25,7 +25,7 @@ class ParcelRepositoryImpl implements ParcelRepository {
   }
 
   @override
-  Future<Either<Failure, ParcelEntity>> getParcelDetail(int seleccionId) async {
+  Future<Either<Failure, ParcelEntity>> getParcelDetail(String seleccionId) async {
     try {
       final selecciones = await remoteDataSource.getMisSelecciones();
       final match = selecciones.where((s) => s.seleccionId == seleccionId).toList();
@@ -53,7 +53,7 @@ class ParcelRepositoryImpl implements ParcelRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteParcel(int seleccionId) async {
+  Future<Either<Failure, void>> deleteParcel(String seleccionId) async {
     try {
       await remoteDataSource.eliminarSeleccion(seleccionId);
       return const Right(null);

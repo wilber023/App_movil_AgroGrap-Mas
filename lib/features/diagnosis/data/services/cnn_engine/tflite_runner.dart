@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
@@ -65,47 +63,12 @@ class GlobalModelManager {
   }
 
   Float32List _runInferenceInternal(Float32List flat) {
-    // ── Diagnóstico de entrada ────────────────────────────────────────────────
-    double inAbsSum = 0;
-    for (int i = 0; i < 100; i++) { inAbsSum += flat[i].abs(); }
-    debugPrint('[CNN] Sum abs primeros 100 valores flat: ${inAbsSum.toStringAsFixed(4)}');
-
-    // ── Escribir input en el buffer nativo del tensor ─────────────────────────
-    // getInputTensor(0).data devuelve Uint8List sobre memoria nativa FFI.
-    // Reinterpretado como Float32List → setAll es un memcpy directo sin
-    // conversión de tipos (Float32List→Float32List, no double 64-bit).
-    final inputNative = _interpreter!.getInputTensor(0).data.buffer.asFloat32List();
-    inputNative.setAll(0, flat);
-
-    // Verificar que el write llegó al buffer nativo (si devuelve copia, la
-    // suma sería 0 incluso después de setAll — eso indica que necesitamos FFI)
-    double verifySum = 0;
-    for (int i = 0; i < 100; i++) { verifySum += inputNative[i].abs(); }
-    debugPrint('[CNN] Verify native input (0=copia, >0=vista nativa): ${verifySum.toStringAsFixed(4)}');
-
-    // ── Ejecutar inferencia ────────────────────────────────────────────────────
+    // Escribir input en el buffer nativo (Float32List→Float32List = memcpy directo)
+    _interpreter!.getInputTensor(0).data.buffer.asFloat32List().setAll(0, flat);
     _interpreter!.invoke();
-
-    // ── Leer output del buffer nativo ─────────────────────────────────────────
-    final outputNative = _interpreter!.getOutputTensor(0).data.buffer.asFloat32List();
-    final result = Float32List.fromList(outputNative);
-
-    // ── Diagnóstico de salida ─────────────────────────────────────────────────
-    final outSum = result.fold<double>(0.0, (a, b) => a + b);
-    final outMin = result.reduce(math.min);
-    final outMax = result.reduce(math.max);
-    final mean     = outSum / result.length;
-    final variance = result.fold<double>(0.0, (a, b) => a + (b - mean) * (b - mean)) / result.length;
-    debugPrint(
-      '[CNN] output: sum=${outSum.toStringAsFixed(4)}'
-      ' min=${outMin.toStringAsFixed(4)}'
-      ' max=${outMax.toStringAsFixed(4)}'
-      ' var=${variance.toStringAsFixed(6)}'
-      '\n      → sum≈1.0 && var>0  ⇒ softmax horneado (postprocessing lo detecta)'
-      '\n      → sum≈0 || var≈0    ⇒ input inválido',
+    return Float32List.fromList(
+      _interpreter!.getOutputTensor(0).data.buffer.asFloat32List(),
     );
-
-    return result;
   }
 
   void dispose() {

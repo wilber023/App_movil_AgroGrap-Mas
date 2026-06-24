@@ -14,7 +14,8 @@ class AprendizDiagnosisLocalDataSourceImpl implements AprendizDiagnosisLocalData
     // Inferencia CNN real — mismo motor que usa el perfil agricultor
     final cnn = await CnnEngine.analyze(imagePath);
 
-    final isHealthy = cnn.diseaseName.toLowerCase().contains('saludable');
+    final isHealthy = cnn.diseaseName.toLowerCase().contains('saludable') ||
+        cnn.diseaseName.toLowerCase().contains('healthy');
 
     return DiagnosisEntity(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

@@ -7,14 +7,15 @@ import '../entities/parcel_entity.dart';
 
 abstract class ParcelRepository {
   Future<Either<Failure, List<ParcelEntity>>> getParcels();
-  Future<Either<Failure, ParcelEntity>> getParcelDetail(int seleccionId);
+  Future<Either<Failure, ParcelEntity>> getParcelDetail(String seleccionId);
   Future<Either<Failure, ParcelEntity>> addParcel(AddParcelParams params);
-  Future<Either<Failure, void>> deleteParcel(int seleccionId);
+  Future<Either<Failure, void>> deleteParcel(String seleccionId);
   Future<Either<Failure, List<CultivoEntity>>> getCultivoCatalog();
 }
 
 class AddParcelParams extends Equatable {
-  final int cultivoId;
+  final String cultivoId;
+  final String cultivoNombre;
   final String nombreParcela;
   final double areaHa;
   final String unidadArea;
@@ -26,6 +27,7 @@ class AddParcelParams extends Equatable {
 
   const AddParcelParams({
     required this.cultivoId,
+    required this.cultivoNombre,
     required this.nombreParcela,
     required this.areaHa,
     required this.unidadArea,

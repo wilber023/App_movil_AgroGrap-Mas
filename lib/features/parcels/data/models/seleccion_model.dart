@@ -19,17 +19,18 @@ class SeleccionModel extends ParcelEntity {
   });
 
   factory SeleccionModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id']?.toString() ?? '';
     final cultivoNombre = _str(json, ['cultivo_nombre', 'cultivoNombre', 'nombre']) ?? 'Sin cultivo';
     final nombreParcela = _str(json, ['nombre_parcela', 'nombreParcela']) ?? cultivoNombre;
     final rawEtapa = _str(json, ['etapa_fenologica', 'etapaFenologica', 'currentStage']) ?? 'Siembra';
     final progreso = (_num(json, ['progreso_etapa', 'progresoEtapa', 'progressPercentage']) ?? 0.0) / 100.0;
-    final estado = _str(json, ['estado_salud', 'estadoSalud', 'status']) ?? 'Sin diagnostico';
+    final estado = _str(json, ['estado_salud', 'estadoSalud', 'estado_plan', 'status']) ?? 'Sin diagnostico';
     final rawFechaSiembra = _str(json, ['fecha_siembra', 'fechaSiembra', 'startDate']);
 
     return SeleccionModel(
-      id: json['id'].toString(),
-      seleccionId: (json['id'] as num).toInt(),
-      cultivoId: (json['cultivo_id'] ?? json['cultivoId'] ?? 0) as int,
+      id: rawId,
+      seleccionId: rawId,
+      cultivoId: (json['cultivo_id'] ?? json['cultivoId'] ?? '').toString(),
       name: nombreParcela,
       cropName: cultivoNombre,
       areaSize: (_num(json, ['area_ha', 'areaHa']) ?? 0.0),
@@ -57,13 +58,12 @@ class SeleccionModel extends ParcelEntity {
         'estado_salud': status,
       };
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
   static String? _str(Map<String, dynamic> json, List<String> keys) {
     for (final k in keys) {
-      if (json.containsKey(k) && json[k] != null) return json[k].toString();
+      if (json.containsKey(k) && json[k] != null) {
+        final s = json[k].toString();
+        if (s.isNotEmpty) return s;
+      }
     }
     return null;
   }
@@ -96,16 +96,11 @@ class SeleccionModel extends ParcelEntity {
 
   static int _stageIndex(String etapa) {
     switch (etapa) {
-      case 'Siembra':
-        return 0;
-      case 'Vegetativo':
-        return 1;
-      case 'Floracion':
-        return 2;
-      case 'Cosecha':
-        return 3;
-      default:
-        return 0;
+      case 'Siembra': return 0;
+      case 'Vegetativo': return 1;
+      case 'Floracion': return 2;
+      case 'Cosecha': return 3;
+      default: return 0;
     }
   }
 }
