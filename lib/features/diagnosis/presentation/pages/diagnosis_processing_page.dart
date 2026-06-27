@@ -33,7 +33,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
   static const List<String> _subtitles = [
     'Ejecutando modelo CNN EfficientNetB4...',
     'Procesando localmente \u00B7 sin necesidad de internet...',
-    'Comparando con 40+ patologias conocidas...',
+    'Comparando con 40+ patolog\u00EDas conocidas...',
     'Calculando nivel de confianza...',
   ];
 
@@ -169,7 +169,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                       Navigator.pop(context);
                     },
                     child: Text(
-                      'Cancelar analisis',
+                      'Cancelar análisis',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,

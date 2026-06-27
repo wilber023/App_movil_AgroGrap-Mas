@@ -69,7 +69,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Historial de diagnosticos',
+                  'Historial de diagnósticos',
                   style: AppTypography.labelMd.copyWith(
                     color: _textPrimary,
                     fontSize: 15,
@@ -146,7 +146,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aun no hay diagnosticos',
+              'Aún no hay diagnósticos',
               style: AppTypography.labelMd.copyWith(
                 color: _textPrimary,
                 fontWeight: FontWeight.w500,
@@ -204,7 +204,7 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Historial de diagnosticos',
+          'Historial de diagnósticos',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
@@ -284,8 +284,12 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
     );
   }
 
+  static const List<String> _meses = [
+    '', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
+  ];
+
   Widget _buildGroupedList(List<DiagnosisEntity> items) {
-    // Group entries by month mapping (Mocked month extraction for demonstration)
     final grouped = <String, List<DiagnosisEntity>>{};
     for (final e in items) {
       final monthStr = '${e.diagnosedAt.month}/${e.diagnosedAt.year}';
@@ -296,13 +300,13 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
       padding: const EdgeInsets.only(top: 4),
       children: [
         for (final month in grouped.keys) ...[
-          // Month header
+          // Encabezado de mes en español
           Container(
             width: double.infinity,
             color: _bg,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Text(
-              'MES $month',
+              _formatMes(month),
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 11,
@@ -316,6 +320,16 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
         ],
       ],
     );
+  }
+
+  /// Convierte "6/2026" → "JUNIO 2026"
+  String _formatMes(String monthSlash) {
+    final parts = monthSlash.split('/');
+    if (parts.length != 2) return monthSlash;
+    final m = int.tryParse(parts[0]) ?? 0;
+    final y = parts[1];
+    final nombre = (m >= 1 && m <= 12) ? _meses[m] : monthSlash;
+    return '$nombre $y';
   }
 
   Widget _buildEmptyStateFull() {
@@ -337,7 +351,7 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aun no hay diagnosticos',
+              'Aún no hay diagnósticos',
               style: AppTypography.labelMd.copyWith(
                 color: _textPrimary,
                 fontWeight: FontWeight.w500,
@@ -365,7 +379,7 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                   elevation: 0,
                 ),
                 child: const Text(
-                  'Ir a camara \u2192',
+                  'Ir a c\u00e1mara \u2192',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
