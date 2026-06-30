@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../domain/entities/treatment_entity.dart';
+import '../bloc/treatment_bloc.dart';
 
-class TreatmentPage extends StatefulWidget {
+// ---------------------------------------------------------------------------
+
+const _months = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+];
+
+String _fmtDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+String _fmtShort(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+
+class TreatmentPage extends StatelessWidget {
   const TreatmentPage({super.key});
-
-  @override
-  State<TreatmentPage> createState() => _TreatmentPageState();
-}
-
-class _TreatmentPageState extends State<TreatmentPage> {
-  bool _remindersActive = true;
 
   @override
   Widget build(BuildContext context) {
@@ -21,394 +27,231 @@ class _TreatmentPageState extends State<TreatmentPage> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        titleSpacing: 0, // Ajuste para el Pill
-        title: Row(
-          children: [
-            const SizedBox(width: 16),
-            const Text(
-              'Agenda agronomica',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'ACTIVO',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
+        title: const Text(
+          'Agenda Agronómica',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert_rounded),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () =>
+                context.read<TreatmentBloc>().add(const TreatmentAgendaRequested()),
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: BlocBuilder<TreatmentBloc, TreatmentState>(
+        builder: (context, state) {
+          if (state is TreatmentInitial || state is TreatmentLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.forestGreen),
+            );
+          }
+          if (state is TreatmentFailure) {
+            return _ErrorView(
+              message: state.message,
+              onRetry: () => context
+                  .read<TreatmentBloc>()
+                  .add(const TreatmentAgendaRequested()),
+            );
+          }
+          if (state is TreatmentAgendaLoaded) {
+            if (state.treatments.isEmpty) return const _EmptyView();
+            return _AgendaListView(treatments: state.treatments);
+          }
+          // TreatmentStepMarked — momentaneamente vacío mientras recarga
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.forestGreen),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Lista de tratamientos
+// =============================================================================
+
+class _AgendaListView extends StatelessWidget {
+  final List<TreatmentEntity> treatments;
+  const _AgendaListView({required this.treatments});
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      color: AppColors.forestGreen,
+      onRefresh: () async {
+        context.read<TreatmentBloc>().add(const TreatmentAgendaRequested());
+        // Espera a que el estado cambie
+        await Future.delayed(const Duration(milliseconds: 600));
+      },
+      child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 1. Titulo principal
-            Text(
-              'Gusano cogollero',
-              style: AppTypography.tituloLg.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Junio 2026',
-              style: AppTypography.bodyLg.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 2. Calendario Semanal Compacto
-            _buildWeeklyCalendar(),
-            const SizedBox(height: 24),
-
-            // 3. Switch de Recordatorios y Barra de Progreso
-            _buildRemindersAndProgress(),
-            const SizedBox(height: 32),
-
-            // 4. Listado de Tareas
-            _buildTaskCompleted(),
-            const SizedBox(height: 16),
-            _buildTaskTomorrow(),
-            const SizedBox(height: 16),
-            _buildTaskScheduled(),
-            const SizedBox(height: 40),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        itemCount: treatments.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: _TreatmentCard(treatment: treatments[index]),
+          );
+        },
       ),
     );
   }
+}
 
-  /// Calendario semanal estilizado
-  Widget _buildWeeklyCalendar() {
-    final days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    // Para simplificar, asumimos que el 5 es hoy y el 10 (mostramos otra fila o un dia suelto?
-    // El prompt pide: "El dia actual (5) debe llevar un fondo circular... El dia seleccionado (10) debe llevar un borde..."
-    // Si la cuadricula es semanal, el 10 estaria en la siguiente semana.
-    // Vamos a mostrar una fila de 7 dias que contenga del 4 al 10 para cumplir el diseno visual.
-    final visibleDates = [4, 5, 6, 7, 8, 9, 10];
+// =============================================================================
+// Tarjeta de tratamiento individual
+// =============================================================================
 
+class _TreatmentCard extends StatelessWidget {
+  final TreatmentEntity treatment;
+  const _TreatmentCard({required this.treatment});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: days.map((day) {
-              return Text(
-                day,
-                style: AppTypography.etiquetaSm.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                  fontWeight: FontWeight.bold,
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: visibleDates.map((date) {
-              final isToday = date == 5;
-              final isEvent = date == 10;
-
-              return Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isToday
-                      ? AppColors.primaryContainer.withValues(alpha: 0.3)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: isEvent
-                        ? AppColors.burntOrange
-                        : (isToday ? AppColors.primary : Colors.transparent),
-                    width: isEvent ? 2.0 : (isToday ? 1.0 : 0.0),
-                  ),
-                ),
-                child: Text(
-                  date.toString(),
-                  style: AppTypography.bodyMd.copyWith(
-                    color: (isToday || isEvent)
-                        ? AppColors.onSurface
-                        : AppColors.onSurfaceVariant,
-                    fontWeight: (isToday || isEvent) ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Switch de recordatorios y barra de progreso
-  Widget _buildRemindersAndProgress() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Recordatorios
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.statusHealthyBg,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.notifications_none_rounded, color: AppColors.forestGreen),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Recordatorios activos',
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.forestGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Switch(
-                value: _remindersActive,
-                onChanged: (val) {
-                  setState(() {
-                    _remindersActive = val;
-                  });
-                },
-                activeTrackColor: AppColors.forestGreen,
-                thumbColor: WidgetStateProperty.all(Colors.white),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Progreso Textos
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Paso 1 de 3',
-              style: AppTypography.labelMd.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              '33% completado',
-              style: AppTypography.labelMd.copyWith(
-                color: AppColors.forestGreen,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Barra de progreso
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: const LinearProgressIndicator(
-            value: 0.33,
-            minHeight: 8,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Tarea 1 (Completada)
-  Widget _buildTaskCompleted() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.statusHealthyBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: AppColors.forestGreen,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Primera aplicacion',
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Aplicacion de insecticida sistemico.',
-                    style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.statusHealthyBg,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.check_rounded,
-                          size: 14,
-                          color: AppColors.forestGreen,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'completada el dia 5',
-                          style: AppTypography.etiquetaSm.copyWith(
-                            color: AppColors.forestGreen,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Tarea 2 (Manana - Con borde izquierdo naranja)
-  Widget _buildTaskTomorrow() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: const Border(
-          left: BorderSide(color: AppColors.burntOrange, width: 4),
-          top: BorderSide(color: AppColors.outlineVariant, width: 0.5),
-          right: BorderSide(color: AppColors.outlineVariant, width: 0.5),
-          bottom: BorderSide(color: AppColors.outlineVariant, width: 0.5),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-              ),
-              child: Text(
-                '2',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(),
+          if (treatment.llmDiagnostico.isNotEmpty) _buildDiagnosticoChip(),
+          _buildProgressBar(),
+          const Divider(height: 1, thickness: 0.5),
+          _buildTimeline(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.burntOrange.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Segunda aplicacion',
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: const Icon(
+              Icons.bug_report_outlined,
+              color: AppColors.burntOrange,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  treatment.diseaseName,
+                  style: AppTypography.labelMd.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Refuerzo foliar en horas tempranas.',
-                    style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.eco_outlined,
+                      size: 13,
+                      color: AppColors.forestGreen,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.warmAmber.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'manana',
+                    const SizedBox(width: 4),
+                    Text(
+                      treatment.cropName,
                       style: AppTypography.etiquetaSm.copyWith(
-                        color: AppColors.burntOrange,
+                        color: AppColors.forestGreen,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _fmtDate(treatment.createdAt),
+                  style: AppTypography.etiquetaSm.copyWith(
+                    color: AppColors.onSurfaceVariant,
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: treatment.progressPercent == 100
+                  ? AppColors.statusHealthyBg
+                  : AppColors.warmAmber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              treatment.progressPercent == 100 ? 'COMPLETO' : 'ACTIVO',
+              style: AppTypography.etiquetaSm.copyWith(
+                color: treatment.progressPercent == 100
+                    ? AppColors.forestGreen
+                    : AppColors.burntOrange,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+                fontSize: 9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticoChip() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.primaryContainer.withValues(alpha: 0.4),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.psychology_outlined,
+              size: 15,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                treatment.llmDiagnostico,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.etiquetaSm.copyWith(
+                  color: AppColors.primary,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
@@ -417,72 +260,381 @@ class _TreatmentPageState extends State<TreatmentPage> {
     );
   }
 
-  /// Tarea 3 (Programada)
-  Widget _buildTaskScheduled() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-              ),
-              child: Text(
-                '3',
-                style: AppTypography.labelMd.copyWith(
+  Widget _buildProgressBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Paso ${treatment.completedSteps} de ${treatment.totalSteps}',
+                style: AppTypography.etiquetaSm.copyWith(
                   color: AppColors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${treatment.progressPercent}% completado',
+                style: AppTypography.etiquetaSm.copyWith(
+                  color: AppColors.forestGreen,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: treatment.progress,
+              minHeight: 6,
+              backgroundColor: AppColors.surfaceContainerHigh,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
             ),
-            const SizedBox(width: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeline(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Column(
+        children: [
+          for (int i = 0; i < treatment.steps.length; i++)
+            _TimelineStep(
+              step: treatment.steps[i],
+              treatmentId: treatment.id,
+              isLast: i == treatment.steps.length - 1,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Paso de la línea de tiempo
+// =============================================================================
+
+class _TimelineStep extends StatelessWidget {
+  final TreatmentStepEntity step;
+  final String treatmentId;
+  final bool isLast;
+
+  const _TimelineStep({
+    required this.step,
+    required this.treatmentId,
+    required this.isLast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildIndicatorColumn(),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+              child: _buildContent(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicatorColumn() {
+    return SizedBox(
+      width: 28,
+      child: Column(
+        children: [
+          _buildCircle(),
+          if (!isLast)
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Monitoreo de control',
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Evaluacion de eficacia del tratamiento.',
-                    style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'programado',
-                      style: AppTypography.etiquetaSm.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              child: Container(
+                width: 2,
+                color: step.isCompleted
+                    ? AppColors.forestGreen.withValues(alpha: 0.4)
+                    : AppColors.outlineVariant,
               ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircle() {
+    if (step.isCompleted) {
+      return Container(
+        width: 28,
+        height: 28,
+        decoration: const BoxDecoration(
+          color: AppColors.statusHealthyBg,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.check_rounded, color: AppColors.forestGreen, size: 16),
+      );
+    }
+    if (step.isScheduled) {
+      return Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: AppColors.warmAmber.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.burntOrange, width: 2),
+        ),
+        child: const Icon(Icons.schedule_rounded, color: AppColors.burntOrange, size: 14),
+      );
+    }
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.outlineVariant, width: 1.5),
+      ),
+      child: Center(
+        child: Text(
+          step.stepNumber.toString(),
+          style: AppTypography.etiquetaSm.copyWith(
+            color: AppColors.onSurfaceVariant,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                step.title,
+                style: AppTypography.labelMd.copyWith(
+                  color: step.isCompleted
+                      ? AppColors.onSurfaceVariant
+                      : AppColors.onSurface,
+                  fontWeight: FontWeight.bold,
+                  decoration:
+                      step.isCompleted ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ),
+            _buildStatusChip(),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined,
+                size: 12, color: AppColors.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              step.isCompleted && step.completedDate != null
+                  ? 'Completado ${_fmtShort(step.completedDate!)}'
+                  : _fmtDate(step.scheduledDate),
+              style: AppTypography.etiquetaSm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          step.description,
+          style: AppTypography.bodyMd.copyWith(
+            color: AppColors.onSurfaceVariant,
+            fontSize: 12,
+            height: 1.45,
+          ),
+        ),
+        if (step.isScheduled) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 34,
+            child: ElevatedButton.icon(
+              onPressed: () => _markComplete(context),
+              icon: const Icon(Icons.check_rounded, size: 15),
+              label: const Text('Marcar completado'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.forestGreen,
+                foregroundColor: Colors.white,
+                textStyle: AppTypography.etiquetaSm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStatusChip() {
+    if (step.isCompleted) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.statusHealthyBg,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'completado',
+          style: AppTypography.etiquetaSm.copyWith(
+            color: AppColors.forestGreen,
+            fontWeight: FontWeight.w600,
+            fontSize: 9,
+          ),
+        ),
+      );
+    }
+    if (step.isScheduled) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.warmAmber.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'pendiente',
+          style: AppTypography.etiquetaSm.copyWith(
+            color: AppColors.burntOrange,
+            fontWeight: FontWeight.w600,
+            fontSize: 9,
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        'programado',
+        style: AppTypography.etiquetaSm.copyWith(
+          color: AppColors.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+          fontSize: 9,
+        ),
+      ),
+    );
+  }
+
+  void _markComplete(BuildContext context) {
+    context.read<TreatmentBloc>().add(
+          TreatmentStepCompleted(
+            treatmentId: treatmentId,
+            stepId: step.id,
+          ),
+        );
+  }
+}
+
+// =============================================================================
+// Estados vacío / error
+// =============================================================================
+
+class _EmptyView extends StatelessWidget {
+  const _EmptyView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.event_note_outlined,
+                size: 40,
+                color: AppColors.forestGreen,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Sin tratamientos activos',
+              style: AppTypography.tituloMd.copyWith(
+                color: AppColors.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Realiza un diagnóstico de tu cultivo.\nCuando se detecte una enfermedad, aparecerá\naquí un plan de tratamiento automático.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMd.copyWith(
+                color: AppColors.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded,
+                size: 48, color: AppColors.offlineGrey),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMd.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.forestGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reintentar'),
             ),
           ],
         ),

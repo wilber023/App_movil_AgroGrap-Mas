@@ -62,12 +62,13 @@ class _AddParcelPageState extends State<AddParcelPage> {
     'Hoja ancha', 'Pastos', 'Ciperáceas', 'Mixta', 'No hay / No sé',
   ];
 
-  // Emojis por nombre de cultivo (orden coincide con el catálogo del backend)
+  // Cultivos soportados por el modelo CNN
+  static const Set<String> _allowedCrops = {
+    'Calabaza', 'Frijol', 'Maíz', 'Papa', 'Tomate',
+  };
+
   static const Map<String, String> _emojiMap = {
-    'Calabaza': '🎃', 'Frijol': '🫘', 'Manzana': '🍎', 'Mora': '🫐',
-    'Cereza': '🍒', 'Maíz': '🌽', 'Durazno': '🍑', 'Uva': '🍇',
-    'Naranja': '🍊', 'Pimienta': '🌶️', 'Papa': '🥔', 'Frambuesa': '🍓',
-    'Soja': '🌱', 'Fresa': '🍓', 'Tomate': '🍅',
+    'Calabaza': '🎃', 'Frijol': '🫘', 'Maíz': '🌽', 'Papa': '🥔', 'Tomate': '🍅',
   };
 
   @override
@@ -100,7 +101,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
       result.fold(
         (_) => setState(() => _catalogLoading = false),
         (cultivos) => setState(() {
-          _catalog = cultivos;
+          _catalog = cultivos
+              .where((c) => _allowedCrops.contains(c.nombre))
+              .toList();
           _catalogLoading = false;
         }),
       );

@@ -70,7 +70,10 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => DiagnosisResultPage(diagnosis: state.diagnosis),
+              builder: (_) => DiagnosisResultPage(
+                diagnosis: state.diagnosis,
+                userText: state.userText,
+              ),
             ),
           );
         } else if (state is DiagnosisError) {

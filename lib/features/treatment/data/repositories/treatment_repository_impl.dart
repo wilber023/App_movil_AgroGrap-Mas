@@ -1,39 +1,35 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/network/network_info.dart';
 import '../../domain/entities/treatment_entity.dart';
 import '../../domain/repositories/treatment_repository.dart';
-import '../datasources/treatment_remote_datasource.dart';
+import '../datasources/treatment_local_datasource.dart';
 
 class TreatmentRepositoryImpl implements TreatmentRepository {
-  final TreatmentRemoteDataSource remoteDataSource;
-  final NetworkInfo networkInfo;
+  final TreatmentLocalDataSource localDataSource;
 
-  const TreatmentRepositoryImpl({
-    required this.remoteDataSource,
-    required this.networkInfo,
-  });
+  const TreatmentRepositoryImpl({required this.localDataSource});
 
   @override
   Future<Either<Failure, List<TreatmentEntity>>> getAgenda() async {
-    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final result = await remoteDataSource.getAgenda();
+      final result = await localDataSource.getAgenda();
       return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(CacheFailure(message: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, TreatmentEntity>> getById(String id) async {
-    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final result = await remoteDataSource.getById(id);
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+      final all = await localDataSource.getAgenda();
+      final found = all.firstWhere(
+        (t) => t.id == id,
+        orElse: () => throw Exception('Tratamiento no encontrado'),
+      );
+      return Right(found);
+    } catch (e) {
+      return Left(CacheFailure(message: e.toString()));
     }
   }
 
@@ -42,15 +38,14 @@ class TreatmentRepositoryImpl implements TreatmentRepository {
     required String treatmentId,
     required String stepId,
   }) async {
-    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      await remoteDataSource.markStepComplete(
+      await localDataSource.markStepComplete(
         treatmentId: treatmentId,
         stepId: stepId,
       );
       return const Right(null);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(CacheFailure(message: e.toString()));
     }
   }
 }

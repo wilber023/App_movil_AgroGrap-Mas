@@ -19,18 +19,8 @@ class _AprendizCropRegisterPageState extends State<AprendizCropRegisterPage> {
   static const _crops = [
     ('🎃', 'Calabaza'),
     ('🫘', 'Frijol'),
-    ('🍎', 'Manzana'),
-    ('🫐', 'Mora'),
-    ('🍒', 'Cereza'),
     ('🌽', 'Maíz'),
-    ('🍑', 'Durazno'),
-    ('🍇', 'Uva'),
-    ('🍊', 'Naranja'),
-    ('🫑', 'Pimienta'),
     ('🥔', 'Papa'),
-    ('🍓', 'Frambuesa'),
-    ('🌱', 'Soja'),
-    ('🍓', 'Fresa'),
     ('🍅', 'Tomate'),
   ];
 

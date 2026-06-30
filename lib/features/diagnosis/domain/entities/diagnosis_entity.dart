@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../data/services/cnn_engine/cnn_result.dart';
+import 'llm_response_entity.dart';
 
 class DiagnosisEntity extends Equatable {
   final String id;
@@ -15,6 +16,8 @@ class DiagnosisEntity extends Equatable {
   final String statusLabel;
   // Top-K predicciones del CNN (solo vive en sesión, no se persiste en Hive)
   final List<TopKPrediction> topK;
+  // Respuesta del LLM/RAG (se persiste en Hive tras la primera consulta)
+  final LlmResponseEntity? llmResponse;
 
   const DiagnosisEntity({
     required this.id,
@@ -28,6 +31,7 @@ class DiagnosisEntity extends Equatable {
     this.treatmentStep,
     required this.statusLabel,
     this.topK = const [],
+    this.llmResponse,
   });
 
   @override

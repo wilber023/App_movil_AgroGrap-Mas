@@ -7,6 +7,7 @@ import 'package:hive/hive.dart';
 
 import '../../data/services/cnn_engine.dart';
 import '../../domain/entities/diagnosis_entity.dart';
+import '../../domain/entities/llm_response_entity.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- DiagnosisBloc
@@ -34,7 +35,10 @@ final class DiagnosisPhotoCaptured extends DiagnosisEvent {
 }
 
 final class DiagnosisProcessRequested extends DiagnosisEvent {
-  const DiagnosisProcessRequested();
+  final String? userText;
+  const DiagnosisProcessRequested({this.userText});
+  @override
+  List<Object?> get props => [userText];
 }
 
 final class DiagnosisHistoryRequested extends DiagnosisEvent {
@@ -50,6 +54,14 @@ final class DiagnosisFilterHistory extends DiagnosisEvent {
 
 final class DiagnosisReset extends DiagnosisEvent {
   const DiagnosisReset();
+}
+
+final class DiagnosisLlmSaved extends DiagnosisEvent {
+  final String diagnosisId;
+  final LlmResponseEntity llmResponse;
+  const DiagnosisLlmSaved({required this.diagnosisId, required this.llmResponse});
+  @override
+  List<Object?> get props => [diagnosisId];
 }
 
 // -- States ------------------------------------------------------------------
@@ -80,9 +92,10 @@ final class DiagnosisProcessing extends DiagnosisState {
 
 final class DiagnosisResult extends DiagnosisState {
   final DiagnosisEntity diagnosis;
-  const DiagnosisResult(this.diagnosis);
+  final String? userText;
+  const DiagnosisResult(this.diagnosis, {this.userText});
   @override
-  List<Object?> get props => [diagnosis];
+  List<Object?> get props => [diagnosis, userText];
 }
 
 final class DiagnosisError extends DiagnosisState {
@@ -121,6 +134,7 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     on<DiagnosisHistoryRequested>(_onHistoryRequested);
     on<DiagnosisFilterHistory>(_onFilterHistory);
     on<DiagnosisReset>(_onReset);
+    on<DiagnosisLlmSaved>(_onLlmSaved);
   }
 
   void _onCameraIdle(DiagnosisCameraIdle event, Emitter<DiagnosisState> emit) {
@@ -155,7 +169,7 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
       );
 
       await _persistDiagnosis(entity);
-      emit(DiagnosisResult(entity));
+      emit(DiagnosisResult(entity, userText: event.userText));
     } on StateError catch (e) {
       debugPrint('[DiagnosisBloc] Modelo no disponible: $e');
       emit(const DiagnosisError(
@@ -207,6 +221,25 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     emit(const DiagnosisIdle());
   }
 
+  /// Persiste la respuesta LLM en la entrada de Hive del diagnóstico indicado.
+  Future<void> _onLlmSaved(
+      DiagnosisLlmSaved event, Emitter<DiagnosisState> emit) async {
+    for (final key in _historyBox.keys) {
+      final raw = _historyBox.get(key);
+      if (raw == null) continue;
+      try {
+        final m = jsonDecode(raw) as Map<String, dynamic>;
+        if (m['id'] == event.diagnosisId) {
+          m['llmResponse'] = event.llmResponse.toJson();
+          await _historyBox.put(key, jsonEncode(m));
+          return;
+        }
+      } catch (e) {
+        debugPrint('[DiagnosisBloc] Error al guardar LLM en Hive: $e');
+      }
+    }
+  }
+
   // -- Helpers ---------------------------------------------------------------
 
   /// Deriva el statusLabel directamente del nombre de enfermedad detectado.
@@ -249,6 +282,7 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
   }
 
   DiagnosisEntity _mapToEntity(Map<String, dynamic> m) {
+    final llmJson = m['llmResponse'] as Map<String, dynamic>?;
     return DiagnosisEntity(
       id: m['id'] as String? ?? '',
       diseaseName: m['diseaseName'] as String? ?? '',
@@ -260,6 +294,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
       isPendingSync: m['isPendingSync'] as bool? ?? false,
       statusLabel: m['statusLabel'] as String? ?? 'Seguimiento',
       // topK vacío en historial persistido (no se guarda)
+      llmResponse:
+          llmJson != null ? LlmResponseEntity.fromJson(llmJson) : null,
     );
   }
 }

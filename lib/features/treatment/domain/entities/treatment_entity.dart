@@ -4,6 +4,9 @@ class TreatmentEntity extends Equatable {
   final String id;
   final String diseaseName;
   final String cropName;
+  final String llmDiagnostico;
+  final String llmTratamiento;
+  final String llmPrevencion;
   final int totalSteps;
   final int completedSteps;
   final bool remindersActive;
@@ -14,6 +17,9 @@ class TreatmentEntity extends Equatable {
     required this.id,
     required this.diseaseName,
     required this.cropName,
+    this.llmDiagnostico = '',
+    this.llmTratamiento = '',
+    this.llmPrevencion = '',
     required this.totalSteps,
     required this.completedSteps,
     this.remindersActive = true,

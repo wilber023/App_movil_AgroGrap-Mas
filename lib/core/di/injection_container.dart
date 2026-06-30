@@ -43,13 +43,18 @@ import '../../features/home/domain/usecases/get_dashboard_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 
 import '../../features/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
+import '../../features/diagnosis/data/datasources/llm_diagnosis_datasource.dart';
 import '../../features/diagnosis/data/repositories/diagnosis_repository_impl.dart';
+import '../../features/diagnosis/data/repositories/llm_diagnosis_repository_impl.dart';
 import '../../features/diagnosis/domain/repositories/diagnosis_repository.dart';
+import '../../features/diagnosis/domain/repositories/llm_diagnosis_repository.dart';
 import '../../features/diagnosis/domain/usecases/diagnosis_usecases.dart';
+import '../../features/diagnosis/domain/usecases/get_llm_diagnosis_usecase.dart';
 import '../../features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
+import '../../features/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
 
 // -- Treatment --
-import '../../features/treatment/data/datasources/treatment_remote_datasource.dart';
+import '../../features/treatment/data/datasources/treatment_local_datasource.dart';
 import '../../features/treatment/data/repositories/treatment_repository_impl.dart';
 import '../../features/treatment/domain/repositories/treatment_repository.dart';
 import '../../features/treatment/domain/usecases/treatment_usecases.dart';
@@ -123,6 +128,9 @@ Future<void> _initCore() async {
 
   final diagnosisBox = await Hive.openBox<String>('diagnosis_history');
   sl.registerLazySingleton<Box<String>>(() => diagnosisBox, instanceName: 'diagnosisBox');
+
+  final agendaBox = await Hive.openBox<String>('agenda_box');
+  sl.registerLazySingleton<Box<String>>(() => agendaBox, instanceName: 'agendaBox');
 
   final seleccionesBox = await Hive.openBox<String>('selecciones_box');
   sl.registerLazySingleton<Box<String>>(() => seleccionesBox, instanceName: 'seleccionesBox');
@@ -303,6 +311,55 @@ void _initDiagnosisFeature() {
   sl.registerFactory(() => DiagnosisBloc(
         historyBox: sl<Box<String>>(instanceName: 'diagnosisBox'),
       ));
+
+  // -- LLM/RAG: diagnóstico enriquecido (http://52.1.110.21:8000) --
+  // Dio dedicado con timeout extendido (Ollama puede tardar hasta 120 s).
+  sl.registerLazySingleton<Dio>(
+    () {
+      final refreshDio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.baseUrl,
+          connectTimeout:
+              const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+          receiveTimeout:
+              const Duration(milliseconds: ApiEndpoints.defaultTimeoutMs),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      final llmDio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.llmBaseUrl,
+          connectTimeout:
+              const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+          receiveTimeout:
+              const Duration(milliseconds: ApiEndpoints.llmTimeoutMs),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      llmDio.interceptors.addAll([
+        ErrorInterceptor(),
+        AuthInterceptor(tokenStorage: sl<TokenStorage>(), refreshDio: refreshDio),
+        LoggingInterceptor(),
+      ]);
+      return llmDio;
+    },
+    instanceName: 'llmDio',
+  );
+
+  sl.registerLazySingleton<LlmDiagnosisDataSource>(
+    () => LlmDiagnosisDataSourceImpl(sl<Dio>(instanceName: 'llmDio')),
+  );
+
+  sl.registerLazySingleton<LlmDiagnosisRepository>(
+    () => LlmDiagnosisRepositoryImpl(
+      dataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(() => GetLlmDiagnosisUseCase(sl()));
+
+  sl.registerFactory(() => LlmDiagnosisCubit(sl()));
 }
 
 // =============================================================================
@@ -311,15 +368,15 @@ void _initDiagnosisFeature() {
 // =============================================================================
 
 void _initTreatmentFeature() {
-  sl.registerLazySingleton<TreatmentRemoteDataSource>(
-    () => TreatmentRemoteDataSourceImpl(client: sl()),
+  sl.registerLazySingleton<TreatmentLocalDataSource>(
+    () => TreatmentLocalDataSourceImpl(
+      diagnosisBox: sl<Box<String>>(instanceName: 'diagnosisBox'),
+      agendaBox: sl<Box<String>>(instanceName: 'agendaBox'),
+    ),
   );
 
   sl.registerLazySingleton<TreatmentRepository>(
-    () => TreatmentRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => TreatmentRepositoryImpl(localDataSource: sl()),
   );
 
   sl.registerLazySingleton(() => GetTreatmentAgendaUseCase(sl()));

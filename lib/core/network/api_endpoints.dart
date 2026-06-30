@@ -14,8 +14,13 @@ abstract final class ApiEndpoints {
   // Base URL del microservicio de cultivos (Nginx en puerto 80, sin puerto explícito).
   static const String cultivosBaseUrl = 'http://3.217.217.227/api/v1';
 
+  // Base URL del microservicio LLM/RAG (diagnóstico enriquecido).
+  static const String llmBaseUrl = 'http://52.1.110.21:8000';
+
   static const int defaultTimeoutMs = 30000;
   static const int connectTimeoutMs = 15000;
+  // Timeout extendido para el LLM (Ollama puede tardar hasta 120 s).
+  static const int llmTimeoutMs = 180000;
 
   // -- AUTH (Bienvenida / Registro de Cuenta) --
   static const AuthEndpoints auth = AuthEndpoints._();
@@ -50,6 +55,9 @@ abstract final class ApiEndpoints {
 
   // -- APRENDIZ (Aprendiz Agrícola) --
   static const AprendizEndpoints aprendiz = AprendizEndpoints._();
+
+  // -- LLM / RAG (Diagnóstico enriquecido) --
+  static const LlmEndpoints llm = LlmEndpoints._();
 }
 
 class AuthEndpoints {
@@ -174,5 +182,17 @@ class SeleccionesApiEndpoints {
   String get myListAlias => '/selecciones/me';
   String byId(String id) => '/selecciones/$id';
   String currentByUser(String userId) => '/selecciones/usuario/$userId/actual';
+}
+
+// =============================================================================
+// LLM / RAG MICROSERVICIO (http://52.1.110.21:8000)
+// Acepta el mismo JWT del microservicio de Usuarios.
+// =============================================================================
+
+class LlmEndpoints {
+  const LlmEndpoints._();
+
+  /// Endpoint principal: CNN result + texto de usuario → diagnóstico enriquecido.
+  String get consultar => '/api/v1/consultar';
 }
 

@@ -1,29 +1,159 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../data/services/cnn_engine/cnn_result.dart';
 import '../../domain/entities/diagnosis_entity.dart';
+import '../../domain/entities/llm_response_entity.dart';
+import '../bloc/diagnosis_bloc.dart';
+import '../bloc/llm_diagnosis_cubit.dart';
+import '../../../treatment/presentation/bloc/treatment_bloc.dart';
 
 // =============================================================================
-// AgroGraph-MAS -- Resultado del Diagnóstico CNN
-// Muestra: cultivo, enfermedad, confianza, top-K predicciones
+// AgroGraph-MAS -- Resultado del Diagnóstico CNN + Asistente IA
 // =============================================================================
 
 const Color _bg = Color(0xFFF8FAF5);
 const Color _textPrimary = Color(0xFF1B2D27);
 const Color _textSecondary = Color(0xFF6B8F71);
 const Color _trackGrey = Color(0xFFE2EBE6);
-
 const Color _chipGreenBg = Color(0xFFEAF3DE);
 const Color _chipGreenText = Color(0xFF27500A);
+const Color _chipAmberBg = Color(0xFFFFF3E0);
+const Color _chipAmberText = Color(0xFF7B4A10);
 
+// Punto de entrada: provee el cubit y delega a la vista con estado.
 class DiagnosisResultPage extends StatelessWidget {
   final DiagnosisEntity diagnosis;
+  final String? userText;
 
-  const DiagnosisResultPage({super.key, required this.diagnosis});
+  const DiagnosisResultPage({
+    super.key,
+    required this.diagnosis,
+    this.userText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) {
+        final cubit = sl<LlmDiagnosisCubit>();
+        // Si el diagnóstico ya tiene respuesta LLM guardada, la carga
+        // directamente sin hacer ninguna petición de red.
+        if (diagnosis.llmResponse != null) {
+          cubit.loadCached(diagnosis.llmResponse!);
+        }
+        return cubit;
+      },
+      child: _ResultView(diagnosis: diagnosis, userText: userText),
+    );
+  }
+}
+
+// =============================================================================
+// Vista interna con estado (campo de texto + llamada LLM)
+// =============================================================================
+
+class _ResultView extends StatefulWidget {
+  final DiagnosisEntity diagnosis;
+  final String? userText;
+  const _ResultView({required this.diagnosis, this.userText});
+
+  @override
+  State<_ResultView> createState() => _ResultViewState();
+}
+
+class _ResultViewState extends State<_ResultView> {
+  late bool _isAddedToAgenda;
+
+  Box<String> get _agendaBox => sl<Box<String>>(instanceName: 'agendaBox');
+
+  String get _agendaKey => 'agenda_added_${widget.diagnosis.id}';
+
+  @override
+  void initState() {
+    super.initState();
+    _isAddedToAgenda = _agendaBox.get(_agendaKey) != null;
+
+    // Solo llama al LLM si no hay respuesta ya guardada (nueva diagnosis)
+    if (widget.diagnosis.llmResponse == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<LlmDiagnosisCubit>().consultar(
+                diagnosis: widget.diagnosis,
+                userText: widget.userText,
+              );
+        }
+      });
+    }
+  }
+
+  Future<void> _addToAgenda() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Agregar a la agenda',
+          style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          '¿Deseas agregar un plan de tratamiento para '
+          '${widget.diagnosis.diseaseName} en ${widget.diagnosis.cropName} '
+          'a tu agenda agronómica?',
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'No agregar',
+              style: TextStyle(fontFamily: 'Inter', color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forestGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Agregar',
+              style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    await _agendaBox.put(_agendaKey, 'true');
+    if (!mounted) return;
+    setState(() => _isAddedToAgenda = true);
+    // Refresca la agenda para que aparezca inmediatamente
+    context.read<TreatmentBloc>().add(const TreatmentAgendaRequested());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Tratamiento agregado a la agenda',
+          style: TextStyle(fontFamily: 'Inter'),
+        ),
+        backgroundColor: AppColors.forestGreen,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,21 +176,100 @@ class DiagnosisResultPage extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          children: [
-            _buildHeroCard(),
-            if (diagnosis.topK.length > 1) ...[
+      body: BlocListener<LlmDiagnosisCubit, LlmDiagnosisState>(
+        // Cuando llega una respuesta nueva la persiste en Hive via DiagnosisBloc
+        listener: (context, state) {
+          if (state is LlmDiagnosisLoaded &&
+              widget.diagnosis.llmResponse == null) {
+            context.read<DiagnosisBloc>().add(DiagnosisLlmSaved(
+                  diagnosisId: widget.diagnosis.id,
+                  llmResponse: state.response,
+                ));
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            children: [
+              _buildHeroCard(),
+              if (widget.diagnosis.topK.length > 1) ...[
+                const SizedBox(height: 8),
+                _buildTopKSection(),
+              ],
               const SizedBox(height: 8),
-              _buildTopKSection(),
+              _buildLlmSection(context),
+              const SizedBox(height: 8),
+              // Botón de agenda: solo si hay LLM cargado y la planta no está sana
+              if (widget.diagnosis.statusLabel != 'Saludable')
+                BlocBuilder<LlmDiagnosisCubit, LlmDiagnosisState>(
+                  builder: (context, llmState) {
+                    if (llmState is! LlmDiagnosisLoaded) {
+                      return const SizedBox.shrink();
+                    }
+                    return _buildAgendaButton();
+                  },
+                ),
+              const SizedBox(height: 24),
             ],
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Botón de agenda
+  // ---------------------------------------------------------------------------
+
+  Widget _buildAgendaButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+      child: SizedBox(
+        width: double.infinity,
+        child: _isAddedToAgenda
+            ? OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                label: const Text(
+                  'Tratamiento en agenda',
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.forestGreen,
+                  disabledForegroundColor: AppColors.forestGreen,
+                  side: const BorderSide(
+                      color: AppColors.forestGreen, width: 0.8),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              )
+            : ElevatedButton.icon(
+                onPressed: _addToAgenda,
+                icon: const Icon(Icons.event_note_outlined, size: 16),
+                label: const Text(
+                  'Agregar tratamiento a la agenda',
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.forestGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
+              ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sección CNN: hero card
+  // ---------------------------------------------------------------------------
 
   Widget _buildHeroCard() {
     return Container(
@@ -75,7 +284,7 @@ class DiagnosisResultPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            diagnosis.diseaseName,
+            widget.diagnosis.diseaseName,
             style: AppTypography.tituloMd.copyWith(
               color: _textPrimary,
               fontWeight: FontWeight.w500,
@@ -85,9 +294,9 @@ class DiagnosisResultPage extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              _pill(diagnosis.cropName, _chipGreenBg, _chipGreenText),
+              _pill(widget.diagnosis.cropName, _chipGreenBg, _chipGreenText),
               const SizedBox(width: 6),
-              _pill(diagnosis.diseaseName, _chipGreenBg, _chipGreenText),
+              _pill(widget.diagnosis.diseaseName, _chipGreenBg, _chipGreenText),
             ],
           ),
           const SizedBox(height: 10),
@@ -103,7 +312,7 @@ class DiagnosisResultPage extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(diagnosis.confidence * 100).toInt()}%',
+                '${(widget.diagnosis.confidence * 100).toInt()}%',
                 style: AppTypography.labelMd.copyWith(
                   color: AppColors.forestGreen,
                   fontSize: 11,
@@ -122,7 +331,7 @@ class DiagnosisResultPage extends StatelessWidget {
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
-              widthFactor: diagnosis.confidence.clamp(0.0, 1.0),
+              widthFactor: widget.diagnosis.confidence.clamp(0.0, 1.0),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.forestGreen,
@@ -146,10 +355,10 @@ class DiagnosisResultPage extends StatelessWidget {
             child: SizedBox(
               height: 180,
               width: double.infinity,
-              child: diagnosis.imagePath != null &&
-                      File(diagnosis.imagePath!).existsSync()
+              child: widget.diagnosis.imagePath != null &&
+                      File(widget.diagnosis.imagePath!).existsSync()
                   ? Image.file(
-                      File(diagnosis.imagePath!),
+                      File(widget.diagnosis.imagePath!),
                       fit: BoxFit.cover,
                     )
                   : Container(
@@ -167,26 +376,12 @@ class DiagnosisResultPage extends StatelessWidget {
     );
   }
 
-  Widget _pill(String text, Color bg, Color textCol) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 10,
-          color: textCol,
-        ),
-      ),
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // Sección CNN: top-K
+  // ---------------------------------------------------------------------------
 
   Widget _buildTopKSection() {
-    final others = diagnosis.topK.skip(1).toList();
+    final others = widget.diagnosis.topK.skip(1).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Container(
@@ -269,6 +464,399 @@ class DiagnosisResultPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sección LLM: campo de texto + botón + respuesta
+  // ---------------------------------------------------------------------------
+
+  Widget _buildLlmSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: BlocBuilder<LlmDiagnosisCubit, LlmDiagnosisState>(
+        builder: (context, state) {
+          if (state is LlmDiagnosisIdle || state is LlmDiagnosisLoading) {
+            return _buildSuggestionsLoadingCard();
+          }
+          if (state is LlmDiagnosisError) {
+            return _buildSuggestionsErrorCard(context, state.message);
+          }
+          if (state is LlmDiagnosisLoaded) {
+            return _buildLlmResultCard(state.response);
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsLoadingCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _trackGrey, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              color: AppColors.forestGreen,
+              strokeWidth: 2,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'Cargando sugerencias IA...',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: _textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsErrorCard(BuildContext context, String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _trackGrey, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.wifi_off_outlined, size: 16, color: _textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                color: _textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.read<LlmDiagnosisCubit>().consultar(
+                  diagnosis: widget.diagnosis,
+                  userText: widget.userText,
+                ),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.forestGreen,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            child: const Text(
+              'Reintentar',
+              style: TextStyle(fontFamily: 'Inter', fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLlmResultCard(LlmResponseEntity r) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _trackGrey, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Encabezado con confianza ajustada
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome,
+                    size: 14, color: AppColors.forestGreen),
+                const SizedBox(width: 6),
+                const Text(
+                  'Resultado del asistente IA',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                _estadoBadge(r.estado),
+              ],
+            ),
+          ),
+          if (r.confianzaAjustada > 0) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Confianza ajustada',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      color: _textSecondary,
+                    ),
+                  ),
+                  Text(
+                    '${(r.confianzaAjustada * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.forestGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          _divider(),
+          // Avisos (si existen)
+          if (r.avisos.isNotEmpty) ...[
+            _sectionBlock(
+              icon: Icons.warning_amber_rounded,
+              iconColor: const Color(0xFF7B4A10),
+              bgColor: _chipAmberBg,
+              label: 'Aviso',
+              content: r.avisos.join('\n'),
+              textColor: _chipAmberText,
+            ),
+            _divider(),
+          ],
+          // Diagnóstico IA
+          if (r.diagnostico.isNotEmpty) ...[
+            _sectionBlock(
+              icon: Icons.biotech_outlined,
+              label: 'Diagnóstico',
+              content: r.diagnostico,
+            ),
+            _divider(),
+          ],
+          // Tratamiento
+          if (r.tratamiento.isNotEmpty) ...[
+            _sectionBlock(
+              icon: Icons.healing_outlined,
+              label: 'Tratamiento',
+              content: r.tratamiento,
+            ),
+            _divider(),
+          ],
+          // Prevención
+          if (r.prevencion.isNotEmpty) ...[
+            _sectionBlock(
+              icon: Icons.shield_outlined,
+              label: 'Prevención',
+              content: r.prevencion,
+            ),
+          ],
+          // Fuentes
+          if (r.fuentes.isNotEmpty) ...[
+            _divider(),
+            _sourcesBlock(r.fuentes),
+          ],
+          if (r.sinDocumentos) ...[
+            _divider(),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(14, 8, 14, 12),
+              child: Text(
+                'No se encontraron documentos de referencia. La respuesta es generada por el modelo sin base documental.',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 10,
+                  color: _textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionBlock({
+    required IconData icon,
+    required String label,
+    required String content,
+    Color iconColor = AppColors.forestGreen,
+    Color? bgColor,
+    Color? textColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 13, color: iconColor),
+              const SizedBox(width: 5),
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: iconColor,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: bgColor != null
+                ? const EdgeInsets.all(8)
+                : EdgeInsets.zero,
+            decoration: bgColor != null
+                ? BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(6),
+                  )
+                : null,
+            child: Text(
+              content,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: textColor ?? _textPrimary,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sourcesBlock(List<String> fuentes) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.menu_book_outlined, size: 13, color: _textSecondary),
+              SizedBox(width: 5),
+              Text(
+                'FUENTES',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: _textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...fuentes.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• ',
+                      style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 11,
+                          color: _textSecondary)),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        color: _textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _estadoBadge(String estado) {
+    Color bg;
+    Color text;
+    String label;
+    switch (estado) {
+      case 'reforzado':
+        bg = _chipGreenBg;
+        text = _chipGreenText;
+        label = 'Reforzado';
+      case 'posible_contradiccion':
+        bg = _chipAmberBg;
+        text = _chipAmberText;
+        label = 'Revisar';
+      default:
+        bg = _trackGrey;
+        text = _textSecondary;
+        label = 'Analizado';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: text,
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() => Container(
+        height: 0.5,
+        color: _trackGrey,
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+      );
+
+  Widget _pill(String text, Color bg, Color textCol) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 10,
+          color: textCol,
+        ),
       ),
     );
   }

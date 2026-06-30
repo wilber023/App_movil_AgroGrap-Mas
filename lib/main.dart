@@ -105,7 +105,21 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            final prev = _currentIndex;
+            setState(() => _currentIndex = index);
+            // Al volver al tab de cámara, limpia estados residuales
+            if (index == 1 && prev != 1) {
+              final bloc = context.read<DiagnosisBloc>();
+              if (bloc.state is DiagnosisResult || bloc.state is DiagnosisError) {
+                bloc.add(const DiagnosisReset());
+              }
+            }
+            // Refresca la agenda desde Hive cada vez que se abre el tab
+            if (index == 3) {
+              context.read<TreatmentBloc>().add(const TreatmentAgendaRequested());
+            }
+          },
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppColors.surfaceContainerLowest,
           selectedItemColor: AppColors.navActive,
