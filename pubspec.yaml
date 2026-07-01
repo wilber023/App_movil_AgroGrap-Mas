@@ -52,6 +52,11 @@ dependencies:
   # Connectivity
   connectivity_plus: ^6.1.4
 
+  # SQLite (Offline Mode — documentos Top-K, embeddings, índices locales)
+  sqflite: ^2.3.3
+  path: ^1.9.1
+  path_provider: ^2.1.4
+
   # Camera (Captura de Cultivo)
   camera: ^0.11.1
   image_picker: ^1.1.2

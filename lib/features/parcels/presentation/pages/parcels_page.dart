@@ -32,7 +32,7 @@ class ParcelsPage extends StatelessWidget {
   static const List<String> _stages = ['Siembra', 'Vegetativo', 'Floracion', 'Cosecha'];
 
   static const Map<String, String> _emojiMap = {
-    'Calabaza': '🎃', 'Frijol': '🫘', 'Manzana': '🍎', 'Mora': '🫐',
+    'Calabaza': '🍈', 'Frijol': '🫘', 'Manzana': '🍎', 'Mora': '🫐',
     'Cereza': '🍒', 'Maíz': '🌽', 'Durazno': '🍑', 'Uva': '🍇',
     'Naranja': '🍊', 'Pimienta': '🌶️', 'Papa': '🥔', 'Frambuesa': '🍓',
     'Soja': '🌱', 'Fresa': '🍓', 'Tomate': '🍅',

@@ -27,6 +27,7 @@ class TreatmentPage extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Agenda Agronómica',
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),

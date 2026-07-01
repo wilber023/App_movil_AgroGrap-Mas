@@ -60,6 +60,13 @@ import '../../features/treatment/domain/repositories/treatment_repository.dart';
 import '../../features/treatment/domain/usecases/treatment_usecases.dart';
 import '../../features/treatment/presentation/bloc/treatment_bloc.dart';
 
+// -- Offline Mode --
+import '../../features/offline/data/datasources/offline_local_datasource.dart';
+import '../../features/offline/data/repositories/offline_repository_impl.dart';
+import '../../features/offline/domain/repositories/offline_repository.dart';
+import '../../features/offline/domain/usecases/offline_usecases.dart';
+import '../../features/offline/presentation/cubit/offline_cubit.dart';
+
 // -- Aprendiz --
 import '../../features/aprendiz/data/datasources/crop_plan_local_datasource.dart';
 import '../../features/aprendiz/data/datasources/crop_plan_remote_datasource.dart';
@@ -114,6 +121,7 @@ Future<void> initDependencies() async {
   _initParcelsFeature();
   _initEconomicsFeature();
   _initProfileFeature();
+  await _initOfflineFeature();
   _initAprendizFeature();
 }
 
@@ -490,6 +498,36 @@ void _initEconomicsFeature() {
 // FEATURE: PROFILE (Perfil)
 // Stitch screen: 2fd4aa99...
 // =============================================================================
+
+// =============================================================================
+// FEATURE: OFFLINE MODE (Diagnóstico sin conexión + Top-K local)
+// SQLite: agro_offline.db
+// PUNTO DE INTEGRACIÓN LLM/RAG: ver OfflineLocalDataSource + OfflineRepository
+// =============================================================================
+
+Future<void> _initOfflineFeature() async {
+  sl.registerLazySingleton<OfflineLocalDataSource>(
+    () => OfflineLocalDataSourceImpl(),
+  );
+
+  sl.registerLazySingleton<OfflineRepository>(
+    () => OfflineRepositoryImpl(dataSource: sl()),
+  );
+
+  sl.registerLazySingleton(() => GetOfflineStatusUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleOfflineModeUseCase(sl()));
+  sl.registerLazySingleton(() => GetOfflineCatalogUseCase(sl()));
+  sl.registerLazySingleton(() => DownloadOfflineDocumentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteOfflineDocumentUseCase(sl()));
+
+  sl.registerFactory(() => OfflineCubit(
+        getStatusUseCase: sl(),
+        toggleModeUseCase: sl(),
+        getCatalogUseCase: sl(),
+        downloadUseCase: sl(),
+        deleteUseCase: sl(),
+      ));
+}
 
 void _initProfileFeature() {
   // -- DataSources --

@@ -17,7 +17,7 @@ class _AprendizCropRegisterPageState extends State<AprendizCropRegisterPage> {
   String _selectedUnit = 'Hectáreas';
 
   static const _crops = [
-    ('🎃', 'Calabaza'),
+    ('🍈', 'Calabaza'),
     ('🫘', 'Frijol'),
     ('🌽', 'Maíz'),
     ('🥔', 'Papa'),

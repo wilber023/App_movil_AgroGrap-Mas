@@ -16,6 +16,7 @@ import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/parcels/presentation/pages/parcels_page.dart';
 import 'features/parcels/presentation/bloc/parcel_bloc.dart';
+import 'features/offline/presentation/cubit/offline_cubit.dart';
 import 'features/treatment/presentation/bloc/treatment_bloc.dart';
 import 'features/treatment/presentation/pages/treatment_page.dart';
 
@@ -58,6 +59,9 @@ class AgroGraphApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => sl<ParcelBloc>()..add(const ParcelLoadRequested()),
+        ),
+        BlocProvider(
+          create: (_) => sl<OfflineCubit>()..loadStatus(),
         ),
       ],
       child: MaterialApp(

@@ -1,23 +1,36 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/pages/select_profile_page.dart';
+import '../../../offline/presentation/cubit/offline_cubit.dart';
+import '../../../offline/presentation/pages/offline_mode_page.dart';
 import '../../../subscription/presentation/pages/subscription_page.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final user = authState is AuthAuthenticated
+            ? authState.user
+            : UserEntity.empty;
+        return _ProfileScaffold(user: user);
+      },
+    );
+  }
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  bool _offlineMode = true;
+class _ProfileScaffold extends StatelessWidget {
+  final UserEntity user;
+  const _ProfileScaffold({required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -28,18 +41,17 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.onSurface,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. ENCABEZADO DEL USUARIO
-            _buildUserHeader(context),
+            _buildUserHeader(context, user),
             const SizedBox(height: 32),
 
-            // 2. SECCION "MI CUENTA"
             _buildSectionTitle('MI CUENTA'),
             const SizedBox(height: 8),
             _buildListTile(
@@ -47,32 +59,17 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: Icons.person_outline_rounded,
             ),
             _buildListTile(
-              title: 'Region y cultivos',
+              title: 'Región y cultivos',
               icon: Icons.layers_outlined,
             ),
             _buildListTile(
               title: 'Notificaciones y recordatorios',
               icon: Icons.notifications_none_rounded,
             ),
-            _buildSwitchTile(
-              title: 'Modo sin conexion',
-              icon: Icons.wifi_off_rounded,
-              value: _offlineMode,
-              onChanged: (val) {
-                setState(() {
-                  _offlineMode = val;
-                });
-              },
-            ),
-            _buildListTile(
-              title: 'Almacenamiento local',
-              icon: Icons.storage_rounded,
-              subtitle: '24 MB \u00B7 3 en cola',
-            ),
+            _buildOfflineCard(context),
             const SizedBox(height: 32),
 
-            // 3. SECCION "SUSCRIPCION"
-            _buildSectionTitle('SUSCRIPCION'),
+            _buildSectionTitle('SUSCRIPCIÓN'),
             const SizedBox(height: 8),
             _buildListTile(
               title: 'Mi plan actual: Free',
@@ -80,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
               trailingWidget: GestureDetector(
                 onTap: () => _goToSubscription(context),
                 child: Text(
-                  'Ver Pro \u2192',
+                  'Ver Pro →',
                   style: AppTypography.labelMd.copyWith(
                     color: AppColors.burntOrange,
                     fontWeight: FontWeight.bold,
@@ -89,26 +86,24 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             _buildListTile(
-              title: 'Pausar suscripcion',
+              title: 'Pausar suscripción',
               icon: Icons.pause_circle_outline_rounded,
             ),
             _buildListTile(
-              title: 'Cancelar suscripcion',
+              title: 'Cancelar suscripción',
               icon: Icons.cancel_outlined,
               textColor: AppColors.error,
               iconColor: AppColors.error,
             ),
             const SizedBox(height: 32),
 
-            // 4. SECCION "LEGAL Y PRIVACIDAD"
             _buildSectionTitle('LEGAL Y PRIVACIDAD'),
             const SizedBox(height: 8),
-            _buildExternalLinkTile('Politica de privacidad'),
-            _buildExternalLinkTile('Terminos de uso'),
-            _buildExternalLinkTile('Como manejamos tus datos'),
+            _buildExternalLinkTile('Política de privacidad'),
+            _buildExternalLinkTile('Términos de uso'),
+            _buildExternalLinkTile('Cómo manejamos tus datos'),
             const SizedBox(height: 32),
 
-            // 5. SECCION "ZONA DE PELIGRO"
             _buildSectionTitle('ZONA DE PELIGRO'),
             const SizedBox(height: 8),
             _buildDangerZone(context),
@@ -119,8 +114,20 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Encabezado de usuario con tarjeta verde claro
-  Widget _buildUserHeader(BuildContext context) {
+  // ---------------------------------------------------------------------------
+  // Encabezado de usuario con datos reales del AuthBloc
+  // ---------------------------------------------------------------------------
+  Widget _buildUserHeader(BuildContext context, UserEntity user) {
+    final initials = _getInitials(user.fullName.isNotEmpty
+        ? user.fullName
+        : user.username.isNotEmpty
+            ? user.username
+            : 'AG');
+
+    final displayName =
+        user.fullName.isNotEmpty ? user.fullName : user.username;
+    final displaySub = user.email ?? user.phone ?? 'Agricultor';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -130,13 +137,12 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Izquierda: Avatar
-          const CircleAvatar(
+          CircleAvatar(
             radius: 28,
             backgroundColor: AppColors.forestGreen,
             child: Text(
-              'WH',
-              style: TextStyle(
+              initials,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -144,32 +150,33 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(width: 16),
-
-          // Centro: Informacion
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Wil Hdz',
+                  displayName,
                   style: AppTypography.tituloMd.copyWith(
                     color: AppColors.onSurface,
+                    fontSize: 17,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  'Chiapas \u00B7 3 parcelas activas',
+                  displaySub,
                   style: AppTypography.etiquetaSm.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+                    border: Border.all(
+                        color: AppColors.outlineVariant, width: 0.5),
                   ),
                   child: Text(
                     'PLAN FREE',
@@ -183,12 +190,10 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-
-          // Derecha: Link a Pro
           GestureDetector(
             onTap: () => _goToSubscription(context),
             child: Text(
-              'Mejorar a Pro \u2192',
+              'Mejorar a Pro →',
               style: AppTypography.labelMd.copyWith(
                 color: AppColors.burntOrange,
                 fontWeight: FontWeight.bold,
@@ -200,10 +205,68 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Titulo de seccion
+  // ---------------------------------------------------------------------------
+  // Acceso rápido a "Diagnóstico sin Conexión" — solo navegación, sin toggle
+  // ---------------------------------------------------------------------------
+  Widget _buildOfflineCard(BuildContext context) {
+    return BlocBuilder<OfflineCubit, OfflineState>(
+      builder: (context, state) {
+        final loaded = state is OfflineLoaded ? state : null;
+        final isEnabled = loaded?.status.isOfflineModeEnabled ?? false;
+        final downloaded = loaded?.status.downloadedCount ?? 0;
+        final total = loaded?.status.totalAvailableCount ?? 0;
+
+        return ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isEnabled
+                  ? AppColors.forestGreen.withValues(alpha: 0.15)
+                  : AppColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              Icons.cloud_off_rounded,
+              size: 20,
+              color: isEnabled
+                  ? AppColors.forestGreen
+                  : AppColors.onSurfaceVariant,
+            ),
+          ),
+          title: Text(
+            'Diagnóstico sin Conexión',
+            style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
+          ),
+          subtitle: Text(
+            loaded != null
+                ? (downloaded > 0
+                    ? '$downloaded/$total guías · ${isEnabled ? "Modo activo" : "Modo inactivo"}'
+                    : 'Gestiona recursos para uso sin internet')
+                : 'Gestiona recursos para uso sin internet',
+            style: AppTypography.etiquetaSm
+                .copyWith(color: AppColors.onSurfaceVariant),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded,
+              color: AppColors.outlineVariant, size: 20),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const OfflineModePage()),
+          ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+      padding: const EdgeInsets.only(left: 8, bottom: 4),
       child: Text(
         title,
         style: AppTypography.labelMd.copyWith(
@@ -215,7 +278,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// ListTile estandar
   Widget _buildListTile({
     required String title,
     required IconData icon,
@@ -235,39 +297,17 @@ class _ProfilePageState extends State<ProfilePage> {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTypography.etiquetaSm
+                  .copyWith(color: AppColors.onSurfaceVariant),
             )
           : null,
       trailing: trailingWidget ??
-          const Icon(Icons.chevron_right_rounded, color: AppColors.outlineVariant, size: 20),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppColors.outlineVariant, size: 20),
       onTap: onTap ?? () {},
     );
   }
 
-  /// ListTile con Switch para modo offline
-  Widget _buildSwitchTile({
-    required String title,
-    required IconData icon,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      leading: Icon(icon, color: AppColors.onSurfaceVariant, size: 24),
-      title: Text(
-        title,
-        style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        thumbColor: WidgetStateProperty.all(Colors.white),
-        activeTrackColor: Colors.blue, // Check azul segun instrucciones
-      ),
-    );
-  }
-
-  /// ListTile para enlaces externos
   Widget _buildExternalLinkTile(String title) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
@@ -275,50 +315,51 @@ class _ProfilePageState extends State<ProfilePage> {
         title,
         style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
       ),
-      trailing: const Icon(
-        Icons.open_in_new_rounded,
-        color: AppColors.outlineVariant,
-        size: 20,
-      ),
+      trailing: const Icon(Icons.open_in_new_rounded,
+          color: AppColors.outlineVariant, size: 20),
       onTap: () {},
     );
   }
 
-  /// Zona de peligro (Container rojo)
   Widget _buildDangerZone(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.errorContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.5), width: 1),
+        border:
+            Border.all(color: AppColors.error.withValues(alpha: 0.5), width: 1),
       ),
       child: Column(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: const Icon(Icons.logout_rounded, color: AppColors.error),
             title: Text(
-              'Cerrar sesion',
+              'Cerrar sesión',
               style: AppTypography.labelMd.copyWith(color: AppColors.error),
             ),
             onTap: () {
               context.read<AuthBloc>().add(const AuthLogoutRequested());
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const SelectProfilePage()),
-                (Route<dynamic> route) => false,
+                MaterialPageRoute(
+                    builder: (_) => const SelectProfilePage()),
+                (route) => false,
               );
             },
           ),
           const Divider(height: 1, color: AppColors.outlineVariant),
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            leading: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            leading:
+                const Icon(Icons.delete_outline_rounded, color: AppColors.error),
             title: Text(
               'Eliminar mi cuenta',
               style: AppTypography.labelMd.copyWith(color: AppColors.error),
             ),
             subtitle: Text(
-              'Esta accion es permanente e irreversible',
+              'Esta acción es permanente e irreversible',
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.error),
             ),
             onTap: () {},
@@ -334,4 +375,14 @@ class _ProfilePageState extends State<ProfilePage> {
       MaterialPageRoute(builder: (_) => const SubscriptionPage()),
     );
   }
+
+  String _getInitials(String fullName) {
+    final parts = fullName.trim().split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    if (parts.isNotEmpty) return parts[0][0].toUpperCase();
+    return 'AG';
+  }
 }
+

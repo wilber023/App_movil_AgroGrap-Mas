@@ -68,7 +68,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
   };
 
   static const Map<String, String> _emojiMap = {
-    'Calabaza': '🎃', 'Frijol': '🫘', 'Maíz': '🌽', 'Papa': '🥔', 'Tomate': '🍅',
+    'Calabaza': '🍈', 'Frijol': '🫘', 'Maíz': '🌽', 'Papa': '🥔', 'Tomate': '🍅',
   };
 
   @override
