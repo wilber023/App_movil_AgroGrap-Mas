@@ -36,7 +36,9 @@ Future<String> _compressToJpeg(String sourcePath) async {
 }
 
 class DiagnosisPage extends StatefulWidget {
-  const DiagnosisPage({super.key});
+  final String? parcelId;
+  final String? parcelName;
+  const DiagnosisPage({super.key, this.parcelId, this.parcelName});
 
   @override
   State<DiagnosisPage> createState() => _DiagnosisPageState();
@@ -234,7 +236,11 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   void _processWithAI() {
     final text = _symptomsController.text.trim();
     context.read<DiagnosisBloc>().add(
-          DiagnosisProcessRequested(userText: text.isEmpty ? null : text),
+          DiagnosisProcessRequested(
+            userText: text.isEmpty ? null : text,
+            parcelId: widget.parcelId,
+            parcelName: widget.parcelName,
+          ),
         );
     // Limpia para el próximo diagnóstico; el texto ya fue capturado arriba
     _symptomsController.clear();

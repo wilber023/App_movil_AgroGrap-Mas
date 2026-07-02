@@ -58,6 +58,20 @@ abstract final class ApiEndpoints {
 
   // -- LLM / RAG (Diagnóstico enriquecido) --
   static const LlmEndpoints llm = LlmEndpoints._();
+
+  // -- PRODUCTOS (Recomendaciones post-diagnóstico) --
+  // Host: 44.196.107.153:80 — servicio independiente con X-API-Key
+  static const String productsBaseUrl = 'http://44.196.107.153';
+  static const int productsTimeoutMs = 15000;
+  // La API key la proporciona el equipo backend.
+  // Para no hardcodearla, pásala en build-time:
+  //   flutter run --dart-define=PRODUCTS_API_KEY=tu_clave
+  static const String productsApiKey = String.fromEnvironment(
+    'PRODUCTS_API_KEY',
+    defaultValue: '4b7e2a9f1c6d3e8b5a0f4c9e2d7b1a6f3c8e5b2d9f0a4c7e1b6d3f8a5c2e9b4d',
+  );
+
+  static const ProductsEndpoints products = ProductsEndpoints._();
 }
 
 class AuthEndpoints {
@@ -194,5 +208,20 @@ class LlmEndpoints {
 
   /// Endpoint principal: CNN result + texto de usuario → diagnóstico enriquecido.
   String get consultar => '/api/v1/consultar';
+}
+
+// =============================================================================
+// PRODUCTOS MICROSERVICIO (http://44.196.107.153)
+// Auth: POST /auth/token (X-API-Key) → JWT → Bearer en cada request.
+// =============================================================================
+
+class ProductsEndpoints {
+  const ProductsEndpoints._();
+
+  /// POST /auth/token?user_type=agricultor_experimentado — devuelve JWT.
+  String get authToken => '/auth/token';
+
+  /// GET /products?disease=&crop=&per_page= — lista de productos.
+  String get products => '/products';
 }
 

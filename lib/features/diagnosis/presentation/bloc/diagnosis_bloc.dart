@@ -36,9 +36,18 @@ final class DiagnosisPhotoCaptured extends DiagnosisEvent {
 
 final class DiagnosisProcessRequested extends DiagnosisEvent {
   final String? userText;
-  const DiagnosisProcessRequested({this.userText});
+  final String? parcelId;
+  final String? parcelName;
+  const DiagnosisProcessRequested({this.userText, this.parcelId, this.parcelName});
   @override
-  List<Object?> get props => [userText];
+  List<Object?> get props => [userText, parcelId, parcelName];
+}
+
+final class DiagnosisParcelHistoryRequested extends DiagnosisEvent {
+  final String parcelId;
+  const DiagnosisParcelHistoryRequested({required this.parcelId});
+  @override
+  List<Object?> get props => [parcelId];
 }
 
 final class DiagnosisHistoryRequested extends DiagnosisEvent {
@@ -132,6 +141,7 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     on<DiagnosisPhotoCaptured>(_onPhotoCaptured);
     on<DiagnosisProcessRequested>(_onProcessRequested);
     on<DiagnosisHistoryRequested>(_onHistoryRequested);
+    on<DiagnosisParcelHistoryRequested>(_onParcelHistoryRequested);
     on<DiagnosisFilterHistory>(_onFilterHistory);
     on<DiagnosisReset>(_onReset);
     on<DiagnosisLlmSaved>(_onLlmSaved);
@@ -166,6 +176,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
         isPendingSync: true,
         statusLabel: _statusForDisease(cnn.diseaseName),
         topK: cnn.topK,
+        parcelId: event.parcelId,
+        parcelName: event.parcelName,
       );
 
       await _persistDiagnosis(entity);
@@ -186,6 +198,14 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
   void _onHistoryRequested(
       DiagnosisHistoryRequested event, Emitter<DiagnosisState> emit) {
     final items = _loadHistory();
+    emit(DiagnosisHistoryLoaded(allItems: items, filteredItems: items));
+  }
+
+  void _onParcelHistoryRequested(
+      DiagnosisParcelHistoryRequested event, Emitter<DiagnosisState> emit) {
+    final items = _loadHistory()
+        .where((e) => e.parcelId == event.parcelId)
+        .toList();
     emit(DiagnosisHistoryLoaded(allItems: items, filteredItems: items));
   }
 
@@ -260,6 +280,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
         'diagnosedAt': entity.diagnosedAt.toIso8601String(),
         'isPendingSync': entity.isPendingSync,
         'statusLabel': entity.statusLabel,
+        if (entity.parcelId != null) 'parcelId': entity.parcelId,
+        if (entity.parcelName != null) 'parcelName': entity.parcelName,
         // topK no se persiste (solo vive en sesión)
       });
       await _historyBox.add(encoded);
@@ -296,6 +318,8 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
       // topK vacío en historial persistido (no se guarda)
       llmResponse:
           llmJson != null ? LlmResponseEntity.fromJson(llmJson) : null,
+      parcelId: m['parcelId'] as String?,
+      parcelName: m['parcelName'] as String?,
     );
   }
 }

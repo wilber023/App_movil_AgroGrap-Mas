@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -10,8 +11,10 @@ import '../../../../core/theme/app_typography.dart';
 import '../../data/services/cnn_engine/cnn_result.dart';
 import '../../domain/entities/diagnosis_entity.dart';
 import '../../domain/entities/llm_response_entity.dart';
+import '../../domain/entities/product_entity.dart';
 import '../bloc/diagnosis_bloc.dart';
 import '../bloc/llm_diagnosis_cubit.dart';
+import '../cubit/product_recommendation_cubit.dart';
 import '../../../treatment/presentation/bloc/treatment_bloc.dart';
 
 // =============================================================================
@@ -40,16 +43,19 @@ class DiagnosisResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final cubit = sl<LlmDiagnosisCubit>();
-        // Si el diagnóstico ya tiene respuesta LLM guardada, la carga
-        // directamente sin hacer ninguna petición de red.
-        if (diagnosis.llmResponse != null) {
-          cubit.loadCached(diagnosis.llmResponse!);
-        }
-        return cubit;
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) {
+            final cubit = sl<LlmDiagnosisCubit>();
+            if (diagnosis.llmResponse != null) {
+              cubit.loadCached(diagnosis.llmResponse!);
+            }
+            return cubit;
+          },
+        ),
+        BlocProvider(create: (_) => sl<ProductRecommendationCubit>()),
+      ],
       child: _ResultView(diagnosis: diagnosis, userText: userText),
     );
   }
@@ -80,17 +86,22 @@ class _ResultViewState extends State<_ResultView> {
     super.initState();
     _isAddedToAgenda = _agendaBox.get(_agendaKey) != null;
 
-    // Solo llama al LLM si no hay respuesta ya guardada (nueva diagnosis)
-    if (widget.diagnosis.llmResponse == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.read<LlmDiagnosisCubit>().consultar(
-                diagnosis: widget.diagnosis,
-                userText: widget.userText,
-              );
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.diagnosis.llmResponse == null) {
+        // Nueva diagnosis: LLM carga → BlocListener dispara productos al terminar
+        context.read<LlmDiagnosisCubit>().consultar(
+              diagnosis: widget.diagnosis,
+              userText: widget.userText,
+            );
+      } else {
+        // LLM ya cacheado: disparar productos de inmediato
+        context.read<ProductRecommendationCubit>().getRecommendations(
+              disease: widget.diagnosis.diseaseName,
+              crop: widget.diagnosis.cropName,
+            );
+      }
+    });
   }
 
   Future<void> _addToAgenda() async {
@@ -177,14 +188,20 @@ class _ResultViewState extends State<_ResultView> {
         ),
       ),
       body: BlocListener<LlmDiagnosisCubit, LlmDiagnosisState>(
-        // Cuando llega una respuesta nueva la persiste en Hive via DiagnosisBloc
         listener: (context, state) {
-          if (state is LlmDiagnosisLoaded &&
-              widget.diagnosis.llmResponse == null) {
-            context.read<DiagnosisBloc>().add(DiagnosisLlmSaved(
-                  diagnosisId: widget.diagnosis.id,
-                  llmResponse: state.response,
-                ));
+          if (state is LlmDiagnosisLoaded) {
+            // Persistir en Hive solo si es respuesta nueva
+            if (widget.diagnosis.llmResponse == null) {
+              context.read<DiagnosisBloc>().add(DiagnosisLlmSaved(
+                    diagnosisId: widget.diagnosis.id,
+                    llmResponse: state.response,
+                  ));
+            }
+            // Disparar productos en cuanto el LLM confirma el diagnóstico
+            context.read<ProductRecommendationCubit>().getRecommendations(
+                  disease: widget.diagnosis.diseaseName,
+                  crop: widget.diagnosis.cropName,
+                );
           }
         },
         child: SingleChildScrollView(
@@ -209,6 +226,8 @@ class _ResultViewState extends State<_ResultView> {
                     return _buildAgendaButton();
                   },
                 ),
+              const SizedBox(height: 8),
+              _buildProductsSection(context),
               const SizedBox(height: 24),
             ],
           ),
@@ -858,6 +877,665 @@ class _ResultViewState extends State<_ResultView> {
           color: textCol,
         ),
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sección de productos recomendados
+  // ---------------------------------------------------------------------------
+
+  Widget _buildProductsSection(BuildContext context) {
+    return BlocBuilder<ProductRecommendationCubit, ProductRecommendationState>(
+      builder: (context, state) {
+        if (state is ProductRecommendationIdle) return const SizedBox.shrink();
+        if (state is ProductRecommendationLoading) {
+          return const _ProductsSkeletonLoader();
+        }
+        if (state is ProductRecommendationError) {
+          return _buildProductsStatusCard(
+            icon: Icons.warning_amber_rounded,
+            iconColor: const Color(0xFFC45E0A),
+            text: 'No fue posible cargar recomendaciones.',
+          );
+        }
+        if (state is ProductRecommendationLoaded && state.products.isEmpty) {
+          return _buildProductsStatusCard(
+            icon: Icons.search_off_rounded,
+            iconColor: _textSecondary,
+            text: 'No se encontraron productos para esta enfermedad.',
+          );
+        }
+        if (state is ProductRecommendationLoaded) {
+          return _buildProductsLoaded(state);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildProductsStatusCard({
+    required IconData icon,
+    required Color iconColor,
+    required String text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _trackGrey, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: iconColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: _textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductsLoaded(ProductRecommendationLoaded state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildProductsSectionHeader(),
+        const SizedBox(height: 12),
+        ...state.products.asMap().entries.map(
+          (e) => Padding(
+            padding: EdgeInsets.only(
+              bottom: e.key < state.products.length - 1 ? 10 : 0,
+            ),
+            child: _ProductCard(product: e.value),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductsSectionHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 3,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.forestGreen,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Productos Recomendados',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Para: ${widget.diagnosis.diseaseName} · '
+                '${widget.diagnosis.cropName}',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  color: _textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Skeleton loader para productos
+// =============================================================================
+
+class _ProductsSkeletonLoader extends StatefulWidget {
+  const _ProductsSkeletonLoader();
+
+  @override
+  State<_ProductsSkeletonLoader> createState() =>
+      _ProductsSkeletonLoaderState();
+}
+
+class _ProductsSkeletonLoaderState extends State<_ProductsSkeletonLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final t = _ctrl.value;
+        final grad = LinearGradient(
+          colors: const [Color(0xFFF2F2F2), Color(0xFFE4E4E4), Color(0xFFF2F2F2)],
+          stops: [
+            (t - 0.3).clamp(0.0, 1.0),
+            t.clamp(0.0, 1.0),
+            (t + 0.3).clamp(0.0, 1.0),
+          ],
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header placeholder
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _trackGrey,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sBox(150, 13, grad),
+                      const SizedBox(height: 5),
+                      _sBox(110, 10, grad),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            _skeletonCard(grad),
+            const SizedBox(height: 10),
+            _skeletonCard(grad),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _skeletonCard(LinearGradient grad) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _trackGrey, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sBox(72, 72, grad, radius: 8),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _sBox(null, 13, grad)),
+                          const SizedBox(width: 8),
+                          _sBox(64, 18, grad, radius: 4),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      _sBox(90, 10, grad),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 0.5, color: _trackGrey),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sBox(double.infinity, 11, grad),
+                const SizedBox(height: 5),
+                _sBox(210, 11, grad),
+                const SizedBox(height: 5),
+                _sBox(170, 11, grad),
+              ],
+            ),
+          ),
+          Container(height: 0.5, color: _trackGrey),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Row(
+              children: [
+                _sBox(110, 16, grad),
+                const Spacer(),
+                _sBox(100, 32, grad, radius: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sBox(double? w, double h, LinearGradient grad, {double radius = 4}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        gradient: grad,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Tarjeta de producto (diseño rico)
+// =============================================================================
+
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({required this.product});
+
+  final ProductEntity product;
+
+  static const _kFungicida    = Color(0xFF1B7A3C);
+  static const _kInsecticida  = Color(0xFFC45E0A);
+  static const _kHerbicida    = Color(0xFF0A7A6B);
+  static const _kFertilizante = Color(0xFF1A4DB5);
+  static const _kBiologico    = Color(0xFF6B1AA8);
+  static const _kOther        = Color(0xFF5C5C5C);
+
+  Color _typeColor() => switch (product.productType?.toLowerCase()) {
+    'fungicida'                    => _kFungicida,
+    'insecticida'                  => _kInsecticida,
+    'herbicida'                    => _kHerbicida,
+    'fertilizante'                 => _kFertilizante,
+    'biológico' || 'biologico'     => _kBiologico,
+    _                              => _kOther,
+  };
+
+  String _cropEmoji(String c) => switch (c.toLowerCase()) {
+    'tomate'          => '🍅',
+    'maiz' || 'maíz' => '🌽',
+    'papa'            => '🥔',
+    'frijol'          => '🫘',
+    'calabaza'        => '🍈',
+    'chile'           => '🌶️',
+    _                 => '🌿',
+  };
+
+  Future<void> _launch(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBody = product.description != null ||
+        product.targetDiseases.isNotEmpty ||
+        product.targetCrops.isNotEmpty;
+    final hasStock = product.stockStatus == 'in_stock' ||
+        product.stockStatus == 'out_of_stock';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _trackGrey, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          if (hasBody) ...[
+            _divider(),
+            _buildBody(),
+          ],
+          if (hasStock) ...[
+            _divider(),
+            _buildStockRow(),
+          ],
+          _divider(),
+          _buildFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() => Container(height: 0.5, color: _trackGrey);
+
+  // --- Header: imagen + nombre + marca + badge ---
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildImage(),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _textPrimary,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    if (product.productType != null) ...[
+                      const SizedBox(width: 8),
+                      _TypeBadge(
+                        label: product.productType!.toUpperCase(),
+                        color: _typeColor(),
+                      ),
+                    ],
+                  ],
+                ),
+                if (product.brand != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.brand!,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      color: _textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    const sz = 72.0;
+    final placeholder = Container(
+      width: sz,
+      height: sz,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F4F0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.eco_outlined, size: 30, color: AppColors.forestGreen),
+    );
+
+    if (product.imageUrl == null) return placeholder;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        product.imageUrl!,
+        width: sz,
+        height: sz,
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, progress) => progress == null
+            ? child
+            : Container(
+                width: sz,
+                height: sz,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F4F0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+        errorBuilder: (_, __, ___) => placeholder,
+      ),
+    );
+  }
+
+  // --- Body: ingrediente, enfermedades, cultivos ---
+
+  Widget _buildBody() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (product.description != null)
+            _InfoRow(
+              emoji: '🧪',
+              label: 'Ingrediente activo',
+              value: product.description!,
+            ),
+          if (product.targetDiseases.isNotEmpty) ...[
+            if (product.description != null) const SizedBox(height: 7),
+            _InfoRow(
+              emoji: '🦠',
+              label: 'Trata',
+              value: product.targetDiseases.take(4).join(' · '),
+            ),
+          ],
+          if (product.targetCrops.isNotEmpty) ...[
+            if (product.description != null ||
+                product.targetDiseases.isNotEmpty)
+              const SizedBox(height: 7),
+            _InfoRow(
+              emoji: '🌱',
+              label: 'Cultivos',
+              value: product.targetCrops
+                  .take(4)
+                  .map((c) => '${_cropEmoji(c)} $c')
+                  .join(' · '),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // --- Stock ---
+
+  Widget _buildStockRow() {
+    final inStock = product.stockStatus == 'in_stock';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            inStock ? Icons.check_circle_outline : Icons.cancel_outlined,
+            size: 13,
+            color: inStock ? AppColors.forestGreen : const Color(0xFFD32F2F),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            inStock ? 'Disponible' : 'Sin stock',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: inStock ? AppColors.forestGreen : const Color(0xFFD32F2F),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Footer: precio + botón ---
+
+  Widget _buildFooter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text(
+              product.price,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.forestGreen,
+              ),
+            ),
+          ),
+          if (product.purchaseUrl != null)
+            FilledButton.icon(
+              onPressed: () => _launch(product.purchaseUrl!),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.forestGreen,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 12),
+              label: const Text(
+                'Ver producto',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Helpers de producto
+// =============================================================================
+
+class _TypeBadge extends StatelessWidget {
+  const _TypeBadge({required this.label, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 8,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.emoji,
+    required this.label,
+    required this.value,
+  });
+  final String emoji;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 12, height: 1.5)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: _textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

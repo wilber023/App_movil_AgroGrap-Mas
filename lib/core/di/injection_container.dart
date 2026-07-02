@@ -44,14 +44,19 @@ import '../../features/home/presentation/bloc/home_bloc.dart';
 
 import '../../features/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
 import '../../features/diagnosis/data/datasources/llm_diagnosis_datasource.dart';
+import '../../features/diagnosis/data/datasources/product_remote_datasource.dart';
 import '../../features/diagnosis/data/repositories/diagnosis_repository_impl.dart';
 import '../../features/diagnosis/data/repositories/llm_diagnosis_repository_impl.dart';
+import '../../features/diagnosis/data/repositories/product_repository_impl.dart';
 import '../../features/diagnosis/domain/repositories/diagnosis_repository.dart';
 import '../../features/diagnosis/domain/repositories/llm_diagnosis_repository.dart';
+import '../../features/diagnosis/domain/repositories/product_repository.dart';
 import '../../features/diagnosis/domain/usecases/diagnosis_usecases.dart';
 import '../../features/diagnosis/domain/usecases/get_llm_diagnosis_usecase.dart';
+import '../../features/diagnosis/domain/usecases/get_recommended_products_usecase.dart';
 import '../../features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
 import '../../features/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
+import '../../features/diagnosis/presentation/cubit/product_recommendation_cubit.dart';
 
 // -- Treatment --
 import '../../features/treatment/data/datasources/treatment_local_datasource.dart';
@@ -368,6 +373,46 @@ void _initDiagnosisFeature() {
   sl.registerLazySingleton(() => GetLlmDiagnosisUseCase(sl()));
 
   sl.registerFactory(() => LlmDiagnosisCubit(sl()));
+
+  // -- Productos: recomendaciones post-diagnóstico (http://44.196.107.153) --
+  // Requiere X-API-Key + Authorization: Bearer <user_jwt>.
+  // Usa TokenInjectInterceptor (sin refresh/clearTokens) para no invalidar
+  // los tokens del usuario si este servidor devuelve 401.
+  sl.registerLazySingleton<Dio>(
+    () {
+      final productsDio = Dio(
+        BaseOptions(
+          baseUrl: ApiEndpoints.productsBaseUrl,
+          connectTimeout:
+              const Duration(milliseconds: ApiEndpoints.connectTimeoutMs),
+          receiveTimeout:
+              const Duration(milliseconds: ApiEndpoints.productsTimeoutMs),
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+            'X-API-Key': ApiEndpoints.productsApiKey,
+          },
+        ),
+      );
+      productsDio.interceptors.addAll([
+        ErrorInterceptor(),
+        LoggingInterceptor(),
+      ]);
+      return productsDio;
+    },
+    instanceName: 'productsDio',
+  );
+
+  sl.registerLazySingleton<ProductRemoteDataSource>(
+    () => ProductRemoteDataSourceImpl(sl<Dio>(instanceName: 'productsDio')),
+  );
+
+  sl.registerLazySingleton<ProductRepository>(
+    () => ProductRepositoryImpl(dataSource: sl(), networkInfo: sl()),
+  );
+
+  sl.registerLazySingleton(() => GetRecommendedProductsUseCase(sl()));
+
+  sl.registerFactory(() => ProductRecommendationCubit(sl()));
 }
 
 // =============================================================================

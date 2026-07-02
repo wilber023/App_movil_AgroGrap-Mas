@@ -67,6 +67,9 @@ dependencies:
   # Procesamiento de imagen en Dart (preprocessing CNN)
   image: ^4.1.0
 
+  # URL Launcher (abrir links de productos en navegador externo)
+  url_launcher: ^6.3.1
+
   # Google Fonts (Inter)
   google_fonts: ^6.2.1
 

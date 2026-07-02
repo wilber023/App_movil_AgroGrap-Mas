@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../diagnosis/presentation/bloc/diagnosis_bloc.dart';
+import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
 import '../../domain/entities/parcel_entity.dart';
 import '../bloc/parcel_bloc.dart';
 import 'add_parcel_page.dart';
@@ -23,6 +29,8 @@ const Color _chipAlertText = Color(0xFFA32D2D);
 const Color _chipFollowBg = Color(0xFFFFF3E0);
 const Color _chipFollowText = Color(0xFF7B4A10);
 const Color _trackGrey = Color(0xFFE2EBE6);
+const Color _chipBlueBg = Color(0xFFE6F1FB);
+const Color _chipBlueText = Color(0xFF0C447C);
 const Color _addGreen = Color(0xFF52B788);
 const Color _addBorder = Color(0xFFA8C5B0);
 
@@ -187,124 +195,135 @@ class _ParcelsView extends StatelessWidget {
   Widget _buildParcelCard(BuildContext context, ParcelEntity p) {
     final statusColors = _statusColors(p.status);
     final emoji = ParcelsPage._emojiMap[p.cropName] ?? '🌿';
+    final diagCount = _countLocalDiagnoses(p.seleccionId);
+
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ParcelDetailPage(parcel: p)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-        padding: const EdgeInsets.all(14),
+      child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(color: statusColors.border, width: 4),
-            top: BorderSide(color: _borderLight.withValues(alpha: 0.3), width: 0.5),
-            right: BorderSide(color: _borderLight.withValues(alpha: 0.3), width: 0.5),
-            bottom: BorderSide(color: _borderLight.withValues(alpha: 0.3), width: 0.5),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Emoji avatar
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: _chipGreenBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Nombre de la parcela
-                      Text(
-                        p.name,
-                        style: AppTypography.labelMd.copyWith(
-                          color: _textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      // Cultivo + área
-                      Row(
-                        children: [
-                          _chip(p.cropName, _chipGreenBg, _chipGreenText),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${p.areaSize.toStringAsFixed(1)} ${p.areaUnit}',
-                            style: AppTypography.etiquetaSm.copyWith(
-                              color: _textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Región
-                      if (p.region.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            const Icon(Icons.place_outlined, size: 11, color: _textSecondary),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: Text(
-                                p.region,
-                                style: AppTypography.etiquetaSm.copyWith(
-                                  color: _textSecondary,
-                                  fontSize: 10,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                _buildThreeDotMenu(context, p),
-              ],
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _statusChip(p.status, statusColors.chipBg, statusColors.chipText, statusColors.icon),
-                const SizedBox(width: 6),
-                if (p.lastDiagnosisAt != null) ...[
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(color: _borderLight, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Diagnostico ${_timeAgo(p.lastDiagnosisAt!)}',
-                    style: AppTypography.etiquetaSm.copyWith(color: _textSecondary, fontSize: 10),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            _buildPhenologicalBar(p),
           ],
         ),
-      ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                left: BorderSide(color: statusColors.border, width: 4),
+                top: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
+                right: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
+                bottom: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Emoji avatar
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: _chipGreenBg,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Center(
+                        child: Text(emoji, style: const TextStyle(fontSize: 25)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.name,
+                            style: AppTypography.labelMd.copyWith(
+                              color: _textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _chip(p.cropName, _chipGreenBg, _chipGreenText),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${p.areaSize.toStringAsFixed(1)} ${p.areaUnit}',
+                                style: AppTypography.etiquetaSm.copyWith(
+                                  color: _textSecondary, fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (p.region.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                const Icon(Icons.place_outlined, size: 11, color: _textSecondary),
+                                const SizedBox(width: 2),
+                                Expanded(
+                                  child: Text(
+                                    p.region,
+                                    style: AppTypography.etiquetaSm.copyWith(
+                                      color: _textSecondary, fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    _buildThreeDotMenu(context, p),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _statusChip(p.status, statusColors.chipBg, statusColors.chipText, statusColors.icon),
+                    const SizedBox(width: 6),
+                    // Conteo de diagnósticos locales
+                    if (diagCount > 0)
+                      _diagCountChip(diagCount)
+                    else if (p.lastDiagnosisAt != null) ...[
+                      Container(
+                        width: 4, height: 4,
+                        decoration: const BoxDecoration(color: _borderLight, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Diag. ${_timeAgo(p.lastDiagnosisAt!)}',
+                        style: AppTypography.etiquetaSm.copyWith(color: _textSecondary, fontSize: 10),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildPhenologicalBar(p),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -326,13 +345,25 @@ class _ParcelsView extends StatelessWidget {
               MaterialPageRoute(builder: (_) => ParcelDetailPage(parcel: p)),
             );
           }
+          if (value == 'diagnostico') {
+            context.read<DiagnosisBloc>().add(const DiagnosisReset());
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DiagnosisPage(
+                  parcelId: p.seleccionId,
+                  parcelName: p.name,
+                ),
+              ),
+            );
+          }
           if (value == 'eliminar') {
             _confirmDelete(context, p);
           }
         },
         itemBuilder: (_) => [
           const PopupMenuItem(value: 'detalle', child: Text('Ver detalle')),
-          const PopupMenuItem(value: 'diagnostico', child: Text('Nuevo diagnostico')),
+          const PopupMenuItem(value: 'diagnostico', child: Text('Nuevo diagnóstico')),
           PopupMenuItem(
             value: 'eliminar',
             child: Text('Eliminar parcela', style: TextStyle(color: AppColors.burntOrange)),
@@ -582,6 +613,48 @@ class _ParcelsView extends StatelessWidget {
   // Helpers
   // ---------------------------------------------------------------------------
 
+  int _countLocalDiagnoses(String parcelId) {
+    try {
+      final box = sl<Box<String>>(instanceName: 'diagnosisBox');
+      var count = 0;
+      for (final raw in box.values) {
+        try {
+          final m = jsonDecode(raw) as Map<String, dynamic>;
+          if (m['parcelId'] == parcelId) count++;
+        } catch (_) {}
+      }
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Widget _diagCountChip(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: _chipBlueBg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.analytics_outlined, size: 10, color: _chipBlueText),
+          const SizedBox(width: 3),
+          Text(
+            '$count ${count == 1 ? 'diagnóstico' : 'diagnósticos'}',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: _chipBlueText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _StatusColors _statusColors(String status) {
     switch (status) {
       case 'Alerta':
@@ -598,12 +671,19 @@ class _ParcelsView extends StatelessWidget {
           chipText: _chipFollowText,
           icon: Icons.visibility_outlined,
         );
-      default:
+      case 'Saludable':
         return _StatusColors(
           border: AppColors.forestGreen,
           chipBg: _chipGreenBg,
           chipText: _chipGreenText,
           icon: Icons.check_circle_outline_rounded,
+        );
+      default: // 'Sin diagnostico' y cualquier otro
+        return _StatusColors(
+          border: _borderLight,
+          chipBg: const Color(0xFFF0F2F5),
+          chipText: _textSecondary,
+          icon: Icons.radio_button_unchecked_outlined,
         );
     }
   }

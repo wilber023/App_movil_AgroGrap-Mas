@@ -18,6 +18,9 @@ class DiagnosisEntity extends Equatable {
   final List<TopKPrediction> topK;
   // Respuesta del LLM/RAG (se persiste en Hive tras la primera consulta)
   final LlmResponseEntity? llmResponse;
+  // Contexto de parcela (opcional — solo cuando el diagnóstico se inicia desde una parcela)
+  final String? parcelId;
+  final String? parcelName;
 
   const DiagnosisEntity({
     required this.id,
@@ -32,6 +35,8 @@ class DiagnosisEntity extends Equatable {
     required this.statusLabel,
     this.topK = const [],
     this.llmResponse,
+    this.parcelId,
+    this.parcelName,
   });
 
   @override
