@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 
 const String _kFont = 'Inter';
 

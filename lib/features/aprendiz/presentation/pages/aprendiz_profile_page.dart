@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_event.dart';
-import '../../../auth/presentation/pages/select_profile_page.dart';
+import '../../../login/auth/presentation/bloc/auth_bloc.dart';
+import '../../../login/auth/presentation/bloc/auth_event.dart';
+import '../../../login/auth/presentation/pages/select_profile_page.dart';
 
 class AprendizProfilePage extends StatefulWidget {
   const AprendizProfilePage({super.key});

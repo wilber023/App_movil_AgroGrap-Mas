@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../../domain/usecases/analyze_crop_aprendiz_usecase.dart';
 
 abstract class DiagnosisCameraAprendizState extends Equatable {

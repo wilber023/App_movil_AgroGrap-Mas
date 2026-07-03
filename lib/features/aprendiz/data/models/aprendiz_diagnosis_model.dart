@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
-import '../../../diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 
 /// Modelo de persistencia del diagnóstico del Aprendiz en SQLite.
 ///

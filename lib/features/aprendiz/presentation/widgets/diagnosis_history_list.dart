@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../bloc/aprendiz_diagnosis_history_cubit.dart';
 import '../pages/diagnosis_result_aprendiz_page.dart';
 import 'diagnosis_history_card.dart';

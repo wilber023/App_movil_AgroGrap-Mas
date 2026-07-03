@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import 'aprendiz_agenda_page.dart';
 
 const String _kFont = 'Inter';

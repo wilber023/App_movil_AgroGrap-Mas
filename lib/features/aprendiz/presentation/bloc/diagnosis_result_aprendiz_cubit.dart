@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../../domain/entities/crop_activity_entity.dart';
 import '../../domain/usecases/accept_guided_action_usecase.dart';
 import '../../domain/usecases/save_diagnosis_llm_response_usecase.dart';

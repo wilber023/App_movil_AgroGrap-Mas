@@ -1,5 +1,5 @@
-import '../../../diagnosis/data/services/cnn_engine.dart';
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/data/services/cnn_engine.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 
 abstract class AprendizDiagnosisLocalDataSource {
   Future<DiagnosisEntity> analyzeCropOffline({required String imagePath, String? description});

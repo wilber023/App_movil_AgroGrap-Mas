@@ -11,66 +11,66 @@ import '../network/interceptors/logging_interceptor.dart';
 import '../storage/token_storage.dart';
 
 // -- Parcelas/Cultivos --
-import '../../features/parcels/data/datasources/cultivos_remote_datasource.dart';
-import '../../features/parcels/data/repositories/parcel_repository_impl.dart';
-import '../../features/parcels/domain/repositories/parcel_repository.dart';
-import '../../features/parcels/domain/usecases/get_parcels_usecase.dart';
-import '../../features/parcels/domain/usecases/add_parcel_usecase.dart';
-import '../../features/parcels/domain/usecases/delete_parcel_usecase.dart';
-import '../../features/parcels/domain/usecases/get_cultivo_catalog_usecase.dart';
-import '../../features/parcels/presentation/bloc/parcel_bloc.dart';
+import '../../features/agricultor/parcels/data/datasources/cultivos_remote_datasource.dart';
+import '../../features/agricultor/parcels/data/repositories/parcel_repository_impl.dart';
+import '../../features/agricultor/parcels/domain/repositories/parcel_repository.dart';
+import '../../features/agricultor/parcels/domain/usecases/get_parcels_usecase.dart';
+import '../../features/agricultor/parcels/domain/usecases/add_parcel_usecase.dart';
+import '../../features/agricultor/parcels/domain/usecases/delete_parcel_usecase.dart';
+import '../../features/agricultor/parcels/domain/usecases/get_cultivo_catalog_usecase.dart';
+import '../../features/agricultor/parcels/presentation/bloc/parcel_bloc.dart';
 
 // -- Auth --
-import '../../features/auth/data/datasources/auth_remote_datasource.dart';
-import '../../features/auth/data/datasources/auth_local_datasource.dart';
-import '../../features/auth/data/repositories/auth_repository_impl.dart';
-import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/auth/domain/usecases/login_usecase.dart';
-import '../../features/auth/domain/usecases/register_usecase.dart';
-import '../../features/auth/domain/usecases/get_current_user_usecase.dart';
-import '../../features/auth/domain/usecases/logout_usecase.dart';
-import '../../features/auth/domain/usecases/select_profile_type_usecase.dart';
-import '../../features/auth/domain/usecases/get_saved_session_usecase.dart';
-import '../../features/auth/domain/usecases/validate_register_form_usecase.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/auth/presentation/bloc/splash_cubit.dart';
+import '../../features/login/auth/data/datasources/auth_remote_datasource.dart';
+import '../../features/login/auth/data/datasources/auth_local_datasource.dart';
+import '../../features/login/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/login/auth/domain/repositories/auth_repository.dart';
+import '../../features/login/auth/domain/usecases/login_usecase.dart';
+import '../../features/login/auth/domain/usecases/register_usecase.dart';
+import '../../features/login/auth/domain/usecases/get_current_user_usecase.dart';
+import '../../features/login/auth/domain/usecases/logout_usecase.dart';
+import '../../features/login/auth/domain/usecases/select_profile_type_usecase.dart';
+import '../../features/login/auth/domain/usecases/get_saved_session_usecase.dart';
+import '../../features/login/auth/domain/usecases/validate_register_form_usecase.dart';
+import '../../features/login/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/login/auth/presentation/bloc/splash_cubit.dart';
 
 // -- Home --
-import '../../features/home/data/datasources/home_remote_datasource.dart';
-import '../../features/home/data/repositories/home_repository_impl.dart';
-import '../../features/home/domain/repositories/home_repository.dart';
-import '../../features/home/domain/usecases/get_dashboard_usecase.dart';
-import '../../features/home/presentation/bloc/home_bloc.dart';
+import '../../features/agricultor/home/data/datasources/home_remote_datasource.dart';
+import '../../features/agricultor/home/data/repositories/home_repository_impl.dart';
+import '../../features/agricultor/home/domain/repositories/home_repository.dart';
+import '../../features/agricultor/home/domain/usecases/get_dashboard_usecase.dart';
+import '../../features/agricultor/home/presentation/bloc/home_bloc.dart';
 
-import '../../features/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
-import '../../features/diagnosis/data/datasources/llm_diagnosis_datasource.dart';
-import '../../features/diagnosis/data/datasources/product_remote_datasource.dart';
-import '../../features/diagnosis/data/repositories/diagnosis_repository_impl.dart';
-import '../../features/diagnosis/data/repositories/llm_diagnosis_repository_impl.dart';
-import '../../features/diagnosis/data/repositories/product_repository_impl.dart';
-import '../../features/diagnosis/domain/repositories/diagnosis_repository.dart';
-import '../../features/diagnosis/domain/repositories/llm_diagnosis_repository.dart';
-import '../../features/diagnosis/domain/repositories/product_repository.dart';
-import '../../features/diagnosis/domain/usecases/diagnosis_usecases.dart';
-import '../../features/diagnosis/domain/usecases/get_llm_diagnosis_usecase.dart';
-import '../../features/diagnosis/domain/usecases/get_recommended_products_usecase.dart';
-import '../../features/diagnosis/presentation/bloc/diagnosis_bloc.dart';
-import '../../features/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
-import '../../features/diagnosis/presentation/cubit/product_recommendation_cubit.dart';
+import '../../features/agricultor/diagnosis/data/datasources/diagnosis_remote_datasource.dart';
+import '../../features/agricultor/diagnosis/data/datasources/llm_diagnosis_datasource.dart';
+import '../../features/agricultor/diagnosis/data/datasources/product_remote_datasource.dart';
+import '../../features/agricultor/diagnosis/data/repositories/diagnosis_repository_impl.dart';
+import '../../features/agricultor/diagnosis/data/repositories/llm_diagnosis_repository_impl.dart';
+import '../../features/agricultor/diagnosis/data/repositories/product_repository_impl.dart';
+import '../../features/agricultor/diagnosis/domain/repositories/diagnosis_repository.dart';
+import '../../features/agricultor/diagnosis/domain/repositories/llm_diagnosis_repository.dart';
+import '../../features/agricultor/diagnosis/domain/repositories/product_repository.dart';
+import '../../features/agricultor/diagnosis/domain/usecases/diagnosis_usecases.dart';
+import '../../features/agricultor/diagnosis/domain/usecases/get_llm_diagnosis_usecase.dart';
+import '../../features/agricultor/diagnosis/domain/usecases/get_recommended_products_usecase.dart';
+import '../../features/agricultor/diagnosis/presentation/bloc/diagnosis_bloc.dart';
+import '../../features/agricultor/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
+import '../../features/agricultor/diagnosis/presentation/cubit/product_recommendation_cubit.dart';
 
 // -- Treatment --
-import '../../features/treatment/data/datasources/treatment_local_datasource.dart';
-import '../../features/treatment/data/repositories/treatment_repository_impl.dart';
-import '../../features/treatment/domain/repositories/treatment_repository.dart';
-import '../../features/treatment/domain/usecases/treatment_usecases.dart';
-import '../../features/treatment/presentation/bloc/treatment_bloc.dart';
+import '../../features/agricultor/treatment/data/datasources/treatment_local_datasource.dart';
+import '../../features/agricultor/treatment/data/repositories/treatment_repository_impl.dart';
+import '../../features/agricultor/treatment/domain/repositories/treatment_repository.dart';
+import '../../features/agricultor/treatment/domain/usecases/treatment_usecases.dart';
+import '../../features/agricultor/treatment/presentation/bloc/treatment_bloc.dart';
 
 // -- Offline Mode --
-import '../../features/offline/data/datasources/offline_local_datasource.dart';
-import '../../features/offline/data/repositories/offline_repository_impl.dart';
-import '../../features/offline/domain/repositories/offline_repository.dart';
-import '../../features/offline/domain/usecases/offline_usecases.dart';
-import '../../features/offline/presentation/cubit/offline_cubit.dart';
+import '../../features/agricultor/offline/data/datasources/offline_local_datasource.dart';
+import '../../features/agricultor/offline/data/repositories/offline_repository_impl.dart';
+import '../../features/agricultor/offline/domain/repositories/offline_repository.dart';
+import '../../features/agricultor/offline/domain/usecases/offline_usecases.dart';
+import '../../features/agricultor/offline/presentation/cubit/offline_cubit.dart';
 
 // -- Aprendiz --
 import '../../features/aprendiz/data/datasources/crop_plan_local_datasource.dart';

@@ -1,8 +1,8 @@
 import 'package:path/path.dart' as path_pkg;
 import 'package:sqflite/sqflite.dart';
 
-import '../../../diagnosis/domain/entities/diagnosis_entity.dart';
-import '../../../diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../models/aprendiz_diagnosis_model.dart';
 
 /// Historial de diagnósticos del Aprendiz persistido en SQLite (almacenamiento
