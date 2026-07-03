@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
@@ -42,8 +45,10 @@ class _DiagnosisCameraAprendizView extends StatefulWidget {
 }
 
 class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizView> {
-  bool _photoTaken = false;
+  String? _imagePath;
   final TextEditingController _descriptionController = TextEditingController();
+
+  bool get _photoTaken => _imagePath != null;
 
   @override
   void dispose() {
@@ -51,17 +56,31 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
     super.dispose();
   }
 
-  void _takePhoto() {
-    setState(() {
-      _photoTaken = true;
-    });
+  Future<void> _takePhoto() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 82,
+    );
+    if (image != null && mounted) {
+      setState(() => _imagePath = image.path);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+    );
+    if (image != null && mounted) {
+      setState(() => _imagePath = image.path);
+    }
   }
 
   void _analyzeCrop() {
+    final path = _imagePath;
+    if (path == null) return;
     final cubit = context.read<DiagnosisCameraAprendizCubit>();
-    // Usamos una ruta de imagen ficticia para el demo, igual que antes,
-    // pero ahora se pasa por el Cubit real.
-    cubit.analyzeCrop('path/to/mock_image.jpg', _descriptionController.text);
+    cubit.analyzeCrop(path, _descriptionController.text);
   }
 
   @override
@@ -95,19 +114,28 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             backgroundColor: Colors.transparent,
             elevation: 0,
             foregroundColor: Colors.white,
-            title: const Text('Inspección de Cultivo'),
+            title: Text('Inspección semanal', style: AppTypography.labelMd.copyWith(color: Colors.white)),
           ),
           body: Stack(
             children: [
-              // Mock Camera View / Preview
-              Center(
-                child: Icon(
-                  _photoTaken ? Icons.image_rounded : Icons.camera_alt_rounded, 
-                  color: Colors.white.withValues(alpha: 0.5), 
-                  size: 100
+              // Vista previa de la foto capturada o ícono guía mientras no hay foto
+              if (_photoTaken)
+                Positioned.fill(
+                  child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                )
+              else
+                Center(
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    size: 100,
+                  ),
                 ),
-              ),
-              
+              if (_photoTaken)
+                Positioned.fill(
+                  child: Container(color: Colors.black.withValues(alpha: 0.35)),
+                ),
+
               // Overlay UI
               Positioned(
                 bottom: 40,
@@ -118,9 +146,16 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
 
               if (isLoading)
                 Container(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: AppColors.forestGreen),
+                  color: Colors.black.withValues(alpha: 0.55),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(color: AppColors.aOrange),
+                        const SizedBox(height: 14),
+                        Text('Analizando tu foto...', style: AppTypography.labelMd.copyWith(color: Colors.white)),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -131,10 +166,13 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
   }
 
   Widget _buildCameraOverlay() {
-    return Column(
-      children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
         Text(
-          'Apunta a la hoja afectada (Semana ${widget.weekNumber})',
+          'Fotografía la hoja o parte afectada · Semana ${widget.weekNumber}',
+          textAlign: TextAlign.center,
           style: AppTypography.bodyLg.copyWith(color: Colors.white),
         ),
         const SizedBox(height: 24),
@@ -159,7 +197,14 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             ),
           ),
         ),
-      ],
+        const SizedBox(height: 16),
+        TextButton.icon(
+          onPressed: _pickFromGallery,
+          icon: const Icon(Icons.photo_outlined, color: Colors.white70, size: 18),
+          label: Text('Elegir de galería', style: AppTypography.bodyMd.copyWith(color: Colors.white70)),
+        ),
+        ],
+      ),
     );
   }
 
@@ -196,7 +241,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.green),
+                borderSide: const BorderSide(color: AppColors.aSecondary, width: 1.5),
               ),
               filled: true,
               fillColor: Colors.black.withValues(alpha: 0.05),
@@ -206,17 +251,17 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
           ElevatedButton(
             onPressed: isLoading ? null : _analyzeCrop,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.forestGreen,
+              backgroundColor: AppColors.aOrange,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Analizar', style: AppTypography.labelMd.copyWith(color: Colors.white)),
+            child: Text('Analizar foto', style: AppTypography.labelMd.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: isLoading ? null : () {
               setState(() {
-                _photoTaken = false;
+                _imagePath = null;
                 _descriptionController.clear();
               });
             },

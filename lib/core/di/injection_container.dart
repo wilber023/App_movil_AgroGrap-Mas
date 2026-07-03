@@ -97,10 +97,13 @@ import '../../features/aprendiz/presentation/bloc/diagnosis_result_aprendiz_cubi
 import '../../features/aprendiz/presentation/bloc/aprendiz_my_crop_cubit.dart';
 import '../../features/aprendiz/domain/repositories/aprendiz_diagnosis_repository.dart';
 import '../../features/aprendiz/data/repositories/aprendiz_diagnosis_repository_impl.dart';
-import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_remote_datasource.dart';
 import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_local_datasource.dart';
+import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_history_local_datasource.dart';
 import '../../features/aprendiz/domain/usecases/analyze_crop_aprendiz_usecase.dart';
+import '../../features/aprendiz/domain/usecases/get_diagnosis_history_aprendiz_usecase.dart';
+import '../../features/aprendiz/domain/usecases/save_diagnosis_llm_response_usecase.dart';
 import '../../features/aprendiz/presentation/bloc/diagnosis_camera_aprendiz_cubit.dart';
+import '../../features/aprendiz/presentation/bloc/aprendiz_diagnosis_history_cubit.dart';
 
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
@@ -141,6 +144,10 @@ Future<void> _initCore() async {
 
   final diagnosisBox = await Hive.openBox<String>('diagnosis_history');
   sl.registerLazySingleton<Box<String>>(() => diagnosisBox, instanceName: 'diagnosisBox');
+
+  // Nota: el historial de diagnósticos del perfil Aprendiz vive en SQLite
+  // (tabla propia `aprendiz_diagnoses`, ver AprendizDiagnosisHistoryLocalDataSource),
+  // no en Hive — se registra como datasource en _initAprendizFeature().
 
   final agendaBox = await Hive.openBox<String>('agenda_box');
   sl.registerLazySingleton<Box<String>>(() => agendaBox, instanceName: 'agendaBox');
@@ -642,11 +649,11 @@ void _initAprendizFeature() {
   sl.registerLazySingleton<CropHistoryLocalDataSource>(
     () => CropHistoryLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO
   );
-  sl.registerLazySingleton<AprendizDiagnosisRemoteDataSource>(
-    () => AprendizDiagnosisRemoteDataSourceImpl(apiClient: sl()),
-  );
   sl.registerLazySingleton<AprendizDiagnosisLocalDataSource>(
     () => AprendizDiagnosisLocalDataSourceImpl(),
+  );
+  sl.registerLazySingleton<AprendizDiagnosisHistoryLocalDataSource>(
+    () => AprendizDiagnosisHistoryLocalDataSourceImpl(),
   );
   sl.registerLazySingleton<CropHistoryRepository>(
     () => CropHistoryRepositoryImpl(
@@ -657,12 +664,14 @@ void _initAprendizFeature() {
   );
   sl.registerLazySingleton<AprendizDiagnosisRepository>(
     () => AprendizDiagnosisRepositoryImpl(
-      remoteDataSource: sl(),
       localDataSource: sl(),
-      networkInfo: sl(),
+      historyLocalDataSource: sl(),
+      getCurrentUserUseCase: sl(),
     ),
   );
   sl.registerLazySingleton(() => GetCropHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => GetDiagnosisHistoryAprendizUseCase(sl()));
+  sl.registerLazySingleton(() => SaveDiagnosisLlmResponseUseCase(sl()));
   
   sl.registerLazySingleton(() => AcceptGuidedActionUseCase(
     completeActivityUseCase: sl(),
@@ -691,5 +700,9 @@ void _initAprendizFeature() {
   ));
   sl.registerFactory(() => DiagnosisResultAprendizCubit(
     acceptGuidedActionUseCase: sl(),
+    saveDiagnosisLlmResponseUseCase: sl(),
+  ));
+  sl.registerFactory(() => AprendizDiagnosisHistoryCubit(
+    getDiagnosisHistoryUseCase: sl(),
   ));
 }

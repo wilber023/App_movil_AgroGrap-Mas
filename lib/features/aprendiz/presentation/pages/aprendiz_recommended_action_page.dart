@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../diagnosis/domain/entities/llm_response_entity.dart';
 import 'aprendiz_agenda_page.dart';
 
+const String _kFont = 'Inter';
+
+/// Muestra el tratamiento/prevención recomendados por el asistente IA (LLM),
+/// en lenguaje sencillo para el aprendiz. Sin datos económicos ni de producto
+/// fabricados: si el LLM aún no respondió, se informa en vez de inventar cifras.
 class AprendizRecommendedActionPage extends StatelessWidget {
   final String diseaseName;
   final String cropName;
-  final int weekNumber;
+  final LlmResponseEntity? llmResponse;
 
   const AprendizRecommendedActionPage({
     super.key,
-    this.diseaseName = 'Tizón tardío',
-    this.cropName = 'Maíz',
-    this.weekNumber = 6,
+    required this.diseaseName,
+    required this.cropName,
+    this.llmResponse,
   });
 
   @override
   Widget build(BuildContext context) {
+    final r = llmResponse;
+
     return Scaffold(
       backgroundColor: AppColors.aMint,
       body: SafeArea(
@@ -36,11 +44,12 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                   ),
                   const Expanded(
                     child: Text(
-                      'Acción recomendada',
+                      'Qué hacer ahora',
                       textAlign: TextAlign.center,
                       style: TextStyle(
+                        fontFamily: _kFont,
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 19,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -61,186 +70,49 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 4, bottom: 16),
                       child: RichText(
                         text: TextSpan(
-                          style: const TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
+                          style: const TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant),
                           children: [
                             const TextSpan(
-                              text: 'Basado en: ',
-                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                              text: 'Sobre: ',
+                              style: TextStyle(fontFamily: _kFont, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                             ),
-                            TextSpan(text: '$diseaseName · $cropName · Semana $weekNumber · Milpa Norte'),
+                            TextSpan(text: '$diseaseName · $cropName'),
                           ],
                         ),
                       ),
                     ),
 
-                    // Main action card
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 4)),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          // Left accent bar
-                          Positioned(
-                            left: 0, top: 0, bottom: 0,
-                            child: Container(
-                              width: 4,
-                              decoration: const BoxDecoration(
-                                color: AppColors.error,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  bottomLeft: Radius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Priority badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.aDiseaseCardBg,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 8, height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.error,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'PRIORIDAD ALTA',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.error,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.05,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-
-                                const Text(
-                                  'Aplicar fungicida sistémico',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.aOnSurface,
-                                    height: 1.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.timer_outlined, color: AppColors.aOrange, size: 18),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Hoy · en las próximas 48 horas',
-                                      style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Economic card
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.aWarningBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.aWarningBorder),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4)],
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.payments_outlined, color: Color(0xFFB45309)),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '¿Conviene económicamente?',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF92400E),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Divider(color: Color(0xFFFFE5A3)),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Costo estimado:', style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant)),
-                              const Text(
-                                '~\$320 MXN',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Pérdida potencial:', style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant)),
-                              const Text(
-                                '\$1,800 – \$2,400 MXN',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.error),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.white),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.check_circle, color: AppColors.aOnPrimaryFixedVariant, size: 20),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Tratamiento recomendado',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.aOnPrimaryFixedVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    if (r == null)
+                      _InfoCard(
+                        icon: Icons.hourglass_empty_rounded,
+                        title: 'Aún no hay una recomendación disponible',
+                        body: 'Vuelve a la pantalla de resultado y espera a que '
+                            'el asistente IA termine de generar la explicación '
+                            'para ver aquí el tratamiento sugerido.',
+                      )
+                    else ...[
+                      if (r.tratamiento.isNotEmpty)
+                        _ActionCard(
+                          icon: Icons.healing_outlined,
+                          label: 'QUÉ HACER',
+                          content: r.tratamiento,
+                        ),
+                      if (r.prevencion.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _ActionCard(
+                          icon: Icons.shield_outlined,
+                          label: 'CÓMO PREVENIRLO',
+                          content: r.prevencion,
+                        ),
+                      ],
+                      if (r.tratamiento.isEmpty && r.prevencion.isEmpty)
+                        _InfoCard(
+                          icon: Icons.info_outline,
+                          title: 'Sin recomendación específica',
+                          body: 'El asistente IA no encontró un tratamiento '
+                              'específico para este caso. Consulta a tu instructor.',
+                        ),
+                    ],
 
                     const SizedBox(height: 32),
 
@@ -258,11 +130,11 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         icon: const Icon(Icons.event_available, color: Colors.white),
                         label: const Text(
                           'Agregar a mi agenda',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.aOrange,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                       ),
@@ -274,8 +146,8 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: const Text(
-                          'Rechazar recomendación',
-                          style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
+                          'Volver al resultado',
+                          style: TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -286,6 +158,103 @@ class AprendizRecommendedActionPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String content;
+
+  const _ActionCard({required this.icon, required this.label, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.aOutlineVariant),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(color: AppColors.aMint, shape: BoxShape.circle),
+                child: Icon(icon, color: AppColors.aSecondary, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: _kFont,
+                  fontSize: 12,
+                  color: AppColors.aSecondary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            content,
+            style: const TextStyle(fontFamily: _kFont, fontSize: 15, color: AppColors.aOnSurface, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+
+  const _InfoCard({required this.icon, required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.aOutlineVariant),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.aOnSurfaceVariant, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontFamily: _kFont, fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: const TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant, height: 1.4),
+          ),
+        ],
       ),
     );
   }

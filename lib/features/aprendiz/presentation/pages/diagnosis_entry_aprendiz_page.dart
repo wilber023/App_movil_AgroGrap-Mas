@@ -1,10 +1,27 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/usecases/get_due_inspection_activity_usecase.dart';
+import '../bloc/aprendiz_diagnosis_history_cubit.dart';
+import '../bloc/diagnosis_camera_aprendiz_cubit.dart';
+import '../widgets/diagnosis_history_list.dart';
 import 'diagnosis_camera_aprendiz_page.dart';
+import 'diagnosis_result_aprendiz_page.dart';
+
+// Tipografía Inter consistente con el resto de la app (ver AppTypography).
+const String _kFont = 'Inter';
+
+// Sombra sutil compartida por las cards de esta pantalla, para que todo el
+// feature se sienta parte de un mismo sistema visual (ver diagnosis_result_aprendiz_page).
+const List<BoxShadow> _kCardShadow = [
+  BoxShadow(color: Color(0x0A000000), blurRadius: 10, offset: Offset(0, 3)),
+];
 
 class DiagnosisEntryAprendizPage extends StatefulWidget {
   const DiagnosisEntryAprendizPage({super.key});
@@ -23,14 +40,23 @@ class _DiagnosisEntryAprendizPageState extends State<DiagnosisEntryAprendizPage>
 
   final _notesController = TextEditingController();
 
+  // Se crea una sola vez y se conserva mientras la página vive (la página
+  // permanece montada dentro del IndexedStack de AprendizMainShell), para
+  // poder forzar una recarga cada vez que el usuario abre "Mis diagnósticos"
+  // — así el diagnóstico recién analizado siempre aparece, sin depender de
+  // que la pestaña se reconstruya desde cero.
+  late final AprendizDiagnosisHistoryCubit _historyCubit;
+
   @override
   void initState() {
     super.initState();
+    _historyCubit = sl<AprendizDiagnosisHistoryCubit>()..loadHistory();
     _checkDueInspection();
   }
 
   @override
   void dispose() {
+    _historyCubit.close();
     _notesController.dispose();
     super.dispose();
   }
@@ -78,46 +104,57 @@ class _DiagnosisEntryAprendizPageState extends State<DiagnosisEntryAprendizPage>
       );
     }
 
-    // On error: show the main tab UI anyway (maquetado mode)
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<DiagnosisCameraAprendizCubit>()),
+        BlocProvider.value(value: _historyCubit),
+      ],
+      child: Scaffold(
+        backgroundColor: AppColors.aMint,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _TopBar(),
 
-    return Scaffold(
-      backgroundColor: AppColors.aSurface,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _TopBar(),
-
-            // Internal tabs
-            Container(
-              color: AppColors.aSurface,
-              child: Row(
-                children: [
-                  _TabItem(
-                    label: 'Analizar',
-                    isSelected: _selectedTab == 0,
-                    onTap: () => setState(() => _selectedTab = 0),
-                  ),
-                  _TabItem(
-                    label: 'Mis diagnósticos',
-                    isSelected: _selectedTab == 1,
-                    onTap: () => setState(() => _selectedTab = 1),
-                  ),
-                ],
+              // Internal tabs
+              Container(
+                color: AppColors.aSurfaceContainerLowest,
+                child: Row(
+                  children: [
+                    _TabItem(
+                      icon: Icons.psychology_outlined,
+                      label: 'Analizar',
+                      isSelected: _selectedTab == 0,
+                      onTap: () => setState(() => _selectedTab = 0),
+                    ),
+                    _TabItem(
+                      icon: Icons.history_rounded,
+                      label: 'Mis diagnósticos',
+                      isSelected: _selectedTab == 1,
+                      onTap: () {
+                        // Recarga siempre al entrar a la pestaña, para que un
+                        // diagnóstico recién analizado aparezca de inmediato.
+                        _historyCubit.loadHistory();
+                        setState(() => _selectedTab = 1);
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            Expanded(
-              child: _selectedTab == 0
-                  ? _AnalyzeTab(
-                      hasPendingInspection: _hasPendingInspection,
-                      nextWeek: _nextWeek,
-                      nextDate: _nextDate,
-                      notesController: _notesController,
-                    )
-                  : const _MyDiagnosesTab(),
-            ),
-          ],
+              Expanded(
+                child: _selectedTab == 0
+                    ? _AnalyzeTab(
+                        hasPendingInspection: _hasPendingInspection,
+                        nextWeek: _nextWeek,
+                        nextDate: _nextDate,
+                        notesController: _notesController,
+                      )
+                    : const DiagnosisHistoryList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -136,9 +173,9 @@ class _TopBar extends StatelessWidget {
           IconButton(icon: const Icon(Icons.menu, color: Colors.white), onPressed: () {}),
           const Expanded(
             child: Text(
-              'AgroGraph IA',
+              'Diagnóstico',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+              style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 19, fontWeight: FontWeight.w700),
             ),
           ),
           IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
@@ -149,17 +186,19 @@ class _TopBar extends StatelessWidget {
 }
 
 class _TabItem extends StatelessWidget {
+  final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _TabItem({required this.label, required this.isSelected, required this.onTap});
+  const _TabItem({required this.icon, required this.label, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Container(
           decoration: BoxDecoration(
             border: Border(
@@ -169,16 +208,28 @@ class _TabItem extends StatelessWidget {
               ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.05,
-              color: isSelected ? AppColors.aOnSurface : AppColors.aOnSurfaceVariant,
-            ),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? AppColors.aOrange : AppColors.aOnSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: _kFont,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  letterSpacing: 0.1,
+                  color: isSelected ? AppColors.aOnSurface : AppColors.aOnSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -204,316 +255,380 @@ class _AnalyzeTab extends StatefulWidget {
 }
 
 class _AnalyzeTabState extends State<_AnalyzeTab> {
-  bool _hasPhoto = false;
+  String? _imagePath;
+
+  bool get _hasPhoto => _imagePath != null;
+
+  Future<void> _takePhoto() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 82,
+    );
+    if (image != null && mounted) {
+      setState(() => _imagePath = image.path);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+    );
+    if (image != null && mounted) {
+      setState(() => _imagePath = image.path);
+    }
+  }
+
+  void _analyzeCrop() {
+    final path = _imagePath;
+    if (path == null) return;
+    context.read<DiagnosisCameraAprendizCubit>().analyzeCrop(path, widget.notesController.text);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Context banner (pending inspection info)
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.aWarningBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.aWarningBorder),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)],
-            ),
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.error_outline, color: AppColors.aOrange, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INSPECCIÓN PENDIENTE · SEMANA ${widget.nextWeek}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.aWarningText,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.05,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Maíz · Milpa Norte',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Tu plan indica que es momento de revisar tu cultivo.',
-                        style: TextStyle(fontSize: 13, color: AppColors.aOnSurfaceVariant),
-                      ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () {},
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Ir a inspección',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.aOrange,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(Icons.arrow_forward, color: AppColors.aOrange, size: 14),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Divider
-          Row(
-            children: [
-              const Expanded(child: Divider(color: AppColors.aSurfaceVariant)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'O REALIZA UN DIAGNÓSTICO LIBRE',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.aOnSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.08,
-                  ),
-                ),
+    return BlocConsumer<DiagnosisCameraAprendizCubit, DiagnosisCameraAprendizState>(
+      listener: (context, state) {
+        if (state is DiagnosisCameraAprendizSuccess) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DiagnosisResultAprendizPage(
+                diagnosis: state.diagnosis,
+                activityId: '',
               ),
-              const Expanded(child: Divider(color: AppColors.aSurfaceVariant)),
-            ],
-          ),
+            ),
+          );
+        } else if (state is DiagnosisCameraAprendizError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message, style: const TextStyle(fontFamily: _kFont, color: Colors.white)),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isAnalyzing = state is DiagnosisCameraAprendizLoading;
 
-          const SizedBox(height: 20),
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 80),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Encabezado educativo de la sección
+                  const Text(
+                    '¿Qué quieres analizar hoy?',
+                    style: TextStyle(fontFamily: _kFont, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Toma una foto clara de la planta y te ayudamos a entender qué está pasando.',
+                    style: TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant, height: 1.4),
+                  ),
+                  const SizedBox(height: 20),
 
-          // Photo upload area
-          GestureDetector(
-            onTap: () => setState(() => _hasPhoto = !_hasPhoto),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(minHeight: 160),
-              decoration: BoxDecoration(
-                color: AppColors.aSurfaceContainerLowest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.aOutlineVariant,
-                  style: BorderStyle.solid,
-                  width: 2,
-                ),
-              ),
-              child: _hasPhoto
-                  ? Stack(
-                      alignment: Alignment.topRight,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            height: 200,
-                            color: AppColors.aSurfaceContainerHigh,
-                            child: const Center(
-                              child: Icon(Icons.image, size: 60, color: AppColors.aOnSurfaceVariant),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _hasPhoto = false),
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(4),
-                              child: const Icon(Icons.close, color: Colors.white, size: 16),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  // Context banner (pending inspection info)
+                  if (widget.hasPendingInspection) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.aWarningBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.aWarningBorder),
+                        boxShadow: _kCardShadow,
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 56, height: 56,
-                            decoration: BoxDecoration(
-                              color: AppColors.aPrimaryContainer.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
+                          const Icon(Icons.event_note_rounded, color: AppColors.aOrange, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'INSPECCIÓN PENDIENTE · SEMANA ${widget.nextWeek}',
+                                  style: const TextStyle(
+                                    fontFamily: _kFont,
+                                    fontSize: 11,
+                                    color: AppColors.aWarningText,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Tu plan indica que es momento de revisar tu cultivo.',
+                                  style: TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.add_a_photo_outlined, color: AppColors.aPrimary, size: 28),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Fotografía lo que ves',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Sube una foto clara de la hoja, fruto o tallo afectado.',
-                            style: TextStyle(fontSize: 13, color: AppColors.aOnSurfaceVariant),
-                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'O REALIZA UN DIAGNÓSTICO LIBRE',
+                            style: const TextStyle(
+                              fontFamily: _kFont,
+                              fontSize: 10,
+                              color: AppColors.aOnSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Photo upload area
+                  GestureDetector(
+                    onTap: isAnalyzing ? null : _takePhoto,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: double.infinity,
+                      constraints: const BoxConstraints(minHeight: 190),
+                      decoration: BoxDecoration(
+                        color: _hasPhoto ? AppColors.aSurfaceContainerLowest : AppColors.aMint,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _hasPhoto ? AppColors.aOutlineVariant : AppColors.aSecondaryContainer,
+                          width: 2,
+                        ),
+                        boxShadow: _hasPhoto ? _kCardShadow : null,
+                      ),
+                      child: _hasPhoto
+                          ? Stack(
+                              alignment: Alignment.topRight,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.file(
+                                    File(_imagePath!),
+                                    height: 210,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: GestureDetector(
+                                    onTap: isAnalyzing ? null : () => setState(() => _imagePath = null),
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(5),
+                                      child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 64, height: 64,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.aSecondaryContainer,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add_a_photo_outlined, color: AppColors.aSecondary, size: 30),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'Fotografía lo que ves',
+                                    style: TextStyle(fontFamily: _kFont, fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Una foto clara de la hoja, fruto o tallo afectado',
+                                    style: TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Camera / Gallery buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: isAnalyzing ? null : _takePhoto,
+                          icon: const Icon(Icons.photo_camera_outlined, color: Colors.white, size: 20),
+                          label: const Text('Tomar foto', style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.aSecondary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isAnalyzing ? null : _pickFromGallery,
+                          icon: const Icon(Icons.image_outlined, color: AppColors.aSecondary, size: 20),
+                          label: const Text('Galería', style: TextStyle(fontFamily: _kFont, color: AppColors.aSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.aSecondary, width: 1.5),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Notes textarea
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Cuéntanos qué observas (opcional)',
+                        style: TextStyle(
+                          fontFamily: _kFont,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.aOnSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: widget.notesController,
+                        maxLines: 3,
+                        maxLength: 300,
+                        enabled: !isAnalyzing,
+                        style: const TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurface),
+                        decoration: InputDecoration(
+                          hintText: 'Ej. Las hojas se ven amarillas desde hace unos días...',
+                          hintStyle: const TextStyle(fontFamily: _kFont, color: AppColors.aOnSurfaceVariant),
+                          filled: true,
+                          fillColor: AppColors.aSurfaceContainerLowest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.aOutlineVariant),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.aOutlineVariant),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.aSecondary, width: 2),
+                          ),
+                          counterStyle: const TextStyle(fontFamily: _kFont, fontSize: 11, color: AppColors.aOnSurfaceVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Submit button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: (_hasPhoto && !isAnalyzing) ? _analyzeCrop : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.aOrange,
+                        disabledBackgroundColor: AppColors.aSurfaceVariant,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: isAnalyzing
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Analizando tu foto...',
+                                  style: TextStyle(fontFamily: _kFont, fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              _hasPhoto ? 'Analizar foto' : 'Primero agrega una foto',
+                              style: TextStyle(
+                                fontFamily: _kFont,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _hasPhoto ? Colors.white : AppColors.aOnSurfaceVariant,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 14),
-
-          // Camera / Gallery buttons
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => setState(() => _hasPhoto = true),
-                  icon: const Icon(Icons.photo_camera_outlined, color: Colors.white, size: 20),
-                  label: const Text('Tomar foto', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.aOrange,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    elevation: 0,
+            // Overlay ligero mientras se analiza, para reforzar que la app
+            // está trabajando (además del estado del botón).
+            if (isAnalyzing)
+              Positioned(
+                top: 12,
+                left: 16,
+                right: 16,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.aPrimaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: _kCardShadow,
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Estamos revisando tu foto con inteligencia artificial...',
+                            style: TextStyle(fontFamily: _kFont, fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => setState(() => _hasPhoto = true),
-                  icon: const Icon(Icons.image_outlined, color: AppColors.aOrange, size: 20),
-                  label: const Text('Elegir de galería', style: TextStyle(color: AppColors.aOrange, fontSize: 12, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.aOrange, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Notes textarea
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Información adicional (opcional)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.05,
-                  color: AppColors.aOnSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: widget.notesController,
-                maxLines: 3,
-                maxLength: 300,
-                style: const TextStyle(fontSize: 14, color: AppColors.aOnSurface),
-                decoration: InputDecoration(
-                  hintText: 'Describe lo que observas...',
-                  hintStyle: const TextStyle(color: AppColors.aOnSurfaceVariant),
-                  filled: true,
-                  fillColor: AppColors.aSurfaceContainerLowest,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.aOutlineVariant),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.aOutlineVariant),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.aSecondary, width: 2),
-                  ),
-                  counterStyle: const TextStyle(fontSize: 11, color: AppColors.aOnSurfaceVariant),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _hasPhoto ? () {} : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.aOrange,
-                disabledBackgroundColor: AppColors.aSurfaceVariant,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-              child: Text(
-                _hasPhoto ? 'Analizar foto' : 'Primero agrega una foto',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _hasPhoto ? Colors.white : AppColors.aOnSurfaceVariant,
-                  letterSpacing: 0.05,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _MyDiagnosesTab extends StatelessWidget {
-  const _MyDiagnosesTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 72, height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.aSurfaceContainer,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.find_in_page_outlined, size: 36, color: AppColors.aOnSurfaceVariant),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Sin diagnósticos aún',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Tus diagnósticos anteriores\naparecerán aquí.',
-            style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
