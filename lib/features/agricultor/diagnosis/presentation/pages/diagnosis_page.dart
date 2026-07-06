@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
@@ -14,7 +13,7 @@ import 'diagnosis_processing_page.dart';
 import 'diagnosis_history_page.dart';
 
 // =============================================================================
-// AgroGraph-MAS -- Cámara de Diagnóstico
+// AgroGraph-MAS -- Diagnóstico con cámara nativa
 // =============================================================================
 
 const Color _bracketGreen = Color(0xFF52B788);
@@ -45,14 +44,9 @@ class DiagnosisPage extends StatefulWidget {
 }
 
 class _DiagnosisPageState extends State<DiagnosisPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
-  // ── Cámara ────────────────────────────────────────────────────────────────
-  CameraController? _cameraController;
-  bool _isCameraReady = false;
-  bool _cameraError = false;       // Diferencia "cargando" de "falló"
+    with TickerProviderStateMixin {
+  // ── Estado ────────────────────────────────────────────────────────────────
   bool _isCapturing = false;
-  bool _isReinitializing = false;
-  int _flashState = 0; // 0=off 1=on 2=auto
 
   // ── Animaciones ────────────────────────────────────────────────────────────
   late AnimationController _pulseController;
@@ -60,6 +54,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 
   // ── Texto adicional del usuario ────────────────────────────────────────────
   final TextEditingController _symptomsController = TextEditingController();
+  String? _symptomsError;
 
   // ── Guía cíclica ───────────────────────────────────────────────────────────
   static const List<String> _guideMessages = [
@@ -75,8 +70,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _initCamera();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -85,116 +78,80 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _startGuideTimer();
+    _symptomsController.addListener(_onSymptomsChanged);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _guideTimer?.cancel();
-    _cameraController?.dispose();
     _pulseController.dispose();
     _symptomsController.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_cameraController == null) return;
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      final stale = _cameraController;
-      _cameraController = null;
-      if (mounted) setState(() => _isCameraReady = false);
-      stale?.dispose();
-    } else if (state == AppLifecycleState.resumed) {
-      if (!_isReinitializing) _initCamera();
-    }
+  // ── Validación de síntomas ────────────────────────────────────────────────
+
+  void _onSymptomsChanged() {
+    if (_symptomsError != null) setState(() => _symptomsError = null);
   }
 
-  // ── Cámara ────────────────────────────────────────────────────────────────
+  /// Devuelve un mensaje de error si el texto no cumple la calidad mínima,
+  /// o null si es válido (incluido el caso de estar vacío).
+  String? _validateSymptomsText(String raw) {
+    if (raw.trim().isEmpty) return null; // campo opcional — vacío es válido
 
-  Future<void> _initCamera() async {
-    if (!mounted) { return; }
-    setState(() => _cameraError = false);
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty || !mounted) { return; }
-      final controller = CameraController(
-        cameras.first,
-        ResolutionPreset.medium,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
-      await controller.initialize();
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      final old = _cameraController;
-      setState(() {
-        _cameraController = controller;
-        _isCameraReady = true;
-        _cameraError = false;
-      });
-      if (old != null) {
-        try {
-          await old.dispose();
-        } catch (_) {}
-      }
-    } catch (e) {
-      debugPrint('[DiagnosisPage] Error cámara: $e');
-      if (mounted) setState(() => _cameraError = true);
+    final normalized = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final noSpaces = normalized.replaceAll(' ', '');
+
+    // Mínimo 10 caracteres significativos (sin espacios)
+    if (noSpaces.length < 10) {
+      return 'Si agregas una descripción, escribe al menos 10 caracteres '
+          'sobre el problema observado.';
     }
-  }
 
-  Future<void> _reinitCamera() async {
-    if (!mounted) return;
-    final stale = _cameraController;
-    setState(() {
-      _cameraController = null;
-      _isCameraReady = false;
+    // Debe contener al menos una letra
+    if (!RegExp(r'[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]').hasMatch(normalized)) {
+      return 'La descripción debe contener palabras, no solo números o símbolos.';
+    }
+
+    // Al menos una palabra con ≥ 3 letras y más de un carácter único
+    final words = normalized.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+    final hasMeaningful = words.any((w) {
+      final letters =
+          w.replaceAll(RegExp(r'[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]'), '').toLowerCase();
+      return letters.length >= 3 && letters.split('').toSet().length > 1;
     });
-    try {
-      await stale?.dispose();
-    } catch (_) {}
-    await _initCamera();
-  }
 
-  void _toggleFlash() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized) { return; }
-    try {
-      final next = (_flashState + 1) % 3;
-      switch (next) {
-        case 0:
-          await _cameraController!.setFlashMode(FlashMode.off);
-        case 1:
-          await _cameraController!.setFlashMode(FlashMode.torch);
-        case 2:
-          await _cameraController!.setFlashMode(FlashMode.auto);
-      }
-      setState(() => _flashState = next);
-    } catch (e) {
-      debugPrint('[DiagnosisPage] Error flash: $e');
+    if (!hasMeaningful) {
+      return 'Describe el problema con palabras claras,\n'
+          'ej: "manchas amarillas en las hojas".';
     }
+
+    return null;
   }
 
-  Future<void> _takePicture() async {
-    if (_cameraController == null ||
-        !_cameraController!.value.isInitialized) { return; }
-    if (_cameraController!.value.isTakingPicture || _isCapturing) { return; }
+  // ── Captura ───────────────────────────────────────────────────────────────
 
+  Future<void> _captureWithNativeCamera() async {
+    if (_isCapturing) return;
     setState(() => _isCapturing = true);
     try {
-      final image = await _cameraController!.takePicture();
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+      );
+      // null → el usuario canceló: no lanzar error
+      if (image == null || !mounted) return;
       final compressedPath = await compute(_compressToJpeg, image.path);
       if (mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(compressedPath));
+        context
+            .read<DiagnosisBloc>()
+            .add(DiagnosisPhotoCaptured(compressedPath));
       }
     } catch (e) {
-      debugPrint('[DiagnosisPage] Error captura: $e');
+      debugPrint('[DiagnosisPage] Error cámara nativa: $e');
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
@@ -210,7 +167,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       if (image != null && mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
+        context
+            .read<DiagnosisBloc>()
+            .add(DiagnosisPhotoCaptured(image.path));
       }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error galería: $e');
@@ -218,22 +177,22 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   }
 
   Future<void> _retakePhoto() async {
-    if (_isReinitializing) return;
     _symptomsController.clear();
-    setState(() => _isReinitializing = true);
-    try {
-      context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
-      await _reinitCamera();
-      if (mounted) {
-        _pulseController.repeat(reverse: true);
-        _startGuideTimer();
-      }
-    } finally {
-      if (mounted) setState(() => _isReinitializing = false);
+    if (_symptomsError != null) setState(() => _symptomsError = null);
+    context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
+    if (mounted) {
+      _pulseController.repeat(reverse: true);
+      _startGuideTimer();
     }
   }
 
   void _processWithAI() {
+    final error = _validateSymptomsText(_symptomsController.text);
+    if (error != null) {
+      setState(() => _symptomsError = error);
+      return;
+    }
+
     final text = _symptomsController.text.trim();
     context.read<DiagnosisBloc>().add(
           DiagnosisProcessRequested(
@@ -242,7 +201,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             parcelName: widget.parcelName,
           ),
         );
-    // Limpia para el próximo diagnóstico; el texto ya fue capturado arriba
     _symptomsController.clear();
     Navigator.push(
       context,
@@ -265,12 +223,10 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<DiagnosisBloc, DiagnosisState>(
-      // Listener: reacciona a cambios de estado para restablecer UI de cámara
       listener: (context, state) {
         if (state is DiagnosisIdle ||
             state is DiagnosisResult ||
             state is DiagnosisError) {
-          // Reanuda animaciones al volver al modo cámara activo
           if (!_pulseController.isAnimating) {
             _pulseController.repeat(reverse: true);
           }
@@ -278,18 +234,10 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             _startGuideTimer();
           }
         }
-        // Reinicia cámara si fue liberada (ej. cambio de ciclo de vida)
-        if (state is DiagnosisIdle && !_isCameraReady && !_isReinitializing) {
-          _initCamera();
-        }
       },
       builder: (context, state) {
-        // SOLO DiagnosisCaptured activa el panel de captura.
-        // DiagnosisResult/Processing ya navegan a otras rutas —
-        // cuando el usuario regresa, la cámara debe estar lista.
         final isCaptured = state is DiagnosisCaptured;
 
-        // Imagen a mostrar como fondo (solo cuando hay foto disponible)
         final String? capturedPath = state is DiagnosisCaptured
             ? state.imagePath
             : state is DiagnosisProcessing
@@ -305,10 +253,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 Positioned.fill(
                   child: Image.file(File(capturedPath), fit: BoxFit.cover),
                 )
-              else if (_isCameraReady && _cameraController != null)
-                Positioned.fill(child: CameraPreview(_cameraController!))
               else
-                Positioned.fill(child: _buildCameraPlaceholder()),
+                Positioned.fill(child: _buildIdlePlaceholder()),
 
               // Overlay oscuro sobre imagen capturada
               if (isCaptured)
@@ -319,18 +265,17 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 ),
 
               if (!isCaptured) _buildVignette(),
-              _buildTopBar(),
+              _buildTopBar(isCaptured),
               _buildFocusFrame(isCaptured),
               _buildBottomBar(isCaptured),
 
-              // Indicador de captura en progreso
+              // Indicador mientras se abre la cámara / galería
               if (_isCapturing)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withValues(alpha: 0.45),
                     child: const Center(
-                      child:
-                          CircularProgressIndicator(color: Colors.white),
+                      child: CircularProgressIndicator(color: Colors.white),
                     ),
                   ),
                 ),
@@ -341,65 +286,44 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // Placeholder mientras la cámara carga o si falla
-  Widget _buildCameraPlaceholder() {
-    if (_cameraError) {
-      return Center(
+  // Fondo de espera antes de tomar foto
+  Widget _buildIdlePlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0B1F18), Color(0xFF000000)],
+        ),
+      ),
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.no_photography_outlined,
-              color: Colors.white.withValues(alpha: 0.45),
-              size: 44,
+              Icons.camera_alt_outlined,
+              size: 52,
+              color: Colors.white.withValues(alpha: 0.18),
             ),
             const SizedBox(height: 14),
             Text(
-              'No se pudo iniciar la cámara',
+              'Toca el botón para fotografiar\ntu cultivo',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 13,
                 fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: _initCamera,
-              style: TextButton.styleFrom(
-                foregroundColor: _bracketGreen,
-              ),
-              child: const Text(
-                'Reintentar',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 12),
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.28),
+                height: 1.5,
               ),
             ),
           ],
         ),
-      );
-    }
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(color: _bracketGreen),
-          if (_isReinitializing) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Reiniciando cámara...',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 13,
-                fontFamily: 'Inter',
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
 
   // ── Top bar ────────────────────────────────────────────────────────────────
-  Widget _buildTopBar() {
+  Widget _buildTopBar(bool isCaptured) {
     return Positioned(
       top: MediaQuery.of(context).padding.top,
       left: 0,
@@ -410,34 +334,27 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         color: Colors.black.withValues(alpha: 0.55),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: _isReinitializing ? null : _retakePhoto,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  shape: BoxShape.circle,
+            // Botón "Repetir" solo cuando hay foto capturada
+            if (isCaptured)
+              GestureDetector(
+                onTap: _retakePhoto,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.refresh_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-                child: _isReinitializing
-                    ? const Center(
-                        child: SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 1.5,
-                          ),
-                        ),
-                      )
-                    : const Icon(
-                        Icons.refresh_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-              ),
-            ),
-            Expanded(
+              )
+            else
+              const SizedBox(width: 36),
+            const Expanded(
               child: Center(
                 child: Text(
                   'Diagnóstico CNN',
@@ -445,33 +362,13 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: _toggleFlash,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _flashState == 0
-                      ? Icons.flash_off_outlined
-                      : _flashState == 1
-                          ? Icons.flash_on_outlined
-                          : Icons.flash_auto_outlined,
-                  color: _flashState == 1
-                      ? AppColors.warmAmber
-                      : Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
+            // Espacio de balance
+            const SizedBox(width: 36),
           ],
         ),
       ),
@@ -559,7 +456,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // Panel de captura: campo de síntomas más visible + botones
+  // Panel tras capturar: campo de síntomas + botones de acción
   Widget _buildCapturedPanel() {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     return Container(
@@ -618,6 +515,14 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 fontSize: 11.5,
                 fontFamily: 'Inter',
               ),
+              errorText: _symptomsError,
+              errorStyle: const TextStyle(
+                color: Color(0xFFFF6B6B),
+                fontSize: 10.5,
+                fontFamily: 'Inter',
+                height: 1.4,
+              ),
+              errorMaxLines: 3,
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.13),
               border: OutlineInputBorder(
@@ -638,6 +543,14 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(color: _bracketGreen, width: 1.5),
               ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.0),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+              ),
               counterStyle: TextStyle(
                 color: Colors.white.withValues(alpha: 0.30),
                 fontSize: 9,
@@ -656,7 +569,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                 _buildIconButton(
                   icon: Icons.refresh_outlined,
                   label: 'Repetir',
-                  onTap: _isReinitializing ? null : _retakePhoto,
+                  onTap: _retakePhoto,
                 ),
                 _buildAnalyzeButton(),
                 _buildIconButton(
@@ -672,7 +585,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // Barra mientras apunta la cámara
+  // Barra de disparo: historial / cámara / galería
   Widget _buildShootingBar() {
     return Container(
       height: 100,
@@ -724,7 +637,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 10,
-                color: Colors.white.withValues(alpha: isDisabled ? 0.25 : 0.6),
+                color:
+                    Colors.white.withValues(alpha: isDisabled ? 0.25 : 0.6),
               ),
             ),
           ],
@@ -735,7 +649,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 
   Widget _buildShutterButton() {
     return GestureDetector(
-      onTap: _isCapturing ? null : _takePicture,
+      onTap: _isCapturing ? null : _captureWithNativeCamera,
       child: AnimatedOpacity(
         opacity: _isCapturing ? 0.4 : 1.0,
         duration: const Duration(milliseconds: 150),
@@ -801,8 +715,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         maxChildSize: 0.95,
         minChildSize: 0.4,
         builder: (ctx, scrollController) {
-          return DiagnosisHistorySheet(
-              scrollController: scrollController);
+          return DiagnosisHistorySheet(scrollController: scrollController);
         },
       ),
     );
