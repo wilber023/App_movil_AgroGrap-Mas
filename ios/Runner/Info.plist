@@ -45,5 +45,41 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- MASVS-AUTH: requerido por `local_auth` (Face ID) -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Usamos Face ID para confirmar tu identidad antes de operaciones sensibles.</string>
+	<!--
+	  MASVS-NETWORK: el backend real (microservicios EC2) solo expone HTTP
+	  plano, sin TLS. En vez de deshabilitar ATS globalmente
+	  (NSAllowsArbitraryLoads), se otorga la excepción de tráfico inseguro
+	  ÚNICAMENTE a los hosts explícitos del backend — equivalente al
+	  allowlist de network_security_config.xml en Android.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>174.129.218.190</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>3.217.217.227</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>52.1.110.21</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>44.196.107.153</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>

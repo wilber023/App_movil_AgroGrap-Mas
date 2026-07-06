@@ -15,6 +15,8 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/error/api_error_mapper.dart';
+import '../../../../../core/error/failures.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../domain/entities/profile_type.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -63,7 +65,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     result.fold(
-      (failure) => emit(AuthFailureState(message: failure.message)),
+      (failure) => emit(AuthFailureState(message: _safeMessage(failure))),
       (user) {
         // Convertir el rol real de la API a ProfileType.
         final actualProfileType = _roleToProfileType(user.role);
@@ -113,7 +115,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     await result.fold(
-      (failure) async => emit(AuthFailureState(message: failure.message)),
+      (failure) async => emit(AuthFailureState(message: _safeMessage(failure))),
       (user) async {
         // Limpiar la sesión persistida por el registro: el usuario debe
         // autenticarse manualmente. Esto también invalida los tokens en
@@ -189,4 +191,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         'aprendiz_agricola' => ProfileType.aprendizAgricola,
         _ => null, // 'admin' u otro rol no soportado en mobile
       };
+
+  // ---------------------------------------------------------------------------
+  // Gestión de errores: los fallos originados en el servidor (ServerFailure)
+  // se redactan a un mensaje genérico seguro. Los fallos ya redactados por
+  // la propia app (AuthFailure, NetworkFailure, CacheFailure) se preservan.
+  // ---------------------------------------------------------------------------
+
+  String _safeMessage(Failure failure) {
+    if (failure is ServerFailure) {
+      return ApiErrorMapper.toUserMessage(failure, statusCode: failure.statusCode);
+    }
+    return failure.message;
+  }
 }

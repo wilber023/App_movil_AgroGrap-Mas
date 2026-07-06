@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../core/security/screen_security.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/profile_type.dart';
@@ -60,10 +61,13 @@ class _LoginPageState extends State<LoginPage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
+    // MASVS-STORAGE: bloquea capturas de pantalla mientras se ingresan credenciales.
+    ScreenSecurity.enable();
   }
 
   @override
   void dispose() {
+    ScreenSecurity.disable();
     _usernameController.dispose();
     _passwordController.dispose();
     _tabController.dispose();

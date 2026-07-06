@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
@@ -155,9 +156,18 @@ Future<void> _initCore() async {
   final seleccionesBox = await Hive.openBox<String>('selecciones_box');
   sl.registerLazySingleton<Box<String>>(() => seleccionesBox, instanceName: 'seleccionesBox');
 
+  // -- Secure Storage: Keystore (Android) / Keychain (iOS) --
+  sl.registerLazySingleton<FlutterSecureStorage>(
+    () => const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    ),
+  );
+
   // -- Token Storage: acceso rápido a access/refresh token para el interceptor --
+  // MASVS-STORAGE: los tokens ya NO viven en el Hive Box (texto plano),
+  // sino en flutter_secure_storage (ver core/storage/token_storage.dart).
   sl.registerLazySingleton<TokenStorage>(
-    () => TokenStorageImpl(sl<Box<String>>(instanceName: 'authBox')),
+    () => TokenStorageImpl(sl<FlutterSecureStorage>()),
   );
 
   // -- Dio dedicado para renovar tokens (sin interceptores → evita loop) --

@@ -77,6 +77,18 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_launcher_icons: "^0.13.1"
 
+  # -- Seguridad Móvil (OWASP MASVS) --
+  # Almacenamiento seguro de tokens/credenciales (Keystore/Keychain)
+  flutter_secure_storage: ^9.2.4
+  # Autenticación biométrica local para operaciones sensibles
+  local_auth: ^2.3.0
+  # Detección de dispositivos rooteados / con jailbreak
+  safe_device: ^1.1.6
+  # Comparación semántica de versiones (mecanismo de actualización forzada)
+  pub_semver: ^2.1.4
+  # Hash SHA-256 para el punto de extensión de certificate pinning
+  crypto: ^3.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -136,7 +136,13 @@ class _AuthTextFieldState extends State<AuthTextField> {
             focusNode: _focus,
             controller: widget.controller,
             obscureText: widget.obscureText,
-            keyboardType: widget.keyboardType,
+            // MASVS-PLATFORM (UI segura): en campos de contraseña se
+            // deshabilita el autocompletado/corrector y el cache de teclado
+            // para que el SO no sugiera ni recuerde la contraseña en texto
+            // plano.
+            enableSuggestions: widget.obscureText ? false : true,
+            autocorrect: widget.obscureText ? false : true,
+            keyboardType: widget.obscureText ? TextInputType.visiblePassword : widget.keyboardType,
             textInputAction: widget.textInputAction,
             validator: widget.validator,
             onChanged: widget.onChanged,

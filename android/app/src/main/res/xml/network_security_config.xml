@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MASVS-NETWORK: el backend real de AgroGraph (microservicios de Usuarios,
+  Cultivos, LLM/RAG y Productos) se expone actualmente solo por HTTP plano
+  sobre IPs de EC2, sin certificado TLS — forzar HTTPS globalmente rompería
+  el 100% de las llamadas de red de la app.
+
+  En su lugar, esta configuración deshabilita el tráfico en texto plano
+  por defecto para CUALQUIER otro host (base-config) y lo habilita
+  ÚNICAMENTE para los hosts explícitos del backend (domain-config),
+  igual que si fuera un allowlist. Esto evita que la app haga conexiones
+  cleartext a hosts arbitrarios/maliciosos, aunque no logra HTTPS
+  end-to-end mientras el backend no exponga TLS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Microservicio de Usuarios (auth, perfil) -->
+        <domain includeSubdomains="false">174.129.218.190</domain>
+        <!-- Microservicio de Cultivos/Parcelas -->
+        <domain includeSubdomains="false">3.217.217.227</domain>
+        <!-- Microservicio LLM/RAG (diagnóstico enriquecido) -->
+        <domain includeSubdomains="false">52.1.110.21</domain>
+        <!-- Microservicio de Productos (recomendaciones) -->
+        <domain includeSubdomains="false">44.196.107.153</domain>
+    </domain-config>
+</network-security-config>

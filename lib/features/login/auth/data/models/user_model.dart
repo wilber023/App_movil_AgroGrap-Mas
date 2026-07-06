@@ -60,7 +60,12 @@ class UserModel extends UserEntity {
     };
   }
 
-  /// JSON para persistir en Hive (incluye tokens para restaurar sesión offline).
+  /// JSON para persistir en Hive: solo perfil, SIN tokens.
+  ///
+  /// MASVS-STORAGE (prevención de fuga de datos sensibles): los tokens ya
+  /// se guardan por separado en `flutter_secure_storage` (Keystore/Keychain)
+  /// vía [TokenStorage]. Duplicarlos aquí en texto plano anularía ese
+  /// control, ya que Hive no cifra su contenido en disco.
   Map<String, dynamic> toCacheJson() {
     return {
       'id': id,
@@ -69,8 +74,6 @@ class UserModel extends UserEntity {
       'email': email,
       'phone': phone,
       'avatar_url': avatarUrl,
-      'access_token': accessToken,
-      'refresh_token': refreshToken,
       'is_local_only': isLocalOnly,
       'created_at': createdAt?.toIso8601String(),
       'role': role,

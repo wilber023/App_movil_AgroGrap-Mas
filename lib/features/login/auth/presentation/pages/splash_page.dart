@@ -10,10 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../core/security/force_update_gate.dart';
+import '../../../../../core/security/root_detection.dart';
 import '../bloc/splash_cubit.dart';
 import 'select_profile_page.dart';
 import '../../../../../main.dart';
 import '../../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
+
+/// Versión instalada (pubspec.yaml `version:`). Ver [ForceUpdateGate].
+const String _kAppVersion = '1.0.0+1';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -38,7 +43,21 @@ class _SplashPageState extends State<SplashPage> {
     super.dispose();
   }
 
-  void _handleSplashState(BuildContext context, SplashState state) {
+  Future<void> _handleSplashState(BuildContext context, SplashState state) async {
+    // MASVS-CODE: mecanismo de actualización forzada. `minSupportedVersion`
+    // hoy es igual a la versión actual (no hay endpoint de backend aún),
+    // por lo que esto nunca bloquea todavía — ver ForceUpdateGate.
+    if (ForceUpdateGate.needsUpdate(_kAppVersion) && context.mounted) {
+      await _showForceUpdateDialog(context);
+      return;
+    }
+
+    // MASVS-RESILIENCE: advertencia (no bloqueo) si el dispositivo está
+    // rooteado/con jailbreak — AgroGraph maneja datos económicos y
+    // agronómicos sensibles del productor.
+    await _warnIfCompromisedDevice(context);
+    if (!context.mounted) return;
+
     if (state is SplashNavigateToAgricultorHome) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainShell()),
@@ -52,6 +71,53 @@ class _SplashPageState extends State<SplashPage> {
         MaterialPageRoute(builder: (_) => const AprendizMainShell()),
       );
     }
+  }
+
+  Future<void> _showForceUpdateDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Actualización requerida'),
+        content: const Text(
+          'Hay una nueva versión de AgroGraph disponible. Actualiza para '
+          'continuar usando la app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _rootWarningShown = false;
+
+  Future<void> _warnIfCompromisedDevice(BuildContext context) async {
+    if (_rootWarningShown) return;
+    final compromised = await RootDetection.isCompromised();
+    if (!context.mounted || !compromised) return;
+    _rootWarningShown = true;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dispositivo no confiable'),
+        content: const Text(
+          'Detectamos que este dispositivo está rooteado o con jailbreak. '
+          'Usar AgroGraph en este estado puede exponer tus datos agronómicos '
+          'y económicos a otras apps. Continúa bajo tu propio riesgo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Entendido, continuar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

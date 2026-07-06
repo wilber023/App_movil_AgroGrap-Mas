@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/security/local_auth_gate.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../diagnosis/presentation/bloc/diagnosis_bloc.dart';
@@ -382,8 +383,14 @@ class _ParcelsView extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              // MASVS-AUTH: reautenticación adicional antes de una operación
+              // destructiva e irreversible.
+              final authorized = await LocalAuthGate().authenticate(
+                localizedReason: 'Confirma tu identidad para eliminar esta parcela',
+              );
+              if (!authorized || !context.mounted) return;
               context.read<ParcelBloc>().add(
                     ParcelDeleteRequested(seleccionId: p.seleccionId),
                   );

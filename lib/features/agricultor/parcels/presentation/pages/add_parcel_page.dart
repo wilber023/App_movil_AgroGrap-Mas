@@ -11,6 +11,7 @@ import '../../../../../core/usecases/usecase.dart';
 import '../../domain/entities/cultivo_entity.dart';
 import '../../domain/repositories/parcel_repository.dart';
 import '../../domain/usecases/get_cultivo_catalog_usecase.dart';
+import '../../domain/value_objects/hectareas.dart';
 import '../bloc/parcel_bloc.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
 
@@ -128,9 +129,11 @@ class _AddParcelPageState extends State<AddParcelPage> {
 
   void _updateState() => setState(() {});
 
+  String? get _areaError => Hectareas.validate(_areaController.text);
+
   bool get _isValid =>
       _nameController.text.trim().isNotEmpty &&
-      _areaController.text.trim().isNotEmpty &&
+      _areaError == null &&
       _regionController.text.trim().isNotEmpty &&
       _selectedCropIndex != -1 &&
       _selectedDate != null &&
@@ -169,7 +172,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
     if (!_isValid) return;
 
     final cultivo = _catalog[_selectedCropIndex];
-    final areaRaw = double.tryParse(_areaController.text.trim()) ?? 0.0;
+    final areaRaw = Hectareas(_areaController.text.trim()).value;
     final unidad = _selectedUnit == 'Hectáreas' ? 'ha' : 'm2';
 
     final terrenoTipo = _selectedTerrenoIndex >= 0 ? _terrenoOptions[_selectedTerrenoIndex] : null;
@@ -301,6 +304,13 @@ class _AddParcelPageState extends State<AddParcelPage> {
                                   Expanded(flex: 35, child: _buildUnitDropdown()),
                                 ],
                               ),
+                              if (_areaController.text.isNotEmpty && _areaError != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _areaError!,
+                                  style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: Color(0xFFE76F51)),
+                                ),
+                              ],
                               const SizedBox(height: 12),
 
                               _buildFieldLabel('Región / Comunidad'),

@@ -2,12 +2,17 @@
 // Core -- Token Storage
 // =============================================================================
 // Capa: Core / Storage
-// Responsabilidad única: leer y escribir tokens (access + refresh) en Hive.
+// Responsabilidad única: leer y escribir tokens (access + refresh).
 // Es el único punto de verdad que usan los interceptores de red para
 // adjuntar o renovar el Authorization header sin acoplarse a la feature Auth.
+//
+// MASVS-STORAGE: los tokens se persisten en `flutter_secure_storage`
+// (Keystore en Android / Keychain en iOS), nunca en Hive/SharedPreferences
+// en texto plano — un token robado de un backup o de un dispositivo con
+// acceso al filesystem no debe ser legible.
 // =============================================================================
 
-import 'package:hive/hive.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract interface class TokenStorage {
   Future<String?> getAccessToken();
@@ -20,31 +25,31 @@ abstract interface class TokenStorage {
 }
 
 class TokenStorageImpl implements TokenStorage {
-  final Box<String> _box;
+  final FlutterSecureStorage _storage;
 
   static const _accessKey = 'ACCESS_TOKEN';
   static const _refreshKey = 'REFRESH_TOKEN';
 
-  const TokenStorageImpl(this._box);
+  const TokenStorageImpl(this._storage);
 
   @override
-  Future<String?> getAccessToken() async => _box.get(_accessKey);
+  Future<String?> getAccessToken() => _storage.read(key: _accessKey);
 
   @override
-  Future<String?> getRefreshToken() async => _box.get(_refreshKey);
+  Future<String?> getRefreshToken() => _storage.read(key: _refreshKey);
 
   @override
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
-    await _box.put(_accessKey, accessToken);
-    await _box.put(_refreshKey, refreshToken);
+    await _storage.write(key: _accessKey, value: accessToken);
+    await _storage.write(key: _refreshKey, value: refreshToken);
   }
 
   @override
   Future<void> clearTokens() async {
-    await _box.delete(_accessKey);
-    await _box.delete(_refreshKey);
+    await _storage.delete(key: _accessKey);
+    await _storage.delete(key: _refreshKey);
   }
 }
