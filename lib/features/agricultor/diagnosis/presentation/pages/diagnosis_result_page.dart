@@ -84,6 +84,12 @@ class _ResultView extends StatefulWidget {
 class _ResultViewState extends State<_ResultView> {
   late bool _isAddedToAgenda;
 
+  // "Ver más/Ver menos" del texto de diagnóstico generado por el modelo,
+  // en la tarjeta "Resumen del diagnóstico".
+  bool _diagnosticoExpanded = false;
+  static const _diagnosticoCollapsedLines = 4;
+  static const _diagnosticoCollapseThreshold = 220;
+
   Box<String> get _agendaBox => sl<Box<String>>(instanceName: 'agendaBox');
   String get _agendaKey => 'agenda_added_${widget.diagnosis.id}';
 
@@ -541,15 +547,37 @@ class _ResultViewState extends State<_ResultView> {
             ),
             const SizedBox(height: 12),
           ],
-          if (r.diagnostico.isNotEmpty)
+          if (r.diagnostico.isNotEmpty) ...[
             Text(
               r.diagnostico,
+              maxLines: _diagnosticoExpanded ? null : _diagnosticoCollapsedLines,
+              overflow: _diagnosticoExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 12.5,
                 color: _textPrimary,
                 height: 1.55,
               ),
             ),
+            if (r.diagnostico.length > _diagnosticoCollapseThreshold)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: GestureDetector(
+                  onTap: () => setState(
+                    () => _diagnosticoExpanded = !_diagnosticoExpanded,
+                  ),
+                  child: Text(
+                    _diagnosticoExpanded ? 'Ver menos' : 'Ver más',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.forestGreen,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
@@ -587,44 +615,48 @@ class _ResultViewState extends State<_ResultView> {
       gravColor = _riskLow;
     }
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _metricTile(
-              icon: Icons.local_fire_department_outlined,
-              iconColor: riskColor,
-              value: riskLabel,
-              valueColor: riskColor,
-              label: 'Riesgo actual',
-              sub: isHealthy ? 'Sin enfermedad' : 'Condiciones favorables',
-            ),
+    // Row simple (sin IntrinsicHeight/stretch): cada tarjeta crece segun su
+    // propio contenido. Con IntrinsicHeight, cuando el valor ("Moderado")
+    // envolvia a 2 lineas, el calculo de alto intrinseco no siempre
+    // coincidia exactamente con el alto real ya renderizado, y esa
+    // diferencia de unos pocos pixeles causaba el desborde. Sin forzar una
+    // altura comun entre las 3 tarjetas, no hay nada que desbordar.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _metricTile(
+            icon: Icons.local_fire_department_outlined,
+            iconColor: riskColor,
+            value: riskLabel,
+            valueColor: riskColor,
+            label: 'Riesgo actual',
+            sub: isHealthy ? 'Sin enfermedad' : 'Condiciones favorables',
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _metricTile(
-              icon: Icons.waves_outlined,
-              iconColor: gravColor,
-              value: gravLabel,
-              valueColor: gravColor,
-              label: 'Gravedad',
-              sub: 'Manchas visibles\nen hojas',
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _metricTile(
+            icon: Icons.waves_outlined,
+            iconColor: gravColor,
+            value: gravLabel,
+            valueColor: gravColor,
+            label: 'Gravedad',
+            sub: 'Manchas visibles\nen hojas',
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _metricTile(
-              icon: Icons.diamond_outlined,
-              iconColor: _metricBlue,
-              value: '${(conf * 100).toInt()}%',
-              valueColor: _metricBlue,
-              label: 'Confianza IA',
-              sub: 'Análisis basado\nen modelo',
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _metricTile(
+            icon: Icons.diamond_outlined,
+            iconColor: _metricBlue,
+            value: '${(conf * 100).toInt()}%',
+            valueColor: _metricBlue,
+            label: 'Confianza IA',
+            sub: 'Análisis basado\nen modelo',
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -649,6 +681,8 @@ class _ResultViewState extends State<_ResultView> {
           const SizedBox(height: 6),
           Text(
             value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -658,6 +692,8 @@ class _ResultViewState extends State<_ResultView> {
           const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 9,
               fontWeight: FontWeight.w600,
@@ -672,6 +708,7 @@ class _ResultViewState extends State<_ResultView> {
               color: _textSecondary.withValues(alpha: 0.75),
             ),
             maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

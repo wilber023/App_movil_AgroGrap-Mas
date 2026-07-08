@@ -11,6 +11,7 @@
 //   garantiza que el destino siempre coincide con el tipo de cuenta real.
 // =============================================================================
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/usecases/usecase.dart';
@@ -40,12 +41,24 @@ class SplashCubit extends Cubit<SplashState> {
     await minDelay;
 
     sessionResult.fold(
-      (_) => emit(SplashNavigateToProfileSelect()),
+      (failure) {
+        debugPrint('[AUTH] SplashCubit: sin sesion valida (${failure.message}) -> Login');
+        emit(SplashNavigateToProfileSelect());
+      },
       (user) {
-        if (!user.isAuthenticated) {
-          emit(SplashNavigateToProfileSelect());
-          return;
-        }
+        debugPrint(
+          '[AUTH] SplashCubit: sesion valida, user=${user.id} role=${user.role} '
+          '-> navegando directo (sin pedir login)',
+        );
+        // NOTA: no se valida user.isAuthenticated aqui a proposito.
+        // UserEntity.accessToken nunca esta poblado en un usuario que viene
+        // del cache de Hive (UserModel.toCacheJson() lo excluye
+        // deliberadamente por seguridad — MASVS-STORAGE, ver ese archivo).
+        // Validar isAuthenticated sobre este "user" siempre daba false y
+        // mandaba al Login sin importar si la sesion era valida. La
+        // validacion real (token existe + no vencido, con refresh si hace
+        // falta) ya ocurrio dentro de getSavedSessionUseCase: llegar aqui
+        // a la rama Right() YA significa sesion valida.
 
         // Usar el rol real del backend (guardado en cache) como única fuente
         // de verdad para el destino de navegación.

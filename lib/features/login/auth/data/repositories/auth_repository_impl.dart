@@ -16,6 +16,7 @@
 import 'dart:convert';
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../../../../../core/error/exceptions.dart';
 import '../../../../../core/error/failures.dart';
@@ -34,12 +35,16 @@ class AuthRepositoryImpl implements AuthRepository {
   final NetworkInfo networkInfo;
   final TokenStorage tokenStorage;
 
-  const AuthRepositoryImpl({
+  AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
     required this.tokenStorage,
   });
+
+  // Refresh "en vuelo" compartido entre llamadores concurrentes (ver
+  // refreshSession() mas abajo).
+  Future<Either<Failure, UserEntity>>? _pendingRefresh;
 
   // ---------------------------------------------------------------------------
   // Login
@@ -143,11 +148,34 @@ class AuthRepositoryImpl implements AuthRepository {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<Either<Failure, UserEntity>> refreshSession() async {
-    if (!await networkInfo.isConnected) return const Left(NetworkFailure());
+  Future<Either<Failure, UserEntity>> refreshSession() {
+    // Varias partes de la app pueden detectar un token vencido casi al
+    // mismo tiempo al abrir la app (el Splash y el chequeo de sesion del
+    // AuthBloc raiz, por ejemplo). Sin esto, cada una dispara su propio
+    // POST /auth/refresh con el MISMO refresh token; el backend rota el
+    // token en cada uso, asi que la segunda llamada llega con un token ya
+    // invalidado por la primera y falla — aunque la sesion sea valida,
+    // eso hacia que el usuario terminara viendo el Login. Con este guard,
+    // todas las llamadas concurrentes esperan el mismo refresh en curso y
+    // reciben el mismo resultado, en vez de competir por el mismo token.
+    return _pendingRefresh ??= _doRefreshSession().whenComplete(() {
+      _pendingRefresh = null;
+    });
+  }
+
+  Future<Either<Failure, UserEntity>> _doRefreshSession() async {
+    debugPrint('[AUTH] refreshSession: iniciando');
+    if (!await networkInfo.isConnected) {
+      debugPrint('[AUTH] refreshSession: sin red, aborta');
+      return const Left(NetworkFailure());
+    }
 
     try {
       final refreshToken = await tokenStorage.getRefreshToken();
+      debugPrint(
+        '[AUTH] refreshSession: refreshToken presente=${refreshToken != null} '
+        'len=${refreshToken?.length}',
+      );
       if (refreshToken == null) {
         return const Left(
           AuthFailure(message: 'No hay token de refresco disponible.'),
@@ -157,12 +185,25 @@ class AuthRepositoryImpl implements AuthRepository {
       final refreshedUser = await remoteDataSource.refreshToken(
         refreshToken: refreshToken,
       );
+      debugPrint(
+        '[AUTH] refreshSession: exito, nuevo accessToken='
+        '${refreshedUser.accessToken != null}, '
+        'nuevo refreshToken=${refreshedUser.refreshToken != null}',
+      );
       await _persistSession(refreshedUser);
       return Right(refreshedUser);
     } on ServerException catch (e) {
+      debugPrint(
+        '[AUTH] refreshSession: ServerException status=${e.statusCode} '
+        'msg=${e.message}',
+      );
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on CacheException catch (e) {
+      debugPrint('[AUTH] refreshSession: CacheException msg=${e.message}');
       return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      debugPrint('[AUTH] refreshSession: excepcion no prevista: $e');
+      return Left(CacheFailure(message: e.toString()));
     }
   }
 
@@ -199,10 +240,21 @@ class AuthRepositoryImpl implements AuthRepository {
   /// Persiste el usuario autenticado en cache local Y los tokens en TokenStorage.
   Future<void> _persistSession(UserModel user) async {
     await localDataSource.cacheUser(user);
+    debugPrint(
+      '[AUTH] _persistSession: user=${user.id} '
+      'accessToken=${user.accessToken != null} '
+      'refreshToken=${user.refreshToken != null}',
+    );
     if (user.accessToken != null && user.refreshToken != null) {
       await tokenStorage.saveTokens(
         accessToken: user.accessToken!,
         refreshToken: user.refreshToken!,
+      );
+      debugPrint('[AUTH] _persistSession: tokens guardados en TokenStorage');
+    } else {
+      debugPrint(
+        '[AUTH] _persistSession: ADVERTENCIA — el backend no devolvio '
+        'accessToken/refreshToken, NO se guarda nada en TokenStorage',
       );
     }
   }
@@ -210,11 +262,18 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> _getLocalUser() async {
     try {
       final cachedUser = await localDataSource.getLastUser();
+      debugPrint('[AUTH] _getLocalUser: usuario cacheado=${cachedUser.id}');
       // Verify the token is still in TokenStorage — if the interceptor cleared
       // it due to a refresh failure, we treat the session as invalid so the
       // user is sent to login instead of landing on a broken home screen.
       final storedToken = await tokenStorage.getAccessToken();
+      debugPrint(
+        '[AUTH] _getLocalUser: accessToken presente='
+        '${storedToken != null && storedToken.isNotEmpty} '
+        'len=${storedToken?.length}',
+      );
       if (storedToken == null || storedToken.isEmpty) {
+        debugPrint('[AUTH] _getLocalUser: sin accessToken -> Left (a Login)');
         return const Left(
           CacheFailure(message: 'No hay sesión activa. Vuelve a iniciar sesión.'),
         );
@@ -224,8 +283,12 @@ class AuthRepositoryImpl implements AuthRepository {
       // dura el access token — algo normal, para eso existe el refresh
       // token). Antes de invalidar la sesión, se intenta renovarlo: así una
       // sesión larga sigue "logueada" sin pedir credenciales de nuevo.
-      if (_isTokenExpired(storedToken)) {
-        if (!await networkInfo.isConnected) {
+      final expired = _isTokenExpired(storedToken);
+      debugPrint('[AUTH] _getLocalUser: tokenExpirado=$expired');
+      if (expired) {
+        final connected = await networkInfo.isConnected;
+        debugPrint('[AUTH] _getLocalUser: conectado=$connected');
+        if (!connected) {
           // Sin red no se puede confirmar ni renovar: se respeta la sesión
           // cacheada, mismo criterio offline-first que ya usa login().
           return Right(cachedUser);
@@ -233,6 +296,10 @@ class AuthRepositoryImpl implements AuthRepository {
         final refreshResult = await refreshSession();
         return refreshResult.fold(
           (failure) {
+            debugPrint(
+              '[AUTH] _getLocalUser: refresh fallo tipo=${failure.runtimeType} '
+              'msg=${failure.message}',
+            );
             if (failure is NetworkFailure) return Right(cachedUser);
             // El refresh token también es inválido/expiró: ahí sí termina
             // la sesión.
@@ -240,12 +307,23 @@ class AuthRepositoryImpl implements AuthRepository {
               CacheFailure(message: 'Tu sesión expiró. Vuelve a iniciar sesión.'),
             );
           },
-          (refreshedUser) => Right(refreshedUser),
+          (refreshedUser) {
+            debugPrint('[AUTH] _getLocalUser: refresh exitoso');
+            return Right(refreshedUser);
+          },
         );
       }
       return Right(cachedUser);
     } on CacheException catch (e) {
+      debugPrint('[AUTH] _getLocalUser: CacheException msg=${e.message}');
       return Left(CacheFailure(message: e.message));
+    } catch (e, st) {
+      // Antes solo se atrapaba CacheException — cualquier otra excepcion
+      // (ej. una falla nativa al leer flutter_secure_storage) se propagaba
+      // sin control. Se atrapa aqui tambien para no dejar a checkSession()
+      // colgado y para poder ver la causa real en el log.
+      debugPrint('[AUTH] _getLocalUser: excepcion no prevista: $e\n$st');
+      return Left(CacheFailure(message: e.toString()));
     }
   }
 
@@ -261,7 +339,13 @@ class AuthRepositoryImpl implements AuthRepository {
   bool _isTokenExpired(String token) {
     try {
       final parts = token.split('.');
-      if (parts.length != 3) return false;
+      if (parts.length != 3) {
+        debugPrint(
+          '[AUTH] _isTokenExpired: el token no tiene 3 partes '
+          '(partes=${parts.length}) -> se asume NO vencido',
+        );
+        return false;
+      }
 
       var payload = parts[1];
       payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
@@ -269,11 +353,23 @@ class AuthRepositoryImpl implements AuthRepository {
       final claims = json.decode(decoded) as Map<String, dynamic>;
 
       final exp = claims['exp'];
-      if (exp is! int) return false;
+      if (exp is! int) {
+        debugPrint(
+          '[AUTH] _isTokenExpired: claim "exp" ausente o no es int '
+          '(valor=$exp, claves=${claims.keys.toList()}) -> se asume NO vencido',
+        );
+        return false;
+      }
 
       final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-      return DateTime.now().isAfter(expiry);
-    } catch (_) {
+      final now = DateTime.now();
+      final result = now.isAfter(expiry);
+      debugPrint(
+        '[AUTH] _isTokenExpired: exp=$expiry ahora=$now -> vencido=$result',
+      );
+      return result;
+    } catch (e) {
+      debugPrint('[AUTH] _isTokenExpired: no se pudo decodificar ($e) -> se asume NO vencido');
       return false;
     }
   }
