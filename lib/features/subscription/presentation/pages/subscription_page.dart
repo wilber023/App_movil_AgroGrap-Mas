@@ -25,13 +25,17 @@ class SubscriptionPage extends StatelessWidget {
           children: [
             Text(
               'Potencia tu Cultivo con AgroGraph Premium',
-              style: AppTypography.tituloLg.copyWith(color: AppColors.onSurface),
+              style: AppTypography.tituloLg.copyWith(
+                color: AppColors.onSurface,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               'Desbloquea diagnosticos ilimitados, predicciones climaticas avanzadas y gestion de hasta 50 parcelas simultaneas.',
-              style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTypography.bodyMd.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -75,7 +79,7 @@ class SubscriptionPage extends StatelessWidget {
               isActive: false,
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Las suscripciones se renuevan automaticamente. Puedes cancelar en cualquier momento desde los ajustes de tu cuenta.',
               style: AppTypography.etiquetaSm,
               textAlign: TextAlign.center,
@@ -96,7 +100,9 @@ class SubscriptionPage extends StatelessWidget {
     required bool isActive,
   }) {
     final borderColor = isPremium ? AppColors.primary : AppColors.cardBorder;
-    final bgColor = isPremium ? AppColors.primaryContainer.withValues(alpha: 0.1) : AppColors.cardSurface;
+    final bgColor = isPremium
+        ? AppColors.primaryContainer.withValues(alpha: 0.1)
+        : AppColors.cardSurface;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -132,26 +138,32 @@ class SubscriptionPage extends StatelessWidget {
             style: AppTypography.tituloLg.copyWith(color: AppColors.onSurface),
           ),
           const SizedBox(height: 24),
-          ...features.map((feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 20,
-                      color: isPremium ? AppColors.primary : AppColors.forestGreen,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
+          ...features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 20,
+                    color: isPremium
+                        ? AppColors.primary
+                        : AppColors.forestGreen,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: AppTypography.bodyMd.copyWith(
+                        color: AppColors.onSurface,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           if (!isActive)
             SizedBox(
@@ -167,15 +179,22 @@ class SubscriptionPage extends StatelessWidget {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isPremium ? AppColors.primary : AppColors.surfaceContainerHigh,
-                  foregroundColor: isPremium ? Colors.white : AppColors.onSurface,
+                  backgroundColor: isPremium
+                      ? AppColors.primary
+                      : AppColors.surfaceContainerHigh,
+                  foregroundColor: isPremium
+                      ? Colors.white
+                      : AppColors.onSurface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
                   isPremium ? 'Mejorar ahora' : 'Seleccionar',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

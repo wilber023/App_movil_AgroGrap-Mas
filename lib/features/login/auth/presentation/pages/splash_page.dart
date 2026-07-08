@@ -6,6 +6,7 @@
 // Es una pantalla 100% automatica, sin interaccion.
 // =============================================================================
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -43,7 +44,10 @@ class _SplashPageState extends State<SplashPage> {
     super.dispose();
   }
 
-  Future<void> _handleSplashState(BuildContext context, SplashState state) async {
+  Future<void> _handleSplashState(
+    BuildContext context,
+    SplashState state,
+  ) async {
     // MASVS-CODE: mecanismo de actualización forzada. `minSupportedVersion`
     // hoy es igual a la versión actual (no hay endpoint de backend aún),
     // por lo que esto nunca bloquea todavía — ver ForceUpdateGate.
@@ -59,9 +63,9 @@ class _SplashPageState extends State<SplashPage> {
     if (!context.mounted) return;
 
     if (state is SplashNavigateToAgricultorHome) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
     } else if (state is SplashNavigateToProfileSelect) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SelectProfilePage()),
@@ -137,17 +141,12 @@ class _SplashPageState extends State<SplashPage> {
                 children: [
                   const Spacer(flex: 3),
                   // Icono central (hoja)
-                  const Icon(
-                    Icons.eco_rounded,
-                    size: 80,
-                    color: Colors.white,
-                  ),
+                  const Icon(Icons.eco_rounded, size: 80, color: Colors.white),
                   const SizedBox(height: 24),
                   // Titulo
-                  const Text(
+                  Text(
                     'AgroGraph-MAS',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
+                    style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -156,10 +155,9 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: 10),
                   // Subtitulo
-                  const Text(
+                  Text(
                     'Tu agrónomo en el bolsillo',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Color(0xFF81C784), // Light green to match image
@@ -174,7 +172,9 @@ class _SplashPageState extends State<SplashPage> {
                       child: const LinearProgressIndicator(
                         minHeight: 3,
                         backgroundColor: Color(0xFF2E7D32),
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white70,
+                        ),
                       ),
                     ),
                   ),

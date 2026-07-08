@@ -13,6 +13,8 @@
 // depender de la estructura completa de UserModel.
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:dartz/dartz.dart';
 
 import '../../../../../core/error/exceptions.dart';
@@ -217,9 +219,62 @@ class AuthRepositoryImpl implements AuthRepository {
           CacheFailure(message: 'No hay sesión activa. Vuelve a iniciar sesión.'),
         );
       }
+      // El access token existe pero puede haber expirado sin que nadie lo
+      // haya usado todavía (ej. la app estuvo cerrada más tiempo del que
+      // dura el access token — algo normal, para eso existe el refresh
+      // token). Antes de invalidar la sesión, se intenta renovarlo: así una
+      // sesión larga sigue "logueada" sin pedir credenciales de nuevo.
+      if (_isTokenExpired(storedToken)) {
+        if (!await networkInfo.isConnected) {
+          // Sin red no se puede confirmar ni renovar: se respeta la sesión
+          // cacheada, mismo criterio offline-first que ya usa login().
+          return Right(cachedUser);
+        }
+        final refreshResult = await refreshSession();
+        return refreshResult.fold(
+          (failure) {
+            if (failure is NetworkFailure) return Right(cachedUser);
+            // El refresh token también es inválido/expiró: ahí sí termina
+            // la sesión.
+            return const Left(
+              CacheFailure(message: 'Tu sesión expiró. Vuelve a iniciar sesión.'),
+            );
+          },
+          (refreshedUser) => Right(refreshedUser),
+        );
+      }
       return Right(cachedUser);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
+    }
+  }
+
+  /// Decodifica el payload de un JWT (sin verificar firma — eso ya lo hizo
+  /// el backend al emitirlo) para leer el claim estándar `exp` (RFC 7519).
+  ///
+  /// Diseño deliberadamente conservador: si el token no tiene el formato
+  /// esperado o no trae `exp`, NO se asume vencido — se conserva el
+  /// comportamiento actual (solo exigir que el token exista). Esto evita
+  /// que un formato de token inesperado (uno sin `exp`, por ejemplo) deje
+  /// a todos los usuarios sin poder entrar. Solo se rechaza la sesión
+  /// cuando se puede confirmar POSITIVAMENTE que el token ya venció.
+  bool _isTokenExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+
+      var payload = parts[1];
+      payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
+      final decoded = utf8.decode(base64Url.decode(payload));
+      final claims = json.decode(decoded) as Map<String, dynamic>;
+
+      final exp = claims['exp'];
+      if (exp is! int) return false;
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+      return DateTime.now().isAfter(expiry);
+    } catch (_) {
+      return false;
     }
   }
 

@@ -18,6 +18,7 @@
 import 'package:dio/dio.dart';
 
 import '../api_endpoints.dart';
+import '../../session/session_manager.dart';
 import '../../storage/token_storage.dart';
 
 class AuthInterceptor extends Interceptor {
@@ -85,6 +86,7 @@ class AuthInterceptor extends Interceptor {
 
       if (refreshToken == null) {
         await _tokenStorage.clearTokens();
+        SessionManager.instance.notifySessionInvalidated();
         handler.next(err);
         return;
       }
@@ -114,9 +116,11 @@ class AuthInterceptor extends Interceptor {
     } on DioException {
       // El refresh también falló (token expirado/revocado): limpiar sesión.
       await _tokenStorage.clearTokens();
+      SessionManager.instance.notifySessionInvalidated();
       handler.next(err);
     } catch (_) {
       await _tokenStorage.clearTokens();
+      SessionManager.instance.notifySessionInvalidated();
       handler.next(err);
     } finally {
       _isRefreshing = false;

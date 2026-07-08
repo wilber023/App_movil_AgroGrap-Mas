@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -73,23 +74,23 @@ class ParcelDetailPage extends StatelessWidget {
               ),
               Text(
                 '$emoji ${parcel.cropName}',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   color: Color(0xFFADD5B8),
                 ),
               ),
             ],
           ),
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Color(0xFFADD5B8),
             indicatorColor: AppColors.warmAmber,
             indicatorWeight: 3,
-            labelStyle: TextStyle(
-                fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600),
-            unselectedLabelStyle:
-                TextStyle(fontFamily: 'Inter', fontSize: 13),
+            labelStyle: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            unselectedLabelStyle: GoogleFonts.inter(fontSize: 13),
             tabs: [
               Tab(text: 'Resumen'),
               Tab(text: 'Historial'),
@@ -101,8 +102,9 @@ class ParcelDetailPage extends StatelessWidget {
             _ResumenTab(parcel: parcel, emojiMap: _emojiMap),
             BlocProvider(
               create: (_) => sl<DiagnosisBloc>()
-                ..add(DiagnosisParcelHistoryRequested(
-                    parcelId: parcel.seleccionId)),
+                ..add(
+                  DiagnosisParcelHistoryRequested(parcelId: parcel.seleccionId),
+                ),
               child: _HistorialTab(parcel: parcel),
             ),
           ],
@@ -113,10 +115,9 @@ class ParcelDetailPage extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 3,
           icon: const Icon(Icons.camera_alt_outlined),
-          label: const Text(
+          label: Text(
             'Diagnosticar',
-            style: TextStyle(
-                fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 14),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ),
       ),
@@ -202,8 +203,7 @@ class _ResumenTab extends StatelessWidget {
                   children: [
                     Text(
                       parcel.name,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                         color: _textPrimary,
@@ -212,8 +212,7 @@ class _ResumenTab extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       parcel.cropName,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         color: _textSecondary,
                       ),
@@ -236,11 +235,9 @@ class _ResumenTab extends StatelessWidget {
                 'Superficie',
               ),
               if (parcel.region.isNotEmpty) ...[
-                _infoTile(
-                    Icons.location_on_outlined, parcel.region, 'Región'),
+                _infoTile(Icons.location_on_outlined, parcel.region, 'Región'),
               ],
-              _infoTile(
-                  Icons.timeline_outlined, parcel.stageName, 'Etapa'),
+              _infoTile(Icons.timeline_outlined, parcel.stageName, 'Etapa'),
             ],
           ),
         ],
@@ -260,8 +257,7 @@ class _ResumenTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   value,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: _textPrimary,
@@ -274,8 +270,7 @@ class _ResumenTab extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontSize: 10, color: _textSecondary),
+            style: GoogleFonts.inter(fontSize: 10, color: _textSecondary),
           ),
         ],
       ),
@@ -303,10 +298,9 @@ class _ResumenTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Ciclo fenológico',
-                style: TextStyle(
-                  fontFamily: 'Inter',
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: _textPrimary,
@@ -315,10 +309,7 @@ class _ResumenTab extends StatelessWidget {
               if (parcel.fechaSiembra != null)
                 Text(
                   'Siembra: ${_formatDate(parcel.fechaSiembra!)}',
-                  style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 10,
-                      color: _textSecondary),
+                  style: GoogleFonts.inter(fontSize: 10, color: _textSecondary),
                 ),
             ],
           ),
@@ -346,8 +337,8 @@ class _ResumenTab extends StatelessWidget {
                           color: isFuture
                               ? Colors.transparent
                               : isCompleted
-                                  ? AppColors.forestGreen
-                                  : Colors.white,
+                              ? AppColors.forestGreen
+                              : Colors.white,
                           border: Border.all(
                             color: isFuture
                                 ? _trackGrey
@@ -357,18 +348,21 @@ class _ResumenTab extends StatelessWidget {
                         ),
                         child: Center(
                           child: isCompleted
-                              ? const Icon(Icons.check,
-                                  size: 10, color: Colors.white)
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 10,
+                                  color: Colors.white,
+                                )
                               : isCurrent
-                                  ? Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.forestGreen,
-                                      ),
-                                    )
-                                  : null,
+                              ? Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.forestGreen,
+                                  ),
+                                )
+                              : null,
                         ),
                       ),
                       if (!isLast)
@@ -405,29 +399,28 @@ class _ResumenTab extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text(
                               label,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
+                              style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: isCurrent
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                color:
-                                    isFuture ? _textSecondary : _textPrimary,
+                                color: isFuture ? _textSecondary : _textPrimary,
                               ),
                             ),
                             if (isCurrent) ...[
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.forestGreen,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Actual',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
+                                  style: GoogleFonts.inter(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -440,8 +433,7 @@ class _ResumenTab extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           desc,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
+                          style: GoogleFonts.inter(
                             fontSize: 11,
                             color: isFuture ? _hintColor : _textSecondary,
                           ),
@@ -469,10 +461,9 @@ class _ResumenTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Datos registrados',
-            style: TextStyle(
-              fontFamily: 'Inter',
+            style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _textPrimary,
@@ -499,11 +490,13 @@ class _ResumenTab extends StatelessWidget {
             ),
           ],
           _divider(),
-          _dataRow(
-              Icons.timeline_outlined, 'Etapa actual', parcel.stageName),
+          _dataRow(Icons.timeline_outlined, 'Etapa actual', parcel.stageName),
           _divider(),
           _dataRow(
-              Icons.monitor_heart_outlined, 'Estado de salud', parcel.status),
+            Icons.monitor_heart_outlined,
+            'Estado de salud',
+            parcel.status,
+          ),
         ],
       ),
     );
@@ -522,14 +515,12 @@ class _ResumenTab extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: const TextStyle(
-                fontFamily: 'Inter', fontSize: 12, color: _textSecondary),
+            style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
           ),
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
-              fontFamily: 'Inter',
+            style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: _textPrimary,
@@ -540,37 +531,42 @@ class _ResumenTab extends StatelessWidget {
     );
   }
 
-  Widget _divider() =>
-      Divider(height: 1, thickness: 0.5, color: _hintColor.withValues(alpha: 0.2));
+  Widget _divider() => Divider(
+    height: 1,
+    thickness: 0.5,
+    color: _hintColor.withValues(alpha: 0.2),
+  );
 
   Widget _chip(String label, Color bg, Color text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Text(
         label,
-        style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: text),
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: text,
+        ),
       ),
     );
   }
 
   BoxDecoration _cardDecoration() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      );
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(14),
+    border: Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
 
   Color _statusBg(String status) {
     switch (status) {
@@ -596,8 +592,18 @@ class _ResumenTab extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
@@ -659,14 +665,16 @@ class _HistorialTab extends StatelessWidget {
                 color: _chipGreenBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.camera_alt_outlined,
-                  color: AppColors.forestGreen, size: 32),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                color: AppColors.forestGreen,
+                size: 32,
+              ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Sin diagnósticos para esta parcela',
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: _textPrimary,
@@ -674,10 +682,9 @@ class _HistorialTab extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Usa el botón "Diagnosticar" para analizar el cultivo con el modelo CNN.',
-              style: TextStyle(
-                  fontFamily: 'Inter', fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -699,13 +706,12 @@ class _DiagnosisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final confidencePct =
-        (diagnosis.confidence * 100).toStringAsFixed(1);
+    final confidencePct = (diagnosis.confidence * 100).toStringAsFixed(1);
     final confidenceColor = diagnosis.confidence >= 0.80
         ? AppColors.forestGreen
         : diagnosis.confidence >= 0.60
-            ? const Color(0xFF7B4A10)
-            : const Color(0xFFA32D2D);
+        ? const Color(0xFF7B4A10)
+        : const Color(0xFFA32D2D);
 
     return GestureDetector(
       onTap: onTap,
@@ -713,8 +719,10 @@ class _DiagnosisCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+          border: Border.all(
+            color: _hintColor.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -734,16 +742,17 @@ class _DiagnosisCard extends StatelessWidget {
               child: SizedBox(
                 width: 84,
                 height: 96,
-                child: diagnosis.imagePath != null &&
+                child:
+                    diagnosis.imagePath != null &&
                         File(diagnosis.imagePath!).existsSync()
-                    ? Image.file(
-                        File(diagnosis.imagePath!),
-                        fit: BoxFit.cover,
-                      )
+                    ? Image.file(File(diagnosis.imagePath!), fit: BoxFit.cover)
                     : Container(
                         color: _chipGreenBg,
-                        child: const Icon(Icons.eco_outlined,
-                            color: AppColors.forestGreen, size: 28),
+                        child: const Icon(
+                          Icons.eco_outlined,
+                          color: AppColors.forestGreen,
+                          size: 28,
+                        ),
                       ),
               ),
             ),
@@ -757,8 +766,7 @@ class _DiagnosisCard extends StatelessWidget {
                   children: [
                     Text(
                       diagnosis.diseaseName,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: _textPrimary,
@@ -769,10 +777,10 @@ class _DiagnosisCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       diagnosis.cropName,
-                      style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          color: _textSecondary),
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: _textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 7),
                     Wrap(
@@ -794,10 +802,7 @@ class _DiagnosisCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       _formatDate(diagnosis.diagnosedAt),
-                      style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 10,
-                          color: _hintColor),
+                      style: GoogleFonts.inter(fontSize: 10, color: _hintColor),
                     ),
                   ],
                 ),
@@ -805,8 +810,11 @@ class _DiagnosisCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(right: 10),
-              child: Icon(Icons.chevron_right_outlined,
-                  color: _hintColor, size: 18),
+              child: Icon(
+                Icons.chevron_right_outlined,
+                color: _hintColor,
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -817,15 +825,17 @@ class _DiagnosisCard extends StatelessWidget {
   Widget _miniChip(String label, Color bg, Color text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Text(
         label,
-        style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: text),
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: text,
+        ),
       ),
     );
   }
@@ -858,8 +868,18 @@ class _DiagnosisCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }

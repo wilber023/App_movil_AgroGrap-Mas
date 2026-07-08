@@ -339,14 +339,7 @@ class _ProfileScaffold extends StatelessWidget {
               'Cerrar sesión',
               style: AppTypography.labelMd.copyWith(color: AppColors.error),
             ),
-            onTap: () {
-              context.read<AuthBloc>().add(const AuthLogoutRequested());
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                    builder: (_) => const SelectProfilePage()),
-                (route) => false,
-              );
-            },
+            onTap: () => _logout(context),
           ),
           const Divider(height: 1, color: AppColors.outlineVariant),
           ListTile(
@@ -373,6 +366,33 @@ class _ProfileScaffold extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+    );
+  }
+
+  /// Espera a que el logout realmente termine (exito o fallo) antes de
+  /// navegar, para no dejar una carrera entre el Navigator y la limpieza
+  /// de sesion (Hive + TokenStorage) que dispara AuthLogoutRequested.
+  Future<void> _logout(BuildContext context) async {
+    final bloc = context.read<AuthBloc>();
+    bloc.add(const AuthLogoutRequested());
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.forestGreen),
+      ),
+    );
+
+    await bloc.stream.firstWhere(
+      (state) => state is AuthUnauthenticated || state is AuthFailureState,
+    );
+
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SelectProfilePage()),
+      (route) => false,
     );
   }
 

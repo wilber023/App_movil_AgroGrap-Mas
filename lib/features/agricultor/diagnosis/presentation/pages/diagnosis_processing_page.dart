@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -114,7 +115,8 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                             color: Colors.white.withValues(alpha: 0.1),
                           ),
                           child: ClipOval(
-                            child: capturedImagePath != null &&
+                            child:
+                                capturedImagePath != null &&
                                     File(capturedImagePath).existsSync()
                                 ? Image.file(
                                     File(capturedImagePath),
@@ -149,8 +151,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                           child: Text(
                             _subtitles[_subtitleIndex],
                             key: ValueKey(_subtitleIndex),
-                            style: TextStyle(
-                              fontFamily: 'Inter',
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               color: Colors.white.withValues(alpha: 0.7),
                             ),
@@ -168,13 +169,14 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      context.read<DiagnosisBloc>().add(const DiagnosisCameraIdle());
+                      context.read<DiagnosisBloc>().add(
+                        const DiagnosisCameraIdle(),
+                      );
                       Navigator.pop(context);
                     },
                     child: Text(
                       'Cancelar análisis',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.5),
                       ),

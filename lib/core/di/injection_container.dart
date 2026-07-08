@@ -451,10 +451,14 @@ void _initTreatmentFeature() {
 
   sl.registerLazySingleton(() => GetTreatmentAgendaUseCase(sl()));
   sl.registerLazySingleton(() => MarkStepCompleteUseCase(sl()));
+  sl.registerLazySingleton(() => RescheduleStepUseCase(sl()));
+  sl.registerLazySingleton(() => SetRemindersActiveUseCase(sl()));
 
   sl.registerFactory(() => TreatmentBloc(
     getAgendaUseCase: sl(),
     markStepCompleteUseCase: sl(),
+    rescheduleStepUseCase: sl(),
+    setRemindersActiveUseCase: sl(),
   ));
 }
 

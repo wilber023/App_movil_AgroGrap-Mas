@@ -88,6 +88,8 @@ dependencies:
   pub_semver: ^2.1.4
   # Hash SHA-256 para el punto de extensión de certificate pinning
   crypto: ^3.0.6
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:

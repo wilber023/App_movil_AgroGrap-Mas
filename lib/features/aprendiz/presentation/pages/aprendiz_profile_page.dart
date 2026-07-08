@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../login/auth/presentation/bloc/auth_event.dart';
+import '../../../login/auth/presentation/bloc/auth_state.dart';
 import '../../../login/auth/presentation/pages/select_profile_page.dart';
 
 class AprendizProfilePage extends StatefulWidget {
@@ -16,8 +17,27 @@ class AprendizProfilePage extends StatefulWidget {
 class _AprendizProfilePageState extends State<AprendizProfilePage> {
   bool _offlineMode = true;
 
-  void _logout() {
-    context.read<AuthBloc>().add(AuthLogoutRequested());
+  /// Espera a que el logout realmente termine (exito o fallo) antes de
+  /// navegar, para no dejar una carrera entre el Navigator y la limpieza
+  /// de sesion (Hive + TokenStorage) que dispara AuthLogoutRequested.
+  Future<void> _logout() async {
+    final bloc = context.read<AuthBloc>();
+    bloc.add(const AuthLogoutRequested());
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.forestGreen),
+      ),
+    );
+
+    await bloc.stream.firstWhere(
+      (state) => state is AuthUnauthenticated || state is AuthFailureState,
+    );
+
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const SelectProfilePage()),
       (route) => false,

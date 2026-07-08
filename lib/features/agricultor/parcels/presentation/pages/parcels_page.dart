@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
@@ -38,13 +39,29 @@ const Color _addBorder = Color(0xFFA8C5B0);
 class ParcelsPage extends StatelessWidget {
   const ParcelsPage({super.key});
 
-  static const List<String> _stages = ['Siembra', 'Vegetativo', 'Floracion', 'Cosecha'];
+  static const List<String> _stages = [
+    'Siembra',
+    'Vegetativo',
+    'Floracion',
+    'Cosecha',
+  ];
 
   static const Map<String, String> _emojiMap = {
-    'Calabaza': '🍈', 'Frijol': '🫘', 'Manzana': '🍎', 'Mora': '🫐',
-    'Cereza': '🍒', 'Maíz': '🌽', 'Durazno': '🍑', 'Uva': '🍇',
-    'Naranja': '🍊', 'Pimienta': '🌶️', 'Papa': '🥔', 'Frambuesa': '🍓',
-    'Soja': '🌱', 'Fresa': '🍓', 'Tomate': '🍅',
+    'Calabaza': '🍈',
+    'Frijol': '🫘',
+    'Manzana': '🍎',
+    'Mora': '🫐',
+    'Cereza': '🍒',
+    'Maíz': '🌽',
+    'Durazno': '🍑',
+    'Uva': '🍇',
+    'Naranja': '🍊',
+    'Pimienta': '🌶️',
+    'Papa': '🥔',
+    'Frambuesa': '🍓',
+    'Soja': '🌱',
+    'Fresa': '🍓',
+    'Tomate': '🍅',
   };
 
   @override
@@ -79,7 +96,11 @@ class _ParcelsView extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_outlined, color: AppColors.warmAmber, size: 22),
+            icon: const Icon(
+              Icons.add_outlined,
+              color: AppColors.warmAmber,
+              size: 22,
+            ),
             onPressed: () => _openAddParcel(context),
           ),
         ],
@@ -174,15 +195,28 @@ class _ParcelsView extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _borderLight.withValues(alpha: 0.4), width: 0.5),
+          border: Border.all(
+            color: _borderLight.withValues(alpha: 0.4),
+            width: 0.5,
+          ),
         ),
         child: TextField(
           decoration: InputDecoration(
             hintText: 'Buscar parcela...',
-            hintStyle: AppTypography.etiquetaSm.copyWith(color: _borderLight, fontSize: 13),
-            prefixIcon: const Icon(Icons.search_outlined, color: _textSecondary, size: 20),
+            hintStyle: AppTypography.etiquetaSm.copyWith(
+              color: _borderLight,
+              fontSize: 13,
+            ),
+            prefixIcon: const Icon(
+              Icons.search_outlined,
+              color: _textSecondary,
+              size: 20,
+            ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ),
@@ -222,9 +256,18 @@ class _ParcelsView extends StatelessWidget {
               color: Colors.white,
               border: Border(
                 left: BorderSide(color: statusColors.border, width: 4),
-                top: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
-                right: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
-                bottom: BorderSide(color: _borderLight.withValues(alpha: 0.2), width: 0.5),
+                top: BorderSide(
+                  color: _borderLight.withValues(alpha: 0.2),
+                  width: 0.5,
+                ),
+                right: BorderSide(
+                  color: _borderLight.withValues(alpha: 0.2),
+                  width: 0.5,
+                ),
+                bottom: BorderSide(
+                  color: _borderLight.withValues(alpha: 0.2),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Column(
@@ -242,7 +285,10 @@ class _ParcelsView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: Center(
-                        child: Text(emoji, style: const TextStyle(fontSize: 25)),
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 25),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -268,7 +314,8 @@ class _ParcelsView extends StatelessWidget {
                               Text(
                                 '${p.areaSize.toStringAsFixed(1)} ${p.areaUnit}',
                                 style: AppTypography.etiquetaSm.copyWith(
-                                  color: _textSecondary, fontSize: 10,
+                                  color: _textSecondary,
+                                  fontSize: 10,
                                 ),
                               ),
                             ],
@@ -277,13 +324,18 @@ class _ParcelsView extends StatelessWidget {
                             const SizedBox(height: 3),
                             Row(
                               children: [
-                                const Icon(Icons.place_outlined, size: 11, color: _textSecondary),
+                                const Icon(
+                                  Icons.place_outlined,
+                                  size: 11,
+                                  color: _textSecondary,
+                                ),
                                 const SizedBox(width: 2),
                                 Expanded(
                                   child: Text(
                                     p.region,
                                     style: AppTypography.etiquetaSm.copyWith(
-                                      color: _textSecondary, fontSize: 10,
+                                      color: _textSecondary,
+                                      fontSize: 10,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -301,20 +353,32 @@ class _ParcelsView extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _statusChip(p.status, statusColors.chipBg, statusColors.chipText, statusColors.icon),
+                    _statusChip(
+                      p.status,
+                      statusColors.chipBg,
+                      statusColors.chipText,
+                      statusColors.icon,
+                    ),
                     const SizedBox(width: 6),
                     // Conteo de diagnósticos locales
                     if (diagCount > 0)
                       _diagCountChip(diagCount)
                     else if (p.lastDiagnosisAt != null) ...[
                       Container(
-                        width: 4, height: 4,
-                        decoration: const BoxDecoration(color: _borderLight, shape: BoxShape.circle),
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: _borderLight,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Diag. ${_timeAgo(p.lastDiagnosisAt!)}',
-                        style: AppTypography.etiquetaSm.copyWith(color: _textSecondary, fontSize: 10),
+                        style: AppTypography.etiquetaSm.copyWith(
+                          color: _textSecondary,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ],
@@ -338,7 +402,11 @@ class _ParcelsView extends StatelessWidget {
       width: 48,
       height: 48,
       child: PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert_outlined, color: _borderLight, size: 16),
+        icon: const Icon(
+          Icons.more_vert_outlined,
+          color: _borderLight,
+          size: 16,
+        ),
         onSelected: (value) {
           if (value == 'detalle') {
             Navigator.push(
@@ -351,10 +419,8 @@ class _ParcelsView extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => DiagnosisPage(
-                  parcelId: p.seleccionId,
-                  parcelName: p.name,
-                ),
+                builder: (_) =>
+                    DiagnosisPage(parcelId: p.seleccionId, parcelName: p.name),
               ),
             );
           }
@@ -364,10 +430,16 @@ class _ParcelsView extends StatelessWidget {
         },
         itemBuilder: (_) => [
           const PopupMenuItem(value: 'detalle', child: Text('Ver detalle')),
-          const PopupMenuItem(value: 'diagnostico', child: Text('Nuevo diagnóstico')),
+          const PopupMenuItem(
+            value: 'diagnostico',
+            child: Text('Nuevo diagnóstico'),
+          ),
           PopupMenuItem(
             value: 'eliminar',
-            child: Text('Eliminar parcela', style: TextStyle(color: AppColors.burntOrange)),
+            child: Text(
+              'Eliminar parcela',
+              style: TextStyle(color: AppColors.burntOrange),
+            ),
           ),
         ],
       ),
@@ -379,23 +451,32 @@ class _ParcelsView extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar parcela'),
-        content: Text('¿Seguro que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.'),
+        content: Text(
+          '¿Seguro que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               // MASVS-AUTH: reautenticación adicional antes de una operación
               // destructiva e irreversible.
               final authorized = await LocalAuthGate().authenticate(
-                localizedReason: 'Confirma tu identidad para eliminar esta parcela',
+                localizedReason:
+                    'Confirma tu identidad para eliminar esta parcela',
               );
               if (!authorized || !context.mounted) return;
               context.read<ParcelBloc>().add(
-                    ParcelDeleteRequested(seleccionId: p.seleccionId),
-                  );
+                ParcelDeleteRequested(seleccionId: p.seleccionId),
+              );
             },
-            child: Text('Eliminar', style: TextStyle(color: AppColors.burntOrange)),
+            child: Text(
+              'Eliminar',
+              style: TextStyle(color: AppColors.burntOrange),
+            ),
           ),
         ],
       ),
@@ -415,7 +496,10 @@ class _ParcelsView extends StatelessWidget {
           children: [
             Text(
               'Etapa fenologica',
-              style: AppTypography.etiquetaSm.copyWith(color: _textSecondary, fontSize: 10),
+              style: AppTypography.etiquetaSm.copyWith(
+                color: _textSecondary,
+                fontSize: 10,
+              ),
             ),
             Text(
               p.stageName,
@@ -435,7 +519,9 @@ class _ParcelsView extends StatelessWidget {
             child: LinearProgressIndicator(
               value: p.stageProgress,
               backgroundColor: _trackGrey,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.forestGreen,
+              ),
             ),
           ),
         ),
@@ -457,8 +543,7 @@ class _ParcelsView extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   ParcelsPage._stages[i],
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 8,
                     color: reached ? _textPrimary : _textSecondary,
                   ),
@@ -482,7 +567,10 @@ class _ParcelsView extends StatelessWidget {
         painter: _DashedBorderPainter(color: _addBorder, radius: 14),
         child: Container(
           height: 56,
-          decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(
+            color: _bg,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -516,13 +604,23 @@ class _ParcelsView extends StatelessWidget {
           Container(
             width: 100,
             height: 100,
-            decoration: const BoxDecoration(color: _chipGreenBg, shape: BoxShape.circle),
-            child: const Icon(Icons.local_florist_outlined, color: _addGreen, size: 36),
+            decoration: const BoxDecoration(
+              color: _chipGreenBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.local_florist_outlined,
+              color: _addGreen,
+              size: 36,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             'Aun no tienes parcelas',
-            style: AppTypography.labelMd.copyWith(color: _textPrimary, fontWeight: FontWeight.w500),
+            style: AppTypography.labelMd.copyWith(
+              color: _textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -542,9 +640,14 @@ class _ParcelsView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.warmAmber,
                 foregroundColor: const Color(0xFF4A2800),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Registrar parcela', style: TextStyle(fontWeight: FontWeight.w500)),
+              child: const Text(
+                'Registrar parcela',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ),
           ),
           const Spacer(flex: 2),
@@ -564,7 +667,11 @@ class _ParcelsView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_outlined, color: _textSecondary, size: 48),
+            const Icon(
+              Icons.wifi_off_outlined,
+              color: _textSecondary,
+              size: 48,
+            ),
             const SizedBox(height: 12),
             Text(
               message,
@@ -573,9 +680,15 @@ class _ParcelsView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.read<ParcelBloc>().add(const ParcelLoadRequested()),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.forestGreen),
-              child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+              onPressed: () =>
+                  context.read<ParcelBloc>().add(const ParcelLoadRequested()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.forestGreen,
+              ),
+              child: const Text(
+                'Reintentar',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -590,10 +703,17 @@ class _ParcelsView extends StatelessWidget {
   Widget _chip(String label, Color bg, Color text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Text(
         label,
-        style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w500, color: text),
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: text,
+        ),
       ),
     );
   }
@@ -601,7 +721,10 @@ class _ParcelsView extends StatelessWidget {
   Widget _statusChip(String label, Color bg, Color text, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -609,7 +732,11 @@ class _ParcelsView extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.w500, color: text),
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: text,
+            ),
           ),
         ],
       ),
@@ -650,8 +777,7 @@ class _ParcelsView extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             '$count ${count == 1 ? 'diagnóstico' : 'diagnósticos'}',
-            style: const TextStyle(
-              fontFamily: 'Inter',
+            style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: _chipBlueText,
@@ -697,7 +823,8 @@ class _ParcelsView extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inDays >= 1) return 'hace ${diff.inDays} dia${diff.inDays > 1 ? 's' : ''}';
+    if (diff.inDays >= 1)
+      return 'hace ${diff.inDays} dia${diff.inDays > 1 ? 's' : ''}';
     if (diff.inHours >= 1) return 'hace ${diff.inHours} h';
     return 'hace un momento';
   }
@@ -737,17 +864,22 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(radius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(radius),
+        ),
+      );
 
     final metrics = path.computeMetrics();
     for (final metric in metrics) {
       double distance = 0;
       while (distance < metric.length) {
         final end = distance + _dashWidth;
-        canvas.drawPath(metric.extractPath(distance, end.clamp(0, metric.length)), paint);
+        canvas.drawPath(
+          metric.extractPath(distance, end.clamp(0, metric.length)),
+          paint,
+        );
         distance = end + _dashGap;
       }
     }

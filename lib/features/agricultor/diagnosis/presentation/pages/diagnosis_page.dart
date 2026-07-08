@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show compute;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image/image.dart' as img;
@@ -24,8 +25,9 @@ Future<String> _compressToJpeg(String sourcePath) async {
     final rawBytes = await File(sourcePath).readAsBytes();
     final decoded = img.decodeImage(rawBytes);
     if (decoded == null) return sourcePath;
-    final output =
-        decoded.width > 1280 ? img.copyResize(decoded, width: 1280) : decoded;
+    final output = decoded.width > 1280
+        ? img.copyResize(decoded, width: 1280)
+        : decoded;
     final jpegBytes = img.encodeJpg(output, quality: 82);
     await File(sourcePath).writeAsBytes(jpegBytes);
     return sourcePath;
@@ -117,8 +119,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     // Al menos una palabra con ≥ 3 letras y más de un carácter único
     final words = normalized.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
     final hasMeaningful = words.any((w) {
-      final letters =
-          w.replaceAll(RegExp(r'[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]'), '').toLowerCase();
+      final letters = w
+          .replaceAll(RegExp(r'[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]'), '')
+          .toLowerCase();
       return letters.length >= 3 && letters.split('').toSet().length > 1;
     });
 
@@ -146,9 +149,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       if (mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context
-            .read<DiagnosisBloc>()
-            .add(DiagnosisPhotoCaptured(compressedPath));
+        context.read<DiagnosisBloc>().add(
+          DiagnosisPhotoCaptured(compressedPath),
+        );
       }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error cámara nativa: $e');
@@ -167,9 +170,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       if (image != null && mounted) {
         _guideTimer?.cancel();
         _pulseController.stop();
-        context
-            .read<DiagnosisBloc>()
-            .add(DiagnosisPhotoCaptured(image.path));
+        context.read<DiagnosisBloc>().add(DiagnosisPhotoCaptured(image.path));
       }
     } catch (e) {
       debugPrint('[DiagnosisPage] Error galería: $e');
@@ -195,12 +196,12 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 
     final text = _symptomsController.text.trim();
     context.read<DiagnosisBloc>().add(
-          DiagnosisProcessRequested(
-            userText: text.isEmpty ? null : text,
-            parcelId: widget.parcelId,
-            parcelName: widget.parcelName,
-          ),
-        );
+      DiagnosisProcessRequested(
+        userText: text.isEmpty ? null : text,
+        parcelId: widget.parcelId,
+        parcelName: widget.parcelName,
+      ),
+    );
     _symptomsController.clear();
     Navigator.push(
       context,
@@ -241,8 +242,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         final String? capturedPath = state is DiagnosisCaptured
             ? state.imagePath
             : state is DiagnosisProcessing
-                ? state.imagePath
-                : null;
+            ? state.imagePath
+            : null;
 
         return Scaffold(
           backgroundColor: Colors.black,
@@ -259,9 +260,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               // Overlay oscuro sobre imagen capturada
               if (isCaptured)
                 Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.38),
-                  ),
+                  child: Container(color: Colors.black.withValues(alpha: 0.38)),
                 ),
 
               if (!isCaptured) _buildVignette(),
@@ -309,8 +308,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             Text(
               'Toca el botón para fotografiar\ntu cultivo',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 color: Colors.white.withValues(alpha: 0.28),
                 height: 1.5,
@@ -354,12 +352,11 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               )
             else
               const SizedBox(width: 36),
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Text(
                   'Diagnóstico CNN',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -406,8 +403,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
           animation: _pulseAnimation,
           builder: (context, _) {
             final scale = isCaptured ? 1.0 : _pulseAnimation.value;
-            final bracketColor =
-                isCaptured ? AppColors.warmAmber : _bracketGreen;
+            final bracketColor = isCaptured
+                ? AppColors.warmAmber
+                : _bracketGreen;
             return Transform.scale(
               scale: scale,
               child: SizedBox(
@@ -429,8 +427,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                               _guideMessages[_guideIndex],
                               key: ValueKey(_guideIndex),
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: Colors.white.withValues(alpha: 0.75),
                               ),
@@ -485,8 +482,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               const SizedBox(width: 5),
               Text(
                 'SÍNTOMAS OBSERVADOS  ·  OPCIONAL',
-                style: TextStyle(
-                  fontFamily: 'Inter',
+                style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.6,
@@ -501,25 +497,22 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             controller: _symptomsController,
             maxLines: 2,
             maxLength: 400,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Colors.white,
-              fontFamily: 'Inter',
               fontSize: 12.5,
               height: 1.4,
             ),
             decoration: InputDecoration(
               hintText:
                   'Ej: manchas amarillas en hojas, tallos negros, frutos caídos...',
-              hintStyle: TextStyle(
+              hintStyle: GoogleFonts.inter(
                 color: Colors.white.withValues(alpha: 0.50),
                 fontSize: 11.5,
-                fontFamily: 'Inter',
               ),
               errorText: _symptomsError,
-              errorStyle: const TextStyle(
+              errorStyle: GoogleFonts.inter(
                 color: Color(0xFFFF6B6B),
                 fontSize: 10.5,
-                fontFamily: 'Inter',
                 height: 1.4,
               ),
               errorMaxLines: 3,
@@ -545,19 +538,26 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.0),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF6B6B),
+                  width: 1.0,
+                ),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF6B6B),
+                  width: 1.5,
+                ),
               ),
-              counterStyle: TextStyle(
+              counterStyle: GoogleFonts.inter(
                 color: Colors.white.withValues(alpha: 0.30),
                 fontSize: 9,
-                fontFamily: 'Inter',
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
           // ── Botones ─────────────────────────────────────────────────────
@@ -589,9 +589,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   Widget _buildShootingBar() {
     return Container(
       height: 100,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
       color: Colors.black.withValues(alpha: 0.6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -634,11 +632,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 10,
-                color:
-                    Colors.white.withValues(alpha: isDisabled ? 0.25 : 0.6),
+                color: Colors.white.withValues(alpha: isDisabled ? 0.25 : 0.6),
               ),
             ),
           ],
@@ -688,17 +684,16 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               shape: BoxShape.circle,
               color: AppColors.warmAmber,
             ),
-            child: const Icon(Icons.search_outlined,
-                color: Colors.white, size: 24),
+            child: const Icon(
+              Icons.search_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Analizar',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 10,
-              color: Colors.white,
-            ),
+            style: GoogleFonts.inter(fontSize: 10, color: Colors.white),
           ),
         ],
       ),
@@ -762,6 +757,5 @@ class _CornerBracketPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CornerBracketPainter old) =>
-      color != old.color;
+  bool shouldRepaint(covariant _CornerBracketPainter old) => color != old.color;
 }

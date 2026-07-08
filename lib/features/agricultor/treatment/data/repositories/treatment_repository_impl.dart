@@ -48,4 +48,38 @@ class TreatmentRepositoryImpl implements TreatmentRepository {
       return Left(CacheFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> rescheduleStep({
+    required String treatmentId,
+    required String stepId,
+    required DateTime newDate,
+  }) async {
+    try {
+      await localDataSource.rescheduleStep(
+        treatmentId: treatmentId,
+        stepId: stepId,
+        newDate: newDate,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setRemindersActive({
+    required String treatmentId,
+    required bool active,
+  }) async {
+    try {
+      await localDataSource.setRemindersActive(
+        treatmentId: treatmentId,
+        active: active,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(message: e.toString()));
+    }
+  }
 }

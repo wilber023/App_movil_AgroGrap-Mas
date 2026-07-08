@@ -9,4 +9,13 @@ abstract interface class TreatmentRepository {
     required String treatmentId,
     required String stepId,
   });
+  Future<Either<Failure, void>> rescheduleStep({
+    required String treatmentId,
+    required String stepId,
+    required DateTime newDate,
+  });
+  Future<Either<Failure, void>> setRemindersActive({
+    required String treatmentId,
+    required bool active,
+  });
 }

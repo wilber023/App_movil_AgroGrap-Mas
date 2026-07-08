@@ -38,6 +38,14 @@ abstract final class AppColors {
   /// Gris Offline oscuro -- Usado en pills "Sin conexion".
   static const Color offlineGreyDark = Color(0xFF6C757D);
 
+  /// Azul informativo -- Usado en la Agenda para el indicador "Completadas"
+  /// y el estado "Próximo" (distinto de las alertas rojo/naranja/ámbar).
+  static const Color infoBlue = Color(0xFF3B7DDD);
+
+  /// Índigo/morado -- Color de identidad decorativa para tarjetas de la
+  /// Agenda (variedad visual entre tratamientos, no indica urgencia).
+  static const Color agendaIndigo = Color(0xFF7C6FEA);
+
   // ---------------------------------------------------------------------------
   // MATERIAL 3 -- PRIMARY
   // ---------------------------------------------------------------------------

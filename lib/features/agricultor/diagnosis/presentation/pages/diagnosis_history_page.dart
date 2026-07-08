@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -86,10 +87,9 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Ver todo',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppColors.forestGreen,
                     ),
@@ -98,10 +98,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
               ],
             ),
           ),
-          Container(
-            height: 0.5,
-            color: _hintColor.withValues(alpha: 0.2),
-          ),
+          Container(height: 0.5, color: _hintColor.withValues(alpha: 0.2)),
           // List
           Expanded(
             child: BlocBuilder<DiagnosisBloc, DiagnosisState>(
@@ -118,7 +115,11 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
                     itemBuilder: (context, i) => _buildCard(context, items[i]),
                   );
                 }
-                return const Center(child: CircularProgressIndicator(color: AppColors.forestGreen));
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.forestGreen,
+                  ),
+                );
               },
             ),
           ),
@@ -141,8 +142,11 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
                 color: _chipGreenBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.camera_alt_outlined,
-                  color: _addGreen, size: 32),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                color: _addGreen,
+                size: 32,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -153,10 +157,9 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: TextStyle(
-                  fontFamily: 'Inter', fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -203,13 +206,9 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
           icon: const Icon(Icons.arrow_back_outlined, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Historial de diagnósticos',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
       body: BlocBuilder<DiagnosisBloc, DiagnosisState>(
@@ -219,12 +218,17 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
               children: [
                 // Filter bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border(
                       bottom: BorderSide(
-                          color: _hintColor.withValues(alpha: 0.2), width: 0.5),
+                        color: _hintColor.withValues(alpha: 0.2),
+                        width: 0.5,
+                      ),
                     ),
                   ),
                   child: SizedBox(
@@ -237,7 +241,9 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                         final isSelected = filterName == state.activeFilter;
                         return GestureDetector(
                           onTap: () {
-                            context.read<DiagnosisBloc>().add(DiagnosisFilterHistory(filterName));
+                            context.read<DiagnosisBloc>().add(
+                              DiagnosisFilterHistory(filterName),
+                            );
                           },
                           child: Container(
                             margin: const EdgeInsets.only(right: 8),
@@ -252,15 +258,17 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                                   ? null
                                   : Border.all(
                                       color: _hintColor.withValues(alpha: 0.3),
-                                      width: 0.5),
+                                      width: 0.5,
+                                    ),
                             ),
                             child: Text(
                               filterName,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected ? Colors.white : _textSecondary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : _textSecondary,
                               ),
                             ),
                           ),
@@ -278,15 +286,28 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
               ],
             );
           }
-          return const Center(child: CircularProgressIndicator(color: AppColors.forestGreen));
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.forestGreen),
+          );
         },
       ),
     );
   }
 
   static const List<String> _meses = [
-    '', 'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
+    '',
+    'ENERO',
+    'FEBRERO',
+    'MARZO',
+    'ABRIL',
+    'MAYO',
+    'JUNIO',
+    'JULIO',
+    'AGOSTO',
+    'SEPTIEMBRE',
+    'OCTUBRE',
+    'NOVIEMBRE',
+    'DICIEMBRE',
   ];
 
   Widget _buildGroupedList(List<DiagnosisEntity> items) {
@@ -307,8 +328,7 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Text(
               _formatMes(month),
-              style: const TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: _textSecondary,
@@ -346,8 +366,11 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                 color: _chipGreenBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.camera_alt_outlined,
-                  color: _addGreen, size: 32),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                color: _addGreen,
+                size: 32,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -358,10 +381,9 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: TextStyle(
-                  fontFamily: 'Inter', fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -378,10 +400,9 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
+                child: Text(
                   'Ir a c\u00e1mara \u2192',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -420,7 +441,9 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+          color: _hintColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,7 +458,11 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
             ),
             child: e.imagePath != null
                 ? const Icon(Icons.image, size: 24, color: _textSecondary)
-                : const Icon(Icons.eco_outlined, size: 24, color: _textSecondary),
+                : const Icon(
+                    Icons.eco_outlined,
+                    size: 24,
+                    color: _textSecondary,
+                  ),
           ),
           const SizedBox(width: 12),
           // Content
@@ -479,10 +506,7 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                   children: [
                     Text(
                       '${e.diagnosedAt.day}/${e.diagnosedAt.month}/${e.diagnosedAt.year}',
-                      style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 10,
-                          color: _hintColor),
+                      style: GoogleFonts.inter(fontSize: 10, color: _hintColor),
                     ),
                     _buildPill(e.statusLabel, statusBg, statusText),
                   ],
@@ -500,9 +524,9 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                             child: LinearProgressIndicator(
                               value: e.treatmentProgress!,
                               backgroundColor: _trackGrey,
-                              valueColor:
-                                  const AlwaysStoppedAnimation<Color>(
-                                      AppColors.forestGreen),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppColors.forestGreen,
+                              ),
                             ),
                           ),
                         ),
@@ -511,10 +535,10 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                         const SizedBox(width: 8),
                         Text(
                           e.treatmentStep!,
-                          style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 9,
-                              color: _textSecondary),
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            color: _textSecondary,
+                          ),
                         ),
                       ],
                     ],
@@ -538,8 +562,7 @@ Widget _buildPill(String label, Color bg, Color text) {
     ),
     child: Text(
       label,
-      style: TextStyle(
-        fontFamily: 'Inter',
+      style: GoogleFonts.inter(
         fontSize: 10,
         fontWeight: FontWeight.w500,
         color: text,

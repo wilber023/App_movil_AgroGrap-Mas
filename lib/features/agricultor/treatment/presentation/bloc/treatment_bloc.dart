@@ -26,6 +26,30 @@ final class TreatmentStepCompleted extends TreatmentEvent {
   List<Object?> get props => [treatmentId, stepId];
 }
 
+final class TreatmentStepRescheduled extends TreatmentEvent {
+  final String treatmentId;
+  final String stepId;
+  final DateTime newDate;
+  const TreatmentStepRescheduled({
+    required this.treatmentId,
+    required this.stepId,
+    required this.newDate,
+  });
+  @override
+  List<Object?> get props => [treatmentId, stepId, newDate];
+}
+
+final class TreatmentRemindersToggled extends TreatmentEvent {
+  final String treatmentId;
+  final bool active;
+  const TreatmentRemindersToggled({
+    required this.treatmentId,
+    required this.active,
+  });
+  @override
+  List<Object?> get props => [treatmentId, active];
+}
+
 // -- States --
 sealed class TreatmentState extends Equatable {
   const TreatmentState();
@@ -63,15 +87,23 @@ final class TreatmentFailure extends TreatmentState {
 class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
   final GetTreatmentAgendaUseCase _getAgendaUseCase;
   final MarkStepCompleteUseCase _markStepCompleteUseCase;
+  final RescheduleStepUseCase _rescheduleStepUseCase;
+  final SetRemindersActiveUseCase _setRemindersActiveUseCase;
 
   TreatmentBloc({
     required GetTreatmentAgendaUseCase getAgendaUseCase,
     required MarkStepCompleteUseCase markStepCompleteUseCase,
+    required RescheduleStepUseCase rescheduleStepUseCase,
+    required SetRemindersActiveUseCase setRemindersActiveUseCase,
   })  : _getAgendaUseCase = getAgendaUseCase,
         _markStepCompleteUseCase = markStepCompleteUseCase,
+        _rescheduleStepUseCase = rescheduleStepUseCase,
+        _setRemindersActiveUseCase = setRemindersActiveUseCase,
         super(const TreatmentInitial()) {
     on<TreatmentAgendaRequested>(_onLoadAgenda);
     on<TreatmentStepCompleted>(_onMarkStep);
+    on<TreatmentStepRescheduled>(_onRescheduleStep);
+    on<TreatmentRemindersToggled>(_onToggleReminders);
   }
 
   Future<void> _onLoadAgenda(
@@ -90,6 +122,41 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
       MarkStepCompleteParams(
         treatmentId: event.treatmentId,
         stepId: event.stepId,
+      ),
+    );
+    result.fold(
+      (f) => emit(TreatmentFailure(message: f.message)),
+      (_) {
+        emit(const TreatmentStepMarked());
+        add(const TreatmentAgendaRequested());
+      },
+    );
+  }
+
+  Future<void> _onRescheduleStep(
+      TreatmentStepRescheduled event, Emitter<TreatmentState> emit) async {
+    final result = await _rescheduleStepUseCase(
+      RescheduleStepParams(
+        treatmentId: event.treatmentId,
+        stepId: event.stepId,
+        newDate: event.newDate,
+      ),
+    );
+    result.fold(
+      (f) => emit(TreatmentFailure(message: f.message)),
+      (_) {
+        emit(const TreatmentStepMarked());
+        add(const TreatmentAgendaRequested());
+      },
+    );
+  }
+
+  Future<void> _onToggleReminders(
+      TreatmentRemindersToggled event, Emitter<TreatmentState> emit) async {
+    final result = await _setRemindersActiveUseCase(
+      SetRemindersActiveParams(
+        treatmentId: event.treatmentId,
+        active: event.active,
       ),
     );
     result.fold(

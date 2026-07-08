@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -54,22 +55,41 @@ class _AddParcelPageState extends State<AddParcelPage> {
   bool _catalogLoading = false;
 
   static const List<String> _terrenoOptions = [
-    'Plano', 'Pendiente ligera', 'Pendiente pronunciada',
+    'Plano',
+    'Pendiente ligera',
+    'Pendiente pronunciada',
   ];
   static const List<String> _sueloOptions = [
-    'Seco', 'Húmedo', 'Pedregoso', 'Arcilloso', 'Bien drenado', 'No estoy seguro',
+    'Seco',
+    'Húmedo',
+    'Pedregoso',
+    'Arcilloso',
+    'Bien drenado',
+    'No estoy seguro',
   ];
   static const List<String> _malezaOptions = [
-    'Hoja ancha', 'Pastos', 'Ciperáceas', 'Mixta', 'No hay / No sé',
+    'Hoja ancha',
+    'Pastos',
+    'Ciperáceas',
+    'Mixta',
+    'No hay / No sé',
   ];
 
   // Cultivos soportados por el modelo CNN
   static const Set<String> _allowedCrops = {
-    'Calabaza', 'Frijol', 'Maíz', 'Papa', 'Tomate',
+    'Calabaza',
+    'Frijol',
+    'Maíz',
+    'Papa',
+    'Tomate',
   };
 
   static const Map<String, String> _emojiMap = {
-    'Calabaza': '🍈', 'Frijol': '🫘', 'Maíz': '🌽', 'Papa': '🥔', 'Tomate': '🍅',
+    'Calabaza': '🍈',
+    'Frijol': '🫘',
+    'Maíz': '🌽',
+    'Papa': '🥔',
+    'Tomate': '🍅',
   };
 
   @override
@@ -80,13 +100,17 @@ class _AddParcelPageState extends State<AddParcelPage> {
     _regionController.addListener(_updateState);
 
     _checkInitialConnection();
-    _connectivitySubscription = sl<NetworkInfo>().onConnectivityChanged.listen((results) {
+    _connectivitySubscription = sl<NetworkInfo>().onConnectivityChanged.listen((
+      results,
+    ) {
       if (mounted) {
         setState(() {
-          _isConnected = results.any((r) =>
-              r == ConnectivityResult.wifi ||
-              r == ConnectivityResult.mobile ||
-              r == ConnectivityResult.ethernet);
+          _isConnected = results.any(
+            (r) =>
+                r == ConnectivityResult.wifi ||
+                r == ConnectivityResult.mobile ||
+                r == ConnectivityResult.ethernet,
+          );
         });
       }
     });
@@ -175,26 +199,30 @@ class _AddParcelPageState extends State<AddParcelPage> {
     final areaRaw = Hectareas(_areaController.text.trim()).value;
     final unidad = _selectedUnit == 'Hectáreas' ? 'ha' : 'm2';
 
-    final terrenoTipo = _selectedTerrenoIndex >= 0 ? _terrenoOptions[_selectedTerrenoIndex] : null;
-    final suelo = _selectedSueloConditions.map((i) => _sueloOptions[i]).toList();
+    final terrenoTipo = _selectedTerrenoIndex >= 0
+        ? _terrenoOptions[_selectedTerrenoIndex]
+        : null;
+    final suelo = _selectedSueloConditions
+        .map((i) => _sueloOptions[i])
+        .toList();
     final maleza = _selectedMalezaTypes.map((i) => _malezaOptions[i]).toList();
 
     context.read<ParcelBloc>().add(
-          ParcelAddRequested(
-            params: AddParcelParams(
-              cultivoId: cultivo.id,
-              cultivoNombre: cultivo.nombre,
-              nombreParcela: _nameController.text.trim(),
-              areaHa: areaRaw,
-              unidadArea: unidad,
-              region: _regionController.text.trim(),
-              fechaSiembra: _selectedDate!,
-              terrenoTipo: terrenoTipo,
-              sueloCondiciones: suelo.isNotEmpty ? suelo : null,
-              malezaTipos: maleza.isNotEmpty ? maleza : null,
-            ),
-          ),
-        );
+      ParcelAddRequested(
+        params: AddParcelParams(
+          cultivoId: cultivo.id,
+          cultivoNombre: cultivo.nombre,
+          nombreParcela: _nameController.text.trim(),
+          areaHa: areaRaw,
+          unidadArea: unidad,
+          region: _regionController.text.trim(),
+          fechaSiembra: _selectedDate!,
+          terrenoTipo: terrenoTipo,
+          sueloCondiciones: suelo.isNotEmpty ? suelo : null,
+          malezaTipos: maleza.isNotEmpty ? maleza : null,
+        ),
+      ),
+    );
   }
 
   void _showSuccessOverlay(String cropName) {
@@ -244,7 +272,10 @@ class _AddParcelPageState extends State<AddParcelPage> {
               foregroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_outlined, color: Colors.white),
+                icon: const Icon(
+                  Icons.arrow_back_outlined,
+                  color: Colors.white,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Text(
@@ -269,7 +300,10 @@ class _AddParcelPageState extends State<AddParcelPage> {
                           padding: const EdgeInsets.only(top: 12, bottom: 16),
                           child: Text(
                             'Completa solo la información que conozcas. Puedes editarla después.',
-                            style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: _textSecondary),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: _textSecondary,
+                            ),
                           ),
                         ),
 
@@ -297,18 +331,28 @@ class _AddParcelPageState extends State<AddParcelPage> {
                                       controller: _areaController,
                                       hint: 'Ej. 2.5',
                                       icon: Icons.straighten_outlined,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Expanded(flex: 35, child: _buildUnitDropdown()),
+                                  Expanded(
+                                    flex: 35,
+                                    child: _buildUnitDropdown(),
+                                  ),
                                 ],
                               ),
-                              if (_areaController.text.isNotEmpty && _areaError != null) ...[
+                              if (_areaController.text.isNotEmpty &&
+                                  _areaError != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
                                   _areaError!,
-                                  style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: Color(0xFFE76F51)),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: Color(0xFFE76F51),
+                                  ),
                                 ),
                               ],
                               const SizedBox(height: 12),
@@ -321,9 +365,13 @@ class _AddParcelPageState extends State<AddParcelPage> {
                                 icon: Icons.place_outlined,
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Escribe tu comunidad o región para mejorar recomendaciones agrícolas.',
-                                style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: _hintColor, height: 1.3),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  color: _hintColor,
+                                  height: 1.3,
+                                ),
                               ),
                               const SizedBox(height: 12),
 
@@ -337,7 +385,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
                               _buildDatePicker(),
                               if (_selectedDate != null) ...[
                                 const SizedBox(height: 8),
-                                _buildStagePill(_estimatePhenologicalStage(_selectedDate!)),
+                                _buildStagePill(
+                                  _estimatePhenologicalStage(_selectedDate!),
+                                ),
                               ],
                             ],
                           ),
@@ -355,37 +405,46 @@ class _AddParcelPageState extends State<AddParcelPage> {
                                 Padding(
                                   padding: const EdgeInsets.all(14),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       _buildOptionalHeader(
                                         title: 'Tipo de terreno',
-                                        subtitle: 'Ayuda a interpretar el comportamiento del cultivo.',
+                                        subtitle:
+                                            'Ayuda a interpretar el comportamiento del cultivo.',
                                       ),
                                       const SizedBox(height: 6),
                                       _buildSingleSelector(
                                         items: _terrenoOptions,
                                         selectedIndex: _selectedTerrenoIndex,
-                                        onSelected: (i) => setState(() => _selectedTerrenoIndex = i),
+                                        onSelected: (i) => setState(
+                                          () => _selectedTerrenoIndex = i,
+                                        ),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildOptionalHeader(
                                         title: 'Condición del suelo',
-                                        subtitle: 'La IA usará esto para recomendar cultivos compatibles.',
+                                        subtitle:
+                                            'La IA usará esto para recomendar cultivos compatibles.',
                                       ),
                                       const SizedBox(height: 6),
                                       _buildMultiSelector(
                                         items: _sueloOptions,
-                                        selectedIndices: _selectedSueloConditions,
+                                        selectedIndices:
+                                            _selectedSueloConditions,
                                         onTap: (i) => setState(() {
                                           _selectedSueloConditions.contains(i)
-                                              ? _selectedSueloConditions.remove(i)
+                                              ? _selectedSueloConditions.remove(
+                                                  i,
+                                                )
                                               : _selectedSueloConditions.add(i);
                                         }),
                                       ),
                                       const SizedBox(height: 16),
                                       _buildOptionalHeader(
                                         title: 'Malezas predominantes',
-                                        subtitle: 'Ayuda a mejorar la inferencia agronómica.',
+                                        subtitle:
+                                            'Ayuda a mejorar la inferencia agronómica.',
                                       ),
                                       const SizedBox(height: 6),
                                       _buildMultiSelector(
@@ -413,15 +472,23 @@ class _AddParcelPageState extends State<AddParcelPage> {
                             color: const Color(0xFFEAF3DE),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.info_outline, color: Color(0xFF2D6A4F), size: 16),
+                              Icon(
+                                Icons.info_outline,
+                                color: Color(0xFF2D6A4F),
+                                size: 16,
+                              ),
                               SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   'Agregar información del terreno puede ayudar a generar recomendaciones más precisas.',
-                                  style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: Color(0xFF27500A), height: 1.3),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: Color(0xFF27500A),
+                                    height: 1.3,
+                                  ),
                                 ),
                               ),
                             ],
@@ -432,15 +499,25 @@ class _AddParcelPageState extends State<AddParcelPage> {
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: const Color(0xFFF1F1F1), borderRadius: BorderRadius.circular(8)),
-                            child: const Row(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F1F1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
                               children: [
-                                Icon(Icons.wifi_off_outlined, color: Color(0xFFADB5BD), size: 16),
+                                Icon(
+                                  Icons.wifi_off_outlined,
+                                  color: Color(0xFFADB5BD),
+                                  size: 16,
+                                ),
                                 SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     'Sin conexión · necesitas estar en línea para registrar tu parcela',
-                                    style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: Color(0xFFADB5BD)),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: Color(0xFFADB5BD),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -459,7 +536,12 @@ class _AddParcelPageState extends State<AddParcelPage> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border(top: BorderSide(color: _hintColor.withValues(alpha: 0.3), width: 0.5)),
+                    border: Border(
+                      top: BorderSide(
+                        color: _hintColor.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
                   ),
                   child: SafeArea(
                     top: false,
@@ -472,19 +554,27 @@ class _AddParcelPageState extends State<AddParcelPage> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.check_outlined, size: 18),
                         label: Text(
                           isSaving ? 'Guardando...' : 'Guardar parcela',
-                          style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500),
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFF4A261),
                           foregroundColor: const Color(0xFF4A2800),
                           disabledBackgroundColor: const Color(0xFFE2EBE6),
                           disabledForegroundColor: const Color(0xFFADB5BD),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
                       ),
@@ -507,7 +597,10 @@ class _AddParcelPageState extends State<AddParcelPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+        border: Border.all(
+          color: _hintColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
       ),
       child: child,
     );
@@ -515,19 +608,26 @@ class _AddParcelPageState extends State<AddParcelPage> {
 
   Widget _buildAccordionHeader() {
     return GestureDetector(
-      onTap: () => setState(() => _isAdditionalExpanded = !_isAdditionalExpanded),
+      onTap: () =>
+          setState(() => _isAdditionalExpanded = !_isAdditionalExpanded),
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Información adicional (opcional)',
-              style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500, color: _textPrimary),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: _textPrimary,
+              ),
             ),
             Icon(
-              _isAdditionalExpanded ? Icons.keyboard_arrow_up_outlined : Icons.keyboard_arrow_down_outlined,
+              _isAdditionalExpanded
+                  ? Icons.keyboard_arrow_up_outlined
+                  : Icons.keyboard_arrow_down_outlined,
               color: _textPrimary,
               size: 20,
             ),
@@ -543,17 +643,23 @@ class _AddParcelPageState extends State<AddParcelPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+        border: Border.all(
+          color: _hintColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedUnit,
           isExpanded: true,
-          style: const TextStyle(fontFamily: 'Inter', color: _textPrimary, fontSize: 13),
-          items: ['Hectáreas', 'm²']
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-              .toList(),
-          onChanged: (v) { if (v != null) setState(() => _selectedUnit = v); },
+          style: GoogleFonts.inter(color: _textPrimary, fontSize: 13),
+          items: [
+            'Hectáreas',
+            'm²',
+          ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: (v) {
+            if (v != null) setState(() => _selectedUnit = v);
+          },
         ),
       ),
     );
@@ -567,20 +673,26 @@ class _AddParcelPageState extends State<AddParcelPage> {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+          border: Border.all(
+            color: _hintColor.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined, color: _textSecondary, size: 16),
+            const Icon(
+              Icons.calendar_today_outlined,
+              color: _textSecondary,
+              size: 16,
+            ),
             const SizedBox(width: 10),
             Text(
               _selectedDate != null
                   ? '${_selectedDate!.day.toString().padLeft(2, '0')} / '
-                      '${_selectedDate!.month.toString().padLeft(2, '0')} / '
-                      '${_selectedDate!.year}'
+                        '${_selectedDate!.month.toString().padLeft(2, '0')} / '
+                        '${_selectedDate!.year}'
                   : 'DD / MM / AAAA',
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 color: _selectedDate != null ? _textPrimary : _hintColor,
                 fontSize: 13,
               ),
@@ -594,10 +706,17 @@ class _AddParcelPageState extends State<AddParcelPage> {
   Widget _buildStagePill(String stage) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: const Color(0xFFEAF3DE), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF3DE),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Text(
         'Etapa estimada: $stage',
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: Color(0xFF27500A), fontWeight: FontWeight.w500),
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          color: Color(0xFF27500A),
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -605,17 +724,34 @@ class _AddParcelPageState extends State<AddParcelPage> {
   Widget _buildFieldLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w500, color: _textSecondary),
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: _textSecondary,
+      ),
     );
   }
 
-  Widget _buildOptionalHeader({required String title, required String subtitle}) {
+  Widget _buildOptionalHeader({
+    required String title,
+    required String subtitle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w500, color: _textPrimary)),
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: _textPrimary,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(subtitle, style: const TextStyle(fontFamily: 'Inter', fontSize: 10, color: _hintColor)),
+        Text(
+          subtitle,
+          style: GoogleFonts.inter(fontSize: 10, color: _hintColor),
+        ),
       ],
     );
   }
@@ -631,19 +767,28 @@ class _AddParcelPageState extends State<AddParcelPage> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontFamily: 'Inter', color: _textPrimary, fontSize: 13),
+        style: GoogleFonts.inter(color: _textPrimary, fontSize: 13),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontFamily: 'Inter', color: _hintColor, fontSize: 13),
+          hintStyle: GoogleFonts.inter(color: _hintColor, fontSize: 13),
           prefixIcon: Icon(icon, color: _textSecondary, size: 16),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+            borderSide: BorderSide(
+              color: _hintColor.withValues(alpha: 0.3),
+              width: 0.5,
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: _hintColor.withValues(alpha: 0.3), width: 0.5),
+            borderSide: BorderSide(
+              color: _hintColor.withValues(alpha: 0.3),
+              width: 0.5,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -658,7 +803,9 @@ class _AddParcelPageState extends State<AddParcelPage> {
     if (_catalogLoading) {
       return const SizedBox(
         height: 80,
-        child: Center(child: CircularProgressIndicator(color: Color(0xFF2D6A4F))),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF2D6A4F)),
+        ),
       );
     }
     if (_catalog.isEmpty) {
@@ -671,18 +818,17 @@ class _AddParcelPageState extends State<AddParcelPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'No se pudo cargar el catálogo de cultivos.',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: _hintColor),
+                style: GoogleFonts.inter(fontSize: 11, color: _hintColor),
               ),
             ),
             GestureDetector(
               onTap: _loadCatalog,
-              child: const Text(
+              child: Text(
                 'Reintentar',
-                style: TextStyle(
-                  fontFamily: 'Inter',
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF2D6A4F),
@@ -713,10 +859,14 @@ class _AddParcelPageState extends State<AddParcelPage> {
             duration: const Duration(milliseconds: 150),
             curve: Curves.easeOut,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEAF3DE) : const Color(0xFFF5F5F5),
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? const Color(0xFF2D6A4F) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : Colors.transparent,
                 width: 1.5,
               ),
             ),
@@ -727,11 +877,12 @@ class _AddParcelPageState extends State<AddParcelPage> {
                 const SizedBox(height: 5),
                 Text(
                   cultivo.nombre,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
-                    color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF888888),
+                    color: isSelected
+                        ? const Color(0xFF2D6A4F)
+                        : const Color(0xFF888888),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -762,17 +913,22 @@ class _AddParcelPageState extends State<AddParcelPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEAF3DE) : const Color(0xFFF1F1F1),
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF1F1F1),
               borderRadius: BorderRadius.circular(10),
-              border: isSelected ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5) : null,
+              border: isSelected
+                  ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5)
+                  : null,
             ),
             child: Text(
               items[i],
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF888888),
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : const Color(0xFF888888),
               ),
             ),
           ),
@@ -798,17 +954,22 @@ class _AddParcelPageState extends State<AddParcelPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEAF3DE) : const Color(0xFFF1F1F1),
+              color: isSelected
+                  ? const Color(0xFFEAF3DE)
+                  : const Color(0xFFF1F1F1),
               borderRadius: BorderRadius.circular(10),
-              border: isSelected ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5) : null,
+              border: isSelected
+                  ? Border.all(color: const Color(0xFF2D6A4F), width: 0.5)
+                  : null,
             ),
             child: Text(
               items[i],
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? const Color(0xFF2D6A4F) : const Color(0xFF888888),
+                color: isSelected
+                    ? const Color(0xFF2D6A4F)
+                    : const Color(0xFF888888),
               ),
             ),
           ),
@@ -847,18 +1008,32 @@ class _SuccessOverlay extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.check_rounded, color: Color(0xFF2D6A4F), size: 32),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Color(0xFF2D6A4F),
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   '¡Parcela registrada!',
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Tu cultivo de $cropName ha sido guardado. Puedes realizar tu primer diagnóstico cuando lo necesites.',
-                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.white.withValues(alpha: 0.75)),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -870,10 +1045,18 @@ class _SuccessOverlay extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF4A261),
                       foregroundColor: const Color(0xFF4A2800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
-                    child: const Text('Ir a diagnóstico →', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500)),
+                    child: Text(
+                      'Ir a diagnóstico →',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -885,9 +1068,17 @@ class _SuccessOverlay extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white, width: 1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Ver mis parcelas', style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500)),
+                    child: Text(
+                      'Ver mis parcelas',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
               ],

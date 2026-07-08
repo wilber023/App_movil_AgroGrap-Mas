@@ -5,13 +5,93 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../login/auth/presentation/bloc/auth_state.dart';
+import '../../../../subscription/presentation/pages/subscription_page.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
 import '../../../parcels/domain/entities/parcel_entity.dart';
 import '../../../parcels/presentation/bloc/parcel_bloc.dart';
-import '../../../../subscription/presentation/pages/subscription_page.dart';
+import '../../../treatment/domain/entities/treatment_entity.dart';
+import '../../../treatment/presentation/bloc/treatment_bloc.dart';
+import '../bloc/home_bloc.dart';
+
+// =============================================================================
+// Helpers puramente de presentacion. No agregan ningun dato nuevo: solo
+// formatean o clasifican visualmente datos que ya exponen HomeBloc,
+// ParcelBloc y TreatmentBloc (los 3 ya provistos en main.dart, no se creo
+// ningun Bloc/UseCase/Repository nuevo para esta pantalla).
+// =============================================================================
+
+String _greeting() {
+  final hour = DateTime.now().hour;
+  if (hour < 12) return 'Buenos días';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+String _firstName(String fullName) =>
+    fullName.trim().isEmpty ? '' : fullName.trim().split(' ').first;
+
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inDays >= 1) {
+    return 'hace ${diff.inDays} día${diff.inDays == 1 ? '' : 's'}';
+  }
+  if (diff.inHours >= 1) return 'hace ${diff.inHours} h';
+  if (diff.inMinutes >= 1) return 'hace ${diff.inMinutes} min';
+  return 'hace un momento';
+}
+
+/// Relabel puramente visual del status ya almacenado en ParcelEntity.status
+/// ('Alerta' | 'Seguimiento' | 'Saludable' | 'Sin diagnostico'). No cambia
+/// el dato guardado, solo como se muestra.
+({String label, Color color}) _parcelStatusInfo(String status) {
+  switch (status) {
+    case 'Alerta':
+      return (label: 'Riesgo alto', color: AppColors.error);
+    case 'Seguimiento':
+      return (label: 'Atención', color: AppColors.burntOrange);
+    case 'Saludable':
+      return (label: 'Saludable', color: AppColors.forestGreen);
+    default:
+      return (label: 'Sin diagnóstico', color: AppColors.onSurfaceVariant);
+  }
+}
+
+/// No existe un porcentaje de salud medido en el dominio (ParcelEntity no
+/// tiene ese campo). Este numero es una representacion visual estilizada
+/// del status ya conocido, no una metrica precisa — por eso el anillo se
+/// etiqueta "Estado del cultivo" y no "Salud medida".
+int? _parcelStatusTier(String status) {
+  switch (status) {
+    case 'Saludable':
+      return 92;
+    case 'Seguimiento':
+      return 60;
+    case 'Alerta':
+      return 30;
+    default:
+      return null; // Sin diagnostico: no se inventa un numero.
+  }
+}
+
+IconData _cropIcon(String cropName) {
+  final name = cropName.toLowerCase();
+  if (name.contains('tomate')) return Icons.local_pizza_outlined;
+  if (name.contains('papa')) return Icons.egg_outlined;
+  if (name.contains('maíz') || name.contains('maiz')) return Icons.grass_outlined;
+  if (name.contains('pepino')) return Icons.eco_outlined;
+  if (name.contains('calabaza')) return Icons.circle_outlined;
+  if (name.contains('pimiento') || name.contains('chile')) return Icons.local_fire_department_outlined;
+  if (name.contains('fresa')) return Icons.favorite_border_rounded;
+  return Icons.eco_outlined;
+}
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  /// Cambia de tab dentro del BottomNavigationBar (lo provee MainShell en
+  /// main.dart). Si es null (ej. un test que monta HomePage aislada), los
+  /// enlaces "Ver agenda"/"Ver todos" simplemente no hacen nada — no
+  /// truena la pantalla.
+  final ValueChanged<int>? onNavigateToTab;
+  const HomePage({super.key, this.onNavigateToTab});
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +109,17 @@ class HomePage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildPremiumBanner(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildCameraActionCard(context),
                     const SizedBox(height: 24),
-                    _buildMyParcelsSection(context),
+                    _buildTodaySummary(context),
                     const SizedBox(height: 24),
-                    _buildRegionalAlertCard(),
-                    const SizedBox(height: 40),
+                    _buildActiveCropsSection(context),
+                    const SizedBox(height: 24),
+                    _buildRegionalAlertCard(context),
+                    const SizedBox(height: 24),
+                    _buildTodayTasksSection(context),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -46,52 +130,101 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Encabezado
+  // ---------------------------------------------------------------------------
+
   Widget _buildHeader(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       buildWhen: (prev, curr) => curr is AuthAuthenticated || curr is AuthUnauthenticated,
-      builder: (context, state) {
-        final userName = state is AuthAuthenticated ? state.user.fullName : '';
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          color: AppColors.forestGreen,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (userName.isNotEmpty)
-                      Text(
-                        userName,
-                        style: AppTypography.etiquetaSm.copyWith(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          fontWeight: FontWeight.w500,
+      builder: (context, authState) {
+        final fullName = authState is AuthAuthenticated ? authState.user.fullName : '';
+        final name = _firstName(fullName);
+
+        return BlocBuilder<HomeBloc, HomeState>(
+          builder: (context, homeState) {
+            final dashboard = homeState is HomeLoaded ? homeState.dashboard : null;
+            final hasUnread = dashboard?.recentAlerts.any((a) => !a.isRead) ?? false;
+
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+              color: AppColors.forestGreen,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          name.isEmpty ? _greeting() : '${_greeting()}, $name 👋',
+                          style: AppTypography.etiquetaSm.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    Text(
-                      'AgroGraph IA',
-                      style: AppTypography.tituloMd.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'AgroGraph IA',
+                          style: AppTypography.tituloLg.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tu asistente agrícola inteligente',
+                          style: AppTypography.etiquetaSm.copyWith(
+                            color: Colors.white.withValues(alpha: 0.75),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                      if (hasUnread)
+                        Positioned(
+                          right: -1,
+                          top: -1,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.forestGreen, width: 1.5),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              const Icon(
-                Icons.notifications_none_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Banner premium (sin cambios de logica, solo icono)
+  // ---------------------------------------------------------------------------
 
   Widget _buildPremiumBanner(BuildContext context) {
     return GestureDetector(
@@ -111,7 +244,14 @@ class HomePage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.stars_rounded, color: AppColors.warmAmber, size: 20),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.forestGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: RichText(
@@ -121,7 +261,7 @@ class HomePage extends StatelessWidget {
                     height: 1.4,
                   ),
                   children: [
-                    const TextSpan(text: 'Obtén diagnósticos ilimitados y alertas avanzadas. '),
+                    const TextSpan(text: 'Desbloquea diagnósticos ilimitados y alertas avanzadas. '),
                     TextSpan(
                       text: 'Mejorar a Pro →',
                       style: AppTypography.etiquetaSm.copyWith(
@@ -139,148 +279,233 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Tarjeta de escaneo
+  // ---------------------------------------------------------------------------
+
   Widget _buildCameraActionCard(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const DiagnosisPage()),
-      ),
-      child: Container(
-        height: 180,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+        ],
+      ),
+      // Row + Expanded (no Stack/Positioned): el texto/boton tiene prioridad
+      // sobre el ancho disponible y la ilustracion (96px fijos) nunca puede
+      // solaparse con ellos — si la pantalla es angosta, el titulo envuelve
+      // a 2 lineas (la tarjeta crece) en vez de superponerse.
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 26),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Escanear cultivo',
+                  style: AppTypography.tituloLg.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  // Etiqueta breve — reemplaza "Diagnóstico IA en segundos" a pedido.
+                  'Detecta enfermedades al instante',
+                  style: AppTypography.bodyMd.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DiagnosisPage()),
+                    ),
+                    icon: const Icon(Icons.camera_alt_rounded, size: 18, color: AppColors.primary),
+                    label: Text(
+                      'Tomar fotografía',
+                      style: AppTypography.labelMd.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 28),
-            ),
-            const Spacer(),
-            Text(
-              'Tomar foto del cultivo',
-              style: AppTypography.tituloLg.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Diagnóstico en segundos · funciona sin señal',
-              style: AppTypography.bodyMd.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          const _ScanFrameIllustration(),
+        ],
       ),
     );
   }
 
-  Widget _buildMyParcelsSection(BuildContext context) {
-    return BlocBuilder<ParcelBloc, ParcelState>(
-      builder: (context, state) {
-        final parcels = state is ParcelLoaded ? state.parcels : <ParcelEntity>[];
-        final isLoading = state is ParcelLoading || state is ParcelInitial;
+  // ---------------------------------------------------------------------------
+  // Resumen de hoy — reutiliza TreatmentBloc (misma fuente que la Agenda)
+  // ---------------------------------------------------------------------------
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.outlineVariant.withValues(alpha: 0.5),
-              width: 0.5,
+  Widget _buildTodaySummary(BuildContext context) {
+    return BlocBuilder<TreatmentBloc, TreatmentState>(
+      builder: (context, state) {
+        final treatments = state is TreatmentAgendaLoaded ? state.treatments : const <TreatmentEntity>[];
+        final overdue = treatments.where((t) => t.isOverdue).length;
+        final today = treatments.where((t) => t.isDueToday).length;
+        final week = treatments.where((t) => t.isDueThisWeek).length;
+        final completed = treatments.where((t) => t.activeStep == null).length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionHeader(
+              title: 'Resumen de hoy',
+              action: 'Ver agenda',
+              onTap: () => onNavigateToTab?.call(3),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Mis Cultivos Activos',
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _HomeStat(
+                    count: overdue,
+                    label: 'Vencidos',
+                    color: AppColors.error,
+                    icon: Icons.error_outline_rounded,
                   ),
-                  if (parcels.isNotEmpty)
-                    Text(
-                      '${parcels.length} ${parcels.length == 1 ? 'parcela' : 'parcelas'}',
-                      style: AppTypography.etiquetaSm.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (isLoading)
-                const SizedBox(
-                  height: 48,
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.forestGreen,
-                      ),
-                    ),
-                  ),
-                )
-              else if (parcels.isEmpty)
-                _buildEmptyParcels()
-              else
-                Column(
-                  children: [
-                    for (final p in parcels.take(3)) ...[
-                      _buildParcelRow(p),
-                      if (p != parcels.take(3).last)
-                        Divider(
-                          height: 1,
-                          thickness: 0.5,
-                          color: AppColors.outlineVariant.withValues(alpha: 0.4),
-                        ),
-                    ],
-                  ],
                 ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HomeStat(
+                    count: today,
+                    label: 'Hoy',
+                    color: AppColors.burntOrange,
+                    icon: Icons.event_note_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HomeStat(
+                    count: week,
+                    label: 'Esta semana',
+                    color: AppColors.forestGreen,
+                    icon: Icons.eco_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HomeStat(
+                    count: completed,
+                    label: 'Completados',
+                    color: AppColors.infoBlue,
+                    icon: Icons.check_circle_outline_rounded,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cultivos activos — tarjetas horizontales
+  // ---------------------------------------------------------------------------
+
+  Widget _buildActiveCropsSection(BuildContext context) {
+    return BlocBuilder<ParcelBloc, ParcelState>(
+      builder: (context, parcelState) {
+        final parcels = parcelState is ParcelLoaded ? parcelState.parcels : const <ParcelEntity>[];
+        final isLoading = parcelState is ParcelLoading || parcelState is ParcelInitial;
+        final treatmentState = context.watch<TreatmentBloc>().state;
+        final treatments = treatmentState is TreatmentAgendaLoaded
+            ? treatmentState.treatments
+            : const <TreatmentEntity>[];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionHeader(
+              title: 'Cultivos activos',
+              action: parcels.isEmpty ? null : 'Ver todos',
+              onTap: () => onNavigateToTab?.call(2),
+            ),
+            const SizedBox(height: 12),
+            if (isLoading)
+              const SizedBox(
+                height: 80,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.forestGreen),
+                  ),
+                ),
+              )
+            else if (parcels.isEmpty)
+              _buildEmptyParcels()
+            else
+              SizedBox(
+                height: 176,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: parcels.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (_, i) => _CropCard(
+                    parcel: parcels[i],
+                    treatments: treatments,
+                    onTap: () => onNavigateToTab?.call(2),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
   }
 
   Widget _buildEmptyParcels() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5), width: 0.5),
+      ),
       child: Row(
         children: [
           Container(
@@ -318,109 +543,621 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildParcelRow(ParcelEntity p) {
-    final statusColor = _statusColor(p.status);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+  // ---------------------------------------------------------------------------
+  // Alerta regional — ahora usa DashboardEntity.recentAlerts (dato real que
+  // ya cargaba HomeBloc pero la tarjeta anterior ignoraba por completo).
+  // ---------------------------------------------------------------------------
+
+  Widget _buildRegionalAlertCard(BuildContext context) {
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        final dashboard = state is HomeLoaded ? state.dashboard : null;
+        if (dashboard == null || dashboard.recentAlerts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final alert = dashboard.recentAlerts.first;
+        final risk = switch (alert.severity.toLowerCase()) {
+          'alta' => (label: 'ALTO', color: AppColors.error),
+          'media' => (label: 'MEDIO', color: AppColors.burntOrange),
+          _ => (label: 'BAJO', color: AppColors.warmAmber),
+        };
+        // Ilustrativo: cultivos propios del agricultor, no una correlacion
+        // cientifica verificada con esta alerta especifica (esa relacion no
+        // existe todavia en los datos que expone el backend).
+        final ownCrops = context.select<ParcelBloc, List<String>>((bloc) {
+          final s = bloc.state;
+          if (s is! ParcelLoaded) return const [];
+          return s.parcels.map((p) => p.cropName).toSet().take(3).toList();
+        });
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF1EE),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.25), width: 1),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  p.name,
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w500,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ALERTA REGIONAL',
+                      style: AppTypography.labelMd.copyWith(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
+                  GestureDetector(
+                    onTap: () => _showComingSoon(context, 'El detalle de alertas'),
+                    child: const Icon(Icons.chevron_right_rounded, color: AppColors.error, size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                alert.title,
+                style: AppTypography.tituloLg.copyWith(
+                  color: AppColors.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
                 ),
-                Text(
-                  '${p.cropName} · ${p.stageName}',
-                  style: AppTypography.etiquetaSm.copyWith(
-                    color: AppColors.onSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                alert.description,
+                style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 10,
+                runSpacing: 6,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Nivel de riesgo: ',
+                        style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: risk.color,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          risk.label,
+                          style: AppTypography.etiquetaSm.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'Actualizado ${_timeAgo(alert.createdAt)}',
+                    style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+                  ),
+                ],
+              ),
+              if (ownCrops.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tus cultivos en la zona',
+                        style: AppTypography.etiquetaSm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: ownCrops
+                            .map((c) => Chip(
+                                  avatar: Icon(_cropIcon(c), size: 14, color: AppColors.forestGreen),
+                                  label: Text(c),
+                                  labelStyle: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurface),
+                                  backgroundColor: Colors.white,
+                                  side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                ))
+                            .toList(),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              p.status,
-              style: AppTypography.etiquetaSm.copyWith(
-                color: statusColor,
-                fontWeight: FontWeight.w500,
-                fontSize: 10,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRegionalAlertCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.burntOrange.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.burntOrange, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'ALERTA REGIONAL',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.burntOrange,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showComingSoon(context, 'El mapa de alertas'),
+                  icon: const Icon(Icons.map_outlined, size: 17),
+                  label: const Text('Ver mapa de alertas'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Tizón tardío',
-            style: AppTypography.tituloLg.copyWith(
-              color: AppColors.onSurface,
-              fontWeight: FontWeight.bold,
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tareas programadas — misma fuente que la Agenda. No se muestran horas
+  // de reloj (10:00 AM, etc.) porque los tratamientos no tienen una hora
+  // programada real, solo fecha — mostrarlas seria inventar un dato.
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTodayTasksSection(BuildContext context) {
+    return BlocBuilder<TreatmentBloc, TreatmentState>(
+      builder: (context, state) {
+        final treatments = state is TreatmentAgendaLoaded ? state.treatments : const <TreatmentEntity>[];
+        final pending = treatments.where((t) => t.activeStep != null).toList()
+          ..sort((a, b) {
+            int rank(TreatmentEntity t) => t.isOverdue ? 0 : (t.isDueToday ? 1 : 2);
+            final r = rank(a).compareTo(rank(b));
+            if (r != 0) return r;
+            return a.activeStep!.scheduledDate.compareTo(b.activeStep!.scheduledDate);
+          });
+        final display = pending.take(3).toList();
+
+        if (display.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionHeader(
+              title: 'Tareas programadas',
+              action: 'Ver todas',
+              onTap: () => onNavigateToTab?.call(3),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5), width: 0.5),
+              ),
+              child: Column(
+                children: [
+                  for (int i = 0; i < display.length; i++)
+                    _TaskRow(
+                      treatment: display[i],
+                      isLast: i == display.length - 1,
+                      onTap: () => onNavigateToTab?.call(3),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String what) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('$what estará disponible próximamente.'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+}
+
+// =============================================================================
+// Widgets auxiliares
+// =============================================================================
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String? action;
+  final VoidCallback onTap;
+  const _SectionHeader({required this.title, required this.action, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: AppTypography.labelMd.copyWith(
+            color: AppColors.onSurface,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        if (action != null)
+          GestureDetector(
+            onTap: onTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  action!,
+                  style: AppTypography.etiquetaSm.copyWith(
+                    color: AppColors.forestGreen,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.forestGreen, size: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _HomeStat extends StatelessWidget {
+  final int count;
+  final String label;
+  final Color color;
+  final IconData icon;
+  const _HomeStat({required this.count, required this.label, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 6),
           Text(
-            '3 km · 4 casos confirmados en tu zona',
-            style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+            '$count',
+            style: AppTypography.headlineMd.copyWith(color: color, fontSize: 19, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.etiquetaSm.copyWith(
+              color: AppColors.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Alerta':
-        return AppColors.burntOrange;
-      case 'Seguimiento':
-        return AppColors.warmAmber;
-      default:
-        return AppColors.forestGreen;
+class _CropCard extends StatelessWidget {
+  final ParcelEntity parcel;
+  final List<TreatmentEntity> treatments;
+  final VoidCallback onTap;
+  const _CropCard({required this.parcel, required this.treatments, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final statusInfo = _parcelStatusInfo(parcel.status);
+    final tier = _parcelStatusTier(parcel.status);
+
+    // Mejor esfuerzo: no existe un vinculo real parcela<->tratamiento en el
+    // dominio (TreatmentEntity solo guarda el nombre del cultivo, no un
+    // parcelId), asi que se empareja por nombre de cultivo. Si el
+    // agricultor tiene 2 parcelas del mismo cultivo, ambas mostrarian la
+    // misma tarea — limitacion conocida, no se oculta.
+    TreatmentEntity? match;
+    for (final t in treatments) {
+      if (t.cropName.toLowerCase() == parcel.cropName.toLowerCase() && t.activeStep != null) {
+        match = t;
+        break;
+      }
     }
+
+    final String actionLabel;
+    final String actionValue;
+    if (match != null) {
+      actionLabel = match.isOverdue ? 'Tarea vencida' : 'Próxima tarea';
+      actionValue = match.isOverdue
+          ? 'hace ${match.activeStep!.daysOverdue} día${match.activeStep!.daysOverdue == 1 ? '' : 's'}'
+          : (match.isDueToday ? 'Hoy' : match.activeStep!.title);
+    } else if (parcel.lastDiagnosisAt != null) {
+      actionLabel = 'Último análisis';
+      actionValue = _timeAgo(parcel.lastDiagnosisAt!);
+    } else {
+      actionLabel = 'Sin diagnóstico';
+      actionValue = 'Aún no analizado';
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 172,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border(left: BorderSide(color: statusInfo.color, width: 3)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: statusInfo.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(_cropIcon(parcel.cropName), color: statusInfo.color, size: 18),
+                ),
+                const Spacer(),
+                if (tier != null)
+                  _MiniRing(percent: tier, color: statusInfo.color),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              parcel.cropName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.labelMd.copyWith(color: AppColors.onSurface, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              parcel.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: statusInfo.color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                statusInfo.label,
+                style: AppTypography.etiquetaSm.copyWith(
+                  color: statusInfo.color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+            const Spacer(),
+            const Divider(height: 14, thickness: 0.5),
+            Text(
+              actionLabel,
+              style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant, fontSize: 9.5),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    actionValue,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.etiquetaSm.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.onSurfaceVariant),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Anillo circular pequeño. El numero es la representacion estilizada de
+/// [_parcelStatusTier], no una medicion — ver esa funcion para el porque.
+class _MiniRing extends StatelessWidget {
+  final int percent;
+  final Color color;
+  const _MiniRing({required this.percent, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 34,
+      height: 34,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 34,
+            height: 34,
+            child: CircularProgressIndicator(
+              value: percent / 100,
+              strokeWidth: 3,
+              backgroundColor: color.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          Text(
+            '$percent',
+            style: AppTypography.etiquetaSm.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskRow extends StatelessWidget {
+  final TreatmentEntity treatment;
+  final bool isLast;
+  final VoidCallback onTap;
+  const _TaskRow({required this.treatment, required this.isLast, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color dotColor;
+    final String badgeLabel;
+    if (treatment.isOverdue) {
+      dotColor = AppColors.error;
+      badgeLabel = 'Vencida';
+    } else if (treatment.isDueToday) {
+      dotColor = AppColors.burntOrange;
+      badgeLabel = 'Hoy';
+    } else {
+      dotColor = AppColors.forestGreen;
+      badgeLabel = 'Mañana';
+    }
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    treatment.activeStep!.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodyMd.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    treatment.diseaseName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: dotColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                badgeLabel,
+                style: AppTypography.etiquetaSm.copyWith(
+                  color: dotColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ilustracion decorativa (marco de escaneo) para la tarjeta de camara.
+/// Construida con widgets planos, sin assets de imagen.
+class _ScanFrameIllustration extends StatelessWidget {
+  const _ScanFrameIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    const c = Colors.white70;
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(Icons.eco_rounded, size: 52, color: c),
+          Container(
+            width: 64,
+            height: 2,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6FE3A5),
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF6FE3A5).withValues(alpha: 0.6), blurRadius: 6),
+              ],
+            ),
+          ),
+          Positioned(top: 0, left: 0, child: _corner(top: true, left: true)),
+          Positioned(top: 0, right: 0, child: _corner(top: true, left: false)),
+          Positioned(bottom: 0, left: 0, child: _corner(top: false, left: true)),
+          Positioned(bottom: 0, right: 0, child: _corner(top: false, left: false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _corner({required bool top, required bool left}) {
+    const side = BorderSide(color: Colors.white70, width: 2.5);
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        border: Border(
+          top: top ? side : BorderSide.none,
+          bottom: !top ? side : BorderSide.none,
+          left: left ? side : BorderSide.none,
+          right: !left ? side : BorderSide.none,
+        ),
+      ),
+    );
   }
 }

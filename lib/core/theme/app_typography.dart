@@ -7,9 +7,17 @@
 //
 // Font: Inter (exclusivo). Todos los text styles del proyecto deben
 // consumirse desde esta clase.
+//
+// Se usa el paquete `google_fonts` (ya declarado en pubspec.yaml) para
+// cargar la tipografia real: antes, `fontFamily: 'Inter'` apuntaba a una
+// fuente nunca empaquetada como asset, asi que el motor de renderizado
+// caia en silencio a la fuente por defecto del sistema del telefono. Cada
+// llamada a GoogleFonts.inter(...) descarga (una sola vez, con cache local
+// para uso posterior offline) el archivo real del peso solicitado.
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Tokens tipograficos del Design System de AgroGraph-MAS.
 ///
@@ -18,15 +26,12 @@ import 'package:flutter/material.dart';
 abstract final class AppTypography {
   AppTypography._();
 
-  static const String _fontFamily = 'Inter';
-
   // ---------------------------------------------------------------------------
   // DS 1 -- Escala tipografica principal
   // ---------------------------------------------------------------------------
 
   /// Titulo de enfermedad -- Peso maximo, tracking cerrado.
-  static const TextStyle displayDisease = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle displayDisease = GoogleFonts.inter(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     height: 1.25, // lineHeight 40px / fontSize 32px
@@ -34,40 +39,35 @@ abstract final class AppTypography {
   );
 
   /// Titulo de enfermedad (mobile) -- Variante reducida.
-  static const TextStyle displayDiseaseMobile = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle displayDiseaseMobile = GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.286, // 36px / 28px
   );
 
   /// Headline medium -- Subtitulos y secciones.
-  static const TextStyle headlineMd = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle headlineMd = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.333, // 32px / 24px
   );
 
   /// Body large -- Texto de lectura principal ampliado.
-  static const TextStyle bodyLg = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle bodyLg = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w400,
     height: 1.556, // 28px / 18px
   );
 
   /// Body medium -- Texto de lectura estandar (minimo 16px).
-  static const TextStyle bodyMd = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle bodyMd = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5, // 24px / 16px
   );
 
   /// Label medium -- Etiquetas de campos y botones.
-  static const TextStyle labelMd = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle labelMd = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.429, // 20px / 14px
@@ -75,8 +75,7 @@ abstract final class AppTypography {
   );
 
   /// Status pill -- Texto de pills de estado (Saludable, En Riesgo).
-  static const TextStyle statusPill = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle statusPill = GoogleFonts.inter(
     fontSize: 11,
     fontWeight: FontWeight.w600,
     height: 1.455, // 16px / 11px
@@ -88,8 +87,7 @@ abstract final class AppTypography {
   // ---------------------------------------------------------------------------
 
   /// Titulo XL -- Solo para pantallas de alto impacto.
-  static const TextStyle tituloXl = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle tituloXl = GoogleFonts.inter(
     fontSize: 40,
     fontWeight: FontWeight.w700,
     height: 1.2, // 48px / 40px
@@ -97,8 +95,7 @@ abstract final class AppTypography {
   );
 
   /// Titulo LG -- Encabezados principales.
-  static const TextStyle tituloLg = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle tituloLg = GoogleFonts.inter(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     height: 1.25, // 40px / 32px
@@ -106,32 +103,28 @@ abstract final class AppTypography {
   );
 
   /// Titulo LG Mobile -- Variante mobile.
-  static const TextStyle tituloLgMobile = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle tituloLgMobile = GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     height: 1.214, // 34px / 28px
   );
 
   /// Titulo MD -- Subtitulos de seccion.
-  static const TextStyle tituloMd = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle tituloMd = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.333, // 32px / 24px
   );
 
   /// Etiqueta bold -- Labels destacados en formularios.
-  static const TextStyle etiquetaBold = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle etiquetaBold = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 1.429, // 20px / 14px
   );
 
   /// Etiqueta small -- Texto auxiliar y captions.
-  static const TextStyle etiquetaSm = TextStyle(
-    fontFamily: _fontFamily,
+  static final TextStyle etiquetaSm = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.333, // 16px / 12px

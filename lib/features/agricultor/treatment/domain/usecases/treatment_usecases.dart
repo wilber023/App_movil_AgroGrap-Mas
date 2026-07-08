@@ -41,3 +41,58 @@ class MarkStepCompleteParams extends Equatable {
   @override
   List<Object?> get props => [treatmentId, stepId];
 }
+
+class RescheduleStepUseCase
+    implements UseCase<void, RescheduleStepParams> {
+  final TreatmentRepository repository;
+  const RescheduleStepUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, void>> call(RescheduleStepParams params) {
+    return repository.rescheduleStep(
+      treatmentId: params.treatmentId,
+      stepId: params.stepId,
+      newDate: params.newDate,
+    );
+  }
+}
+
+class RescheduleStepParams extends Equatable {
+  final String treatmentId;
+  final String stepId;
+  final DateTime newDate;
+  const RescheduleStepParams({
+    required this.treatmentId,
+    required this.stepId,
+    required this.newDate,
+  });
+
+  @override
+  List<Object?> get props => [treatmentId, stepId, newDate];
+}
+
+class SetRemindersActiveUseCase
+    implements UseCase<void, SetRemindersActiveParams> {
+  final TreatmentRepository repository;
+  const SetRemindersActiveUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, void>> call(SetRemindersActiveParams params) {
+    return repository.setRemindersActive(
+      treatmentId: params.treatmentId,
+      active: params.active,
+    );
+  }
+}
+
+class SetRemindersActiveParams extends Equatable {
+  final String treatmentId;
+  final bool active;
+  const SetRemindersActiveParams({
+    required this.treatmentId,
+    required this.active,
+  });
+
+  @override
+  List<Object?> get props => [treatmentId, active];
+}
