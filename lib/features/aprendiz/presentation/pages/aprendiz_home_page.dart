@@ -3,12 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/crop_activity_entity.dart';
-import '../../domain/entities/crop_plan_entity.dart';
+import '../../cultivo/domain/entities/crop_activity_entity.dart';
+import '../../cultivo/domain/entities/crop_plan_entity.dart';
 import '../bloc/aprendiz_home_cubit.dart';
-import 'aprendiz_agenda_page.dart';
+import '../../agenda/agenda.dart';
 import 'crop_history_page.dart';
-import 'diagnosis_camera_aprendiz_page.dart';
+import '../../diagnostico/diagnostico.dart';
 
 final _mockPlan = CropPlanEntity(
   id: 'mock',

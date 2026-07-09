@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../../domain/usecases/get_diagnosis_history_aprendiz_usecase.dart';
 
 sealed class AprendizDiagnosisHistoryState extends Equatable {

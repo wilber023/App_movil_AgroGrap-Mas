@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
-import '../../../agricultor/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
-import '../../domain/entities/crop_activity_entity.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../agricultor/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
+import '../../../cultivo/domain/entities/crop_activity_entity.dart';
 import '../bloc/diagnosis_result_aprendiz_cubit.dart';
-import 'aprendiz_main_shell.dart';
+import '../../../presentation/pages/aprendiz_main_shell.dart';
 import 'aprendiz_recommended_action_page.dart';
 
 // Tipografía Inter consistente con el resto de la app (ver AppTypography).
@@ -85,7 +85,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
             } else if (state is DiagnosisResultError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message, style: const TextStyle(fontFamily: _kFont, color: Colors.white)),
+                  content: Text(state.message, style: const TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary)),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -117,7 +117,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.aOnPrimary),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const Expanded(
@@ -126,7 +126,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: _kFont,
-                          color: Colors.white,
+                          color: AppColors.aOnPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
@@ -274,7 +274,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                             ),
                             child: const Text(
                               'Continuar',
-                              style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                              style: TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ),
@@ -309,7 +309,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                                         Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
-                                            color: Colors.white,
+                                            color: AppColors.aOnPrimary,
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(Icons.search_rounded, color: AppColors.error, size: 16),
@@ -399,10 +399,10 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                            icon: const Icon(Icons.arrow_forward, color: AppColors.aOnPrimary, size: 20),
                             label: const Text(
                               'Ver qué hacer ahora',
-                              style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                              style: TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.aOrange,
@@ -670,7 +670,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
                   ),
                   child: const Text(
                     'Ver mi agenda',
-                    style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -708,7 +708,7 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       child: child,

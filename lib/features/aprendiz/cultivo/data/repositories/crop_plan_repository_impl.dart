@@ -1,9 +1,10 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/network_info.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/network/network_info.dart';
 import '../../domain/entities/crop_plan_entity.dart';
 import '../../domain/entities/crop_health_entity.dart';
 import '../../domain/entities/crop_activity_entity.dart';
+import '../../domain/entities/crop_practice_location.dart';
 import '../../domain/repositories/crop_plan_repository.dart';
 import '../datasources/crop_plan_remote_datasource.dart';
 import '../datasources/crop_plan_local_datasource.dart';
@@ -46,10 +47,18 @@ class CropPlanRepositoryImpl implements CropPlanRepository {
   }
 
   @override
-  Future<Either<Failure, CropPlanEntity>> registerCropPlan(String cropName, DateTime startDate) async {
+  Future<Either<Failure, CropPlanEntity>> registerCropPlan({
+    required String cropName,
+    required DateTime startDate,
+    required CropPracticeLocation practiceLocation,
+  }) async {
     if (await networkInfo.isConnected) {
       try {
-        final remotePlan = await remoteDataSource.registerCropPlan(cropName, startDate);
+        final remotePlan = await remoteDataSource.registerCropPlan(
+          cropName: cropName,
+          startDate: startDate,
+          practiceLocation: practiceLocation,
+        );
         await localDataSource.cacheCropPlan(remotePlan);
         return Right(remotePlan);
       } catch (e) {

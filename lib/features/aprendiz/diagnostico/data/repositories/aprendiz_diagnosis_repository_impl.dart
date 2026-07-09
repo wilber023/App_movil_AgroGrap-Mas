@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../../login/auth/domain/usecases/get_current_user_usecase.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
-import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../../login/auth/domain/usecases/get_current_user_usecase.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../../domain/repositories/aprendiz_diagnosis_repository.dart';
 import '../datasources/aprendiz_diagnosis_history_local_datasource.dart';
 import '../datasources/aprendiz_diagnosis_local_datasource.dart';

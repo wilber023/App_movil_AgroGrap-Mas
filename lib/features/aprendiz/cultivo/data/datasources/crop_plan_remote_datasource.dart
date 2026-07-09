@@ -1,12 +1,17 @@
-import '../../../../../core/network/api_client.dart';
+import '../../../../../../core/network/api_client.dart';
 import '../models/crop_plan_model.dart';
 import '../../domain/entities/crop_health_entity.dart';
 import '../models/crop_activity_model.dart';
 import '../../domain/entities/crop_activity_entity.dart';
+import '../../domain/entities/crop_practice_location.dart';
 
 abstract class CropPlanRemoteDataSource {
   Future<CropPlanModel> getSavedCropPlan();
-  Future<CropPlanModel> registerCropPlan(String cropName, DateTime startDate);
+  Future<CropPlanModel> registerCropPlan({
+    required String cropName,
+    required DateTime startDate,
+    required CropPracticeLocation practiceLocation,
+  });
   Future<CropHealthEntity> getCropHealthIndicator();
   Future<CropActivityModel> updateActivityStatus(String activityId, ActivityStatus status, String? reason);
 }
@@ -29,10 +34,18 @@ class CropPlanRemoteDataSourceImpl implements CropPlanRemoteDataSource {
   }
 
   @override
-  Future<CropPlanModel> registerCropPlan(String cropName, DateTime startDate) async {
+  Future<CropPlanModel> registerCropPlan({
+    required String cropName,
+    required DateTime startDate,
+    required CropPracticeLocation practiceLocation,
+  }) async {
     final response = await apiClient.post<CropPlanModel>(
       '/api/v1/aprendiz/crop-plan',
-      data: {'cropName': cropName, 'startDate': startDate.toIso8601String()},
+      data: {
+        'cropName': cropName,
+        'startDate': startDate.toIso8601String(),
+        'practiceLocation': practiceLocation.name,
+      },
       fromJsonT: (json) => CropPlanModel.fromJson(json),
     );
     if (!response.success || response.data == null) {

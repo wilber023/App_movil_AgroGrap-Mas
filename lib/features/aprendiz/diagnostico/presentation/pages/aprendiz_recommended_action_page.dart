@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
-import 'aprendiz_agenda_page.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../agenda/agenda.dart';
 
 const String _kFont = 'Inter';
 
@@ -39,7 +39,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.aOnPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(
@@ -48,7 +48,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: _kFont,
-                        color: Colors.white,
+                        color: AppColors.aOnPrimary,
                         fontSize: 19,
                         fontWeight: FontWeight.w700,
                       ),
@@ -127,10 +127,10 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                             MaterialPageRoute(builder: (_) => const AprendizAgendaPage()),
                           );
                         },
-                        icon: const Icon(Icons.event_available, color: Colors.white),
+                        icon: const Icon(Icons.event_available, color: AppColors.aOnPrimary),
                         label: const Text(
                           'Agregar a mi agenda',
-                          style: TextStyle(fontFamily: _kFont, color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          style: TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.aOrange,
@@ -175,11 +175,11 @@ class _ActionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.aSurfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.aOutlineVariant),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -229,7 +229,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.aSurfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),

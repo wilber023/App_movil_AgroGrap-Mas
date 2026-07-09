@@ -74,17 +74,6 @@ import '../../features/agricultor/offline/domain/usecases/offline_usecases.dart'
 import '../../features/agricultor/offline/presentation/cubit/offline_cubit.dart';
 
 // -- Aprendiz --
-import '../../features/aprendiz/data/datasources/crop_plan_local_datasource.dart';
-import '../../features/aprendiz/data/datasources/crop_plan_remote_datasource.dart';
-import '../../features/aprendiz/data/repositories/crop_plan_repository_impl.dart';
-import '../../features/aprendiz/domain/repositories/crop_plan_repository.dart';
-import '../../features/aprendiz/domain/usecases/register_crop_plan_usecase.dart';
-import '../../features/aprendiz/domain/usecases/get_saved_crop_plan_usecase.dart';
-import '../../features/aprendiz/domain/usecases/get_crop_plan_progress_usecase.dart';
-import '../../features/aprendiz/domain/usecases/get_crop_health_indicator_usecase.dart';
-import '../../features/aprendiz/domain/usecases/complete_activity_usecase.dart';
-import '../../features/aprendiz/domain/usecases/postpone_activity_usecase.dart';
-import '../../features/aprendiz/domain/usecases/get_due_inspection_activity_usecase.dart';
 import '../../features/aprendiz/presentation/bloc/aprendiz_home_cubit.dart';
 
 import '../../features/aprendiz/data/datasources/crop_history_local_datasource.dart';
@@ -93,18 +82,18 @@ import '../../features/aprendiz/data/repositories/crop_history_repository_impl.d
 import '../../features/aprendiz/domain/repositories/crop_history_repository.dart';
 import '../../features/aprendiz/domain/usecases/get_crop_history_usecase.dart';
 import '../../features/aprendiz/presentation/bloc/crop_history_bloc.dart';
-import '../../features/aprendiz/domain/usecases/accept_guided_action_usecase.dart';
-import '../../features/aprendiz/presentation/bloc/diagnosis_result_aprendiz_cubit.dart';
-import '../../features/aprendiz/presentation/bloc/aprendiz_my_crop_cubit.dart';
-import '../../features/aprendiz/domain/repositories/aprendiz_diagnosis_repository.dart';
-import '../../features/aprendiz/data/repositories/aprendiz_diagnosis_repository_impl.dart';
-import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_local_datasource.dart';
-import '../../features/aprendiz/data/datasources/aprendiz_diagnosis_history_local_datasource.dart';
-import '../../features/aprendiz/domain/usecases/analyze_crop_aprendiz_usecase.dart';
-import '../../features/aprendiz/domain/usecases/get_diagnosis_history_aprendiz_usecase.dart';
-import '../../features/aprendiz/domain/usecases/save_diagnosis_llm_response_usecase.dart';
-import '../../features/aprendiz/presentation/bloc/diagnosis_camera_aprendiz_cubit.dart';
-import '../../features/aprendiz/presentation/bloc/aprendiz_diagnosis_history_cubit.dart';
+
+// -- Aprendiz / Agenda (modulo independiente, DI propia) --
+import '../../features/aprendiz/agenda/dependency_injection/agenda_injection_container.dart';
+
+// -- Aprendiz / Mi Cultivo (modulo independiente, DI propia) --
+import '../../features/aprendiz/cultivo/dependency_injection/cultivo_injection_container.dart';
+
+// -- Aprendiz / Diagnostico (modulo independiente, DI propia) --
+import '../../features/aprendiz/diagnostico/dependency_injection/diagnostico_injection_container.dart';
+
+// -- Aprendiz / Perfil (modulo independiente, DI propia) --
+import '../../features/aprendiz/perfil/dependency_injection/perfil_injection_container.dart';
 
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
@@ -131,7 +120,7 @@ Future<void> initDependencies() async {
   _initEconomicsFeature();
   _initProfileFeature();
   await _initOfflineFeature();
-  _initAprendizFeature();
+  await _initAprendizFeature();
 }
 
 // =============================================================================
@@ -628,46 +617,22 @@ void _initProfileFeature() {
 // FEATURE: APRENDIZ (Aprendiz Agrícola)
 // =============================================================================
 
-void _initAprendizFeature() {
-  // DataSources
-  sl.registerLazySingleton<CropPlanRemoteDataSource>(
-    () => CropPlanRemoteDataSourceImpl(apiClient: sl()),
-  );
-  sl.registerLazySingleton<CropPlanLocalDataSource>(
-    () => CropPlanLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO: Usar caja propia
-  );
+Future<void> _initAprendizFeature() async {
+  // -- Agenda, Mi Cultivo y Diagnostico: modulos independientes con su
+  // propia configuracion de DI. Cultivo se inicializa antes porque
+  // Diagnostico (AcceptGuidedActionUseCase) e Inicio (AprendizHomeCubit)
+  // consumen sus casos de uso/repositorio.
+  await initAgendaDependencies(sl);
+  await initCultivoDependencies(sl);
+  initDiagnosticoDependencies(sl);
+  await initPerfilDependencies(sl);
 
-  // Repository
-  sl.registerLazySingleton<CropPlanRepository>(
-    () => CropPlanRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
-  // UseCases
-  sl.registerLazySingleton(() => RegisterCropPlanUseCase(sl()));
-  sl.registerLazySingleton(() => GetSavedCropPlanUseCase(sl()));
-  sl.registerLazySingleton(() => GetCropPlanProgressUseCase(sl()));
-  sl.registerLazySingleton(() => GetCropHealthIndicatorUseCase(sl()));
-  sl.registerLazySingleton(() => AnalyzeCropAprendizUseCase(sl()));
-  sl.registerLazySingleton(() => CompleteActivityUseCase(sl()));
-  sl.registerLazySingleton(() => PostponeActivityUseCase(sl()));
-  sl.registerLazySingleton(() => GetDueInspectionActivityUseCase(sl()));
-  
   // -- HISTORY --
   sl.registerLazySingleton<CropHistoryRemoteDataSource>(
     () => CropHistoryRemoteDataSourceImpl(apiClient: sl()),
   );
   sl.registerLazySingleton<CropHistoryLocalDataSource>(
     () => CropHistoryLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO
-  );
-  sl.registerLazySingleton<AprendizDiagnosisLocalDataSource>(
-    () => AprendizDiagnosisLocalDataSourceImpl(),
-  );
-  sl.registerLazySingleton<AprendizDiagnosisHistoryLocalDataSource>(
-    () => AprendizDiagnosisHistoryLocalDataSourceImpl(),
   );
   sl.registerLazySingleton<CropHistoryRepository>(
     () => CropHistoryRepositoryImpl(
@@ -676,21 +641,7 @@ void _initAprendizFeature() {
       networkInfo: sl(),
     ),
   );
-  sl.registerLazySingleton<AprendizDiagnosisRepository>(
-    () => AprendizDiagnosisRepositoryImpl(
-      localDataSource: sl(),
-      historyLocalDataSource: sl(),
-      getCurrentUserUseCase: sl(),
-    ),
-  );
   sl.registerLazySingleton(() => GetCropHistoryUseCase(sl()));
-  sl.registerLazySingleton(() => GetDiagnosisHistoryAprendizUseCase(sl()));
-  sl.registerLazySingleton(() => SaveDiagnosisLlmResponseUseCase(sl()));
-  
-  sl.registerLazySingleton(() => AcceptGuidedActionUseCase(
-    completeActivityUseCase: sl(),
-    cropPlanRepository: sl(),
-  ));
 
   // Cubits
   sl.registerFactory(() => AprendizHomeCubit(
@@ -700,23 +651,8 @@ void _initAprendizFeature() {
     getCropHealthIndicatorUseCase: sl(),
     networkInfo: sl(),
   ));
-  
-  sl.registerFactory(() => DiagnosisCameraAprendizCubit(
-    analyzeCropUseCase: sl(),
-  ));
 
   sl.registerFactory(() => CropHistoryBloc(
     getCropHistoryUseCase: sl(),
-  ));
-  sl.registerFactory(() => AprendizMyCropCubit(
-    getSavedCropPlanUseCase: sl(),
-    networkInfo: sl(),
-  ));
-  sl.registerFactory(() => DiagnosisResultAprendizCubit(
-    acceptGuidedActionUseCase: sl(),
-    saveDiagnosisLlmResponseUseCase: sl(),
-  ));
-  sl.registerFactory(() => AprendizDiagnosisHistoryCubit(
-    getDiagnosisHistoryUseCase: sl(),
   ));
 }

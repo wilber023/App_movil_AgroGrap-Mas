@@ -1,13 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../domain/entities/crop_activity_entity.dart';
-import '../../domain/entities/crop_plan_entity.dart';
-import '../../domain/entities/crop_health_entity.dart';
-import '../../domain/usecases/get_due_inspection_activity_usecase.dart';
-import '../../domain/usecases/postpone_activity_usecase.dart';
-import '../../domain/usecases/get_saved_crop_plan_usecase.dart';
-import '../../domain/usecases/get_crop_health_indicator_usecase.dart';
+import '../../cultivo/domain/entities/crop_activity_entity.dart';
+import '../../cultivo/domain/entities/crop_plan_entity.dart';
+import '../../cultivo/domain/entities/crop_health_entity.dart';
+import '../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
+import '../../cultivo/domain/usecases/postpone_activity_usecase.dart';
+import '../../cultivo/domain/usecases/get_saved_crop_plan_usecase.dart';
+import '../../cultivo/domain/usecases/get_crop_health_indicator_usecase.dart';
 import '../../../../core/network/network_info.dart';
 
 // -- States --

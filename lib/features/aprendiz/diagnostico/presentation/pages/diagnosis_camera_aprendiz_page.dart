@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../../../core/theme/app_typography.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/di/injection_container.dart';
 import '../bloc/diagnosis_camera_aprendiz_cubit.dart';
 import 'diagnosis_result_aprendiz_page.dart';
 
@@ -109,12 +109,12 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
         final isLoading = state is DiagnosisCameraAprendizLoading;
 
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.aOnSurface,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            foregroundColor: Colors.white,
-            title: Text('Inspección semanal', style: AppTypography.labelMd.copyWith(color: Colors.white)),
+            foregroundColor: AppColors.aOnPrimary,
+            title: Text('Inspección semanal', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary)),
           ),
           body: Stack(
             children: [
@@ -127,13 +127,13 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
                 Center(
                   child: Icon(
                     Icons.camera_alt_rounded,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.aOnPrimary.withValues(alpha: 0.5),
                     size: 100,
                   ),
                 ),
               if (_photoTaken)
                 Positioned.fill(
-                  child: Container(color: Colors.black.withValues(alpha: 0.35)),
+                  child: Container(color: AppColors.aOnSurface.withValues(alpha: 0.35)),
                 ),
 
               // Overlay UI
@@ -146,14 +146,14 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
 
               if (isLoading)
                 Container(
-                  color: Colors.black.withValues(alpha: 0.55),
+                  color: AppColors.aOnSurface.withValues(alpha: 0.55),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const CircularProgressIndicator(color: AppColors.aOrange),
                         const SizedBox(height: 14),
-                        Text('Analizando tu foto...', style: AppTypography.labelMd.copyWith(color: Colors.white)),
+                        Text('Analizando tu foto...', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary)),
                       ],
                     ),
                   ),
@@ -173,7 +173,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
         Text(
           'Fotografía la hoja o parte afectada · Semana ${widget.weekNumber}',
           textAlign: TextAlign.center,
-          style: AppTypography.bodyLg.copyWith(color: Colors.white),
+          style: AppTypography.bodyLg.copyWith(color: AppColors.aOnPrimary),
         ),
         const SizedBox(height: 24),
         GestureDetector(
@@ -183,14 +183,14 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             width: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 4),
+              border: Border.all(color: AppColors.aOnPrimary, width: 4),
             ),
             child: Center(
               child: Container(
                 height: 60,
                 width: 60,
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.aOnPrimary,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -200,8 +200,8 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
         const SizedBox(height: 16),
         TextButton.icon(
           onPressed: _pickFromGallery,
-          icon: const Icon(Icons.photo_outlined, color: Colors.white70, size: 18),
-          label: Text('Elegir de galería', style: AppTypography.bodyMd.copyWith(color: Colors.white70)),
+          icon: Icon(Icons.photo_outlined, color: AppColors.aOnPrimary.withValues(alpha: 0.7), size: 18),
+          label: Text('Elegir de galería', style: AppTypography.bodyMd.copyWith(color: AppColors.aOnPrimary.withValues(alpha: 0.7))),
         ),
         ],
       ),
@@ -213,7 +213,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.aOnPrimary,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -221,7 +221,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
         children: [
           Text(
             '¿Quieres agregar algún detalle? (opcional)',
-            style: AppTypography.labelMd.copyWith(color: Colors.black87),
+            style: AppTypography.labelMd.copyWith(color: AppColors.aOnSurface.withValues(alpha: 0.87)),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -230,21 +230,21 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             enabled: !isLoading,
             decoration: InputDecoration(
               hintText: 'Ej. Las hojas se ven amarillas desde hace 3 días...',
-              hintStyle: AppTypography.bodyMd.copyWith(color: Colors.black38),
+              hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.aOnSurface.withValues(alpha: 0.38)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.black12),
+                borderSide: BorderSide(color: AppColors.aOnSurface.withValues(alpha: 0.12)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.black12),
+                borderSide: BorderSide(color: AppColors.aOnSurface.withValues(alpha: 0.12)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: AppColors.aSecondary, width: 1.5),
               ),
               filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.05),
+              fillColor: AppColors.aOnSurface.withValues(alpha: 0.05),
             ),
           ),
           const SizedBox(height: 16),
@@ -255,7 +255,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Analizar foto', style: AppTypography.labelMd.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+            child: Text('Analizar foto', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 8),
           TextButton(
@@ -265,7 +265,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
                 _descriptionController.clear();
               });
             },
-            child: Text('Tomar otra foto', style: AppTypography.bodyMd.copyWith(color: Colors.black54)),
+            child: Text('Tomar otra foto', style: AppTypography.bodyMd.copyWith(color: AppColors.aOnSurface.withValues(alpha: 0.54))),
           ),
         ],
       ),

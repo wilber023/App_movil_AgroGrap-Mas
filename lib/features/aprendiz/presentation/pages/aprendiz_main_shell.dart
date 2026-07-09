@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'aprendiz_home_page.dart';
-import 'aprendiz_crop_route_page.dart';
-import 'diagnosis_entry_aprendiz_page.dart';
-import 'aprendiz_agenda_page.dart';
-import 'aprendiz_profile_page.dart';
+import '../../diagnostico/diagnostico.dart';
+import '../../agenda/agenda.dart';
+import '../../cultivo/cultivo.dart';
+import '../../perfil/perfil.dart';
 
 class AprendizMainShell extends StatefulWidget {
   final int initialIndex;

@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../repositories/aprendiz_diagnosis_repository.dart';
 
 class SaveDiagnosisLlmResponseParams {

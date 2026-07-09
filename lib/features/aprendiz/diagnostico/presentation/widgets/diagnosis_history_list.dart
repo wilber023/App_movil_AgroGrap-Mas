@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_typography.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../bloc/aprendiz_diagnosis_history_cubit.dart';
 import '../pages/diagnosis_result_aprendiz_page.dart';
 import 'diagnosis_history_card.dart';
-
-const String _kFont = 'Inter';
 
 /// Contenido de la pestaña "Mis diagnósticos": escucha
 /// [AprendizDiagnosisHistoryCubit] (ya provisto por un ancestro) y renderiza
@@ -77,15 +76,19 @@ class _EmptyState extends StatelessWidget {
             child: const Icon(Icons.eco_outlined, size: 38, color: AppColors.aSecondary),
           ),
           const SizedBox(height: 18),
-          const Text(
-            'Sin diagnósticos aún',
-            style: TextStyle(fontFamily: _kFont, fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+          Text(
+            'Aún no has realizado ningún diagnóstico.',
+            style: AppTypography.agendaTitle.copyWith(fontSize: 18, color: AppColors.aOnSurface),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Tus diagnósticos anteriores\naparecerán aquí.',
-            style: TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant, height: 1.4),
-            textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'Analiza tu primera planta para comenzar tu historial de aprendizaje.',
+              style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -110,12 +113,15 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: _kFont, color: AppColors.aOnSurfaceVariant),
+              style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => context.read<AprendizDiagnosisHistoryCubit>().loadHistory(),
-              child: const Text('Reintentar', style: TextStyle(fontFamily: _kFont, color: AppColors.aSecondary, fontWeight: FontWeight.w600)),
+              child: Text(
+                'Reintentar',
+                style: AppTypography.labelMd.copyWith(color: AppColors.aSecondary, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),

@@ -129,4 +129,36 @@ abstract final class AppTypography {
     fontWeight: FontWeight.w500,
     height: 1.333, // 16px / 12px
   );
+
+  // ---------------------------------------------------------------------------
+  // APRENDIZ / AGENDA -- Tokens puntuales del rediseño de Agenda
+  // ---------------------------------------------------------------------------
+
+  /// Titulo principal de Agenda (app bar "Agenda" y titulo de la etapa del dia).
+  static final TextStyle agendaTitle = GoogleFonts.inter(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+  );
+
+  /// Titulo de seccion dentro de Agenda (ej. "Proximas tareas").
+  static final TextStyle agendaSectionTitle = GoogleFonts.inter(
+    fontSize: 17,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+  );
+
+  /// Texto de cuerpo de Agenda (descripciones, checklist, tarjetas de tareas).
+  static final TextStyle agendaBody = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+  );
+
+  /// Subtitulo compacto de Agenda (mes del calendario, nombre del cultivo).
+  static final TextStyle agendaSubtitle = GoogleFonts.inter(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+  );
 }

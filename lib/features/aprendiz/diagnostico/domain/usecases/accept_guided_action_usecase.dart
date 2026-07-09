@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../entities/crop_activity_entity.dart';
-import '../repositories/crop_plan_repository.dart';
-import 'complete_activity_usecase.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../cultivo/domain/entities/crop_activity_entity.dart';
+import '../../../cultivo/domain/repositories/crop_plan_repository.dart';
+import '../../../cultivo/domain/usecases/complete_activity_usecase.dart';
 
 
 class AcceptGuidedActionParams {

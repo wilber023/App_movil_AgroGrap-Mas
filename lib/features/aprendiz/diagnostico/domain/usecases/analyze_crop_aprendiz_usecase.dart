@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../../core/error/failures.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../repositories/aprendiz_diagnosis_repository.dart';
 
 class AnalyzeCropAprendizUseCase implements UseCase<DiagnosisEntity, AnalyzeCropAprendizParams> {

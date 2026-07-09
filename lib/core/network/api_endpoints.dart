@@ -56,6 +56,9 @@ abstract final class ApiEndpoints {
   // -- APRENDIZ (Aprendiz Agrícola) --
   static const AprendizEndpoints aprendiz = AprendizEndpoints._();
 
+  // -- APRENDIZ / AGENDA (módulo independiente, endpoint aún no expuesto) --
+  static const AgendaEndpoints agenda = AgendaEndpoints._();
+
   // -- LLM / RAG (Diagnóstico enriquecido) --
   static const LlmEndpoints llm = LlmEndpoints._();
 
@@ -152,6 +155,11 @@ class ProfileEndpoints {
   String get update => '/users/me';
   String get avatar => '/users/me/avatar';
   String get settings => '/users/me/settings';
+
+  // TODO: endpoint aun no expuesto por el backend — progreso/gamificacion
+  // del perfil Aprendiz (nivel, XP, racha). Mientras tanto se calcula
+  // localmente (ver AprendizProfileRepositoryImpl).
+  String get progress => '/users/me/progress';
 }
 
 class SyncEndpoints {
@@ -172,6 +180,16 @@ class AprendizEndpoints {
 
   // TODO: Documentar en backend el endpoint de historial (Pieza 2)
   String get history => '/aprendiz/history';
+}
+
+/// Endpoints del modulo Agenda (independiente de crop-plan).
+/// TODO: reemplazar por la URL real cuando el backend exponga el modulo.
+class AgendaEndpoints {
+  const AgendaEndpoints._();
+
+  String get overview => '/aprendiz/agenda';
+  String completeActivity(String activityId) => '/aprendiz/agenda/activities/$activityId/complete';
+  String postponeActivity(String activityId) => '/aprendiz/agenda/activities/$activityId/postpone';
 }
 
 // =============================================================================

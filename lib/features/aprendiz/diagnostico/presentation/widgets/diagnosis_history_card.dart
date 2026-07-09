@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 
 const String _kFont = 'Inter';
 
-const List<BoxShadow> kAprendizCardShadow = [
-  BoxShadow(color: Color(0x0A000000), blurRadius: 10, offset: Offset(0, 3)),
+final List<BoxShadow> kAprendizCardShadow = [
+  BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
 ];
 
 /// Card de un diagnóstico dentro de "Mis diagnósticos": miniatura, enfermedad,
