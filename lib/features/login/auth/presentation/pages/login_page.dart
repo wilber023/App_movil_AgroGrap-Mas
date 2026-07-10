@@ -23,7 +23,7 @@ import '../widgets/auth_buttons.dart';
 import '../widgets/auth_text_field.dart';
 import 'register_page.dart';
 import '../../../../../main.dart';
-import '../../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
+import '../../../../aprendiz/shell/aprendiz_main_shell.dart';
 
 // ── Tokens de color locales de esta pantalla ──────────────────────────────────
 // Fondo superior: verde eucalipto muy desaturado

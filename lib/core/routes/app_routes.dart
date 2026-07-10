@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/aprendiz/agenda/agenda.dart';
 import '../../features/aprendiz/cultivo/cultivo.dart';
-import '../../features/aprendiz/presentation/pages/crop_history_page.dart';
+import '../../features/aprendiz/historial/historial.dart';
 
 abstract final class AppRoutes {
   AppRoutes._();

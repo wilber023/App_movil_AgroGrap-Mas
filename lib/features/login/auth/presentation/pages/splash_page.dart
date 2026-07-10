@@ -16,7 +16,7 @@ import '../../../../../core/security/root_detection.dart';
 import '../bloc/splash_cubit.dart';
 import 'select_profile_page.dart';
 import '../../../../../main.dart';
-import '../../../../aprendiz/presentation/pages/aprendiz_main_shell.dart';
+import '../../../../aprendiz/shell/aprendiz_main_shell.dart';
 
 /// Versión instalada (pubspec.yaml `version:`). Ver [ForceUpdateGate].
 const String _kAppVersion = '1.0.0+1';

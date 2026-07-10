@@ -73,16 +73,6 @@ import '../../features/agricultor/offline/domain/repositories/offline_repository
 import '../../features/agricultor/offline/domain/usecases/offline_usecases.dart';
 import '../../features/agricultor/offline/presentation/cubit/offline_cubit.dart';
 
-// -- Aprendiz --
-import '../../features/aprendiz/presentation/bloc/aprendiz_home_cubit.dart';
-
-import '../../features/aprendiz/data/datasources/crop_history_local_datasource.dart';
-import '../../features/aprendiz/data/datasources/crop_history_remote_datasource.dart';
-import '../../features/aprendiz/data/repositories/crop_history_repository_impl.dart';
-import '../../features/aprendiz/domain/repositories/crop_history_repository.dart';
-import '../../features/aprendiz/domain/usecases/get_crop_history_usecase.dart';
-import '../../features/aprendiz/presentation/bloc/crop_history_bloc.dart';
-
 // -- Aprendiz / Agenda (modulo independiente, DI propia) --
 import '../../features/aprendiz/agenda/dependency_injection/agenda_injection_container.dart';
 
@@ -94,6 +84,12 @@ import '../../features/aprendiz/diagnostico/dependency_injection/diagnostico_inj
 
 // -- Aprendiz / Perfil (modulo independiente, DI propia) --
 import '../../features/aprendiz/perfil/dependency_injection/perfil_injection_container.dart';
+
+// -- Aprendiz / Inicio (modulo independiente, DI propia) --
+import '../../features/aprendiz/inicio/dependency_injection/aprendiz_home_injection_container.dart';
+
+// -- Aprendiz / Historial (modulo independiente, DI propia) --
+import '../../features/aprendiz/historial/dependency_injection/historial_injection_container.dart';
 
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
@@ -618,41 +614,16 @@ void _initProfileFeature() {
 // =============================================================================
 
 Future<void> _initAprendizFeature() async {
-  // -- Agenda, Mi Cultivo y Diagnostico: modulos independientes con su
-  // propia configuracion de DI. Cultivo se inicializa antes porque
-  // Diagnostico (AcceptGuidedActionUseCase) e Inicio (AprendizHomeCubit)
-  // consumen sus casos de uso/repositorio.
+  // -- Agenda, Mi Cultivo, Diagnostico, Perfil, Inicio e Historial: modulos
+  // independientes, cada uno con su propia configuracion de DI. Cultivo se
+  // inicializa antes porque Diagnostico (AcceptGuidedActionUseCase),
+  // Perfil e Inicio consumen sus casos de uso/repositorio. Inicio se
+  // inicializa despues de esos cuatro porque compone sus datos; Historial
+  // no depende de ningun otro modulo.
   await initAgendaDependencies(sl);
   await initCultivoDependencies(sl);
   initDiagnosticoDependencies(sl);
   await initPerfilDependencies(sl);
-
-  // -- HISTORY --
-  sl.registerLazySingleton<CropHistoryRemoteDataSource>(
-    () => CropHistoryRemoteDataSourceImpl(apiClient: sl()),
-  );
-  sl.registerLazySingleton<CropHistoryLocalDataSource>(
-    () => CropHistoryLocalDataSourceImpl(box: sl(instanceName: 'authBox')), // TODO
-  );
-  sl.registerLazySingleton<CropHistoryRepository>(
-    () => CropHistoryRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-  sl.registerLazySingleton(() => GetCropHistoryUseCase(sl()));
-
-  // Cubits
-  sl.registerFactory(() => AprendizHomeCubit(
-    getDueInspectionActivityUseCase: sl(),
-    postponeActivityUseCase: sl(),
-    getSavedCropPlanUseCase: sl(),
-    getCropHealthIndicatorUseCase: sl(),
-    networkInfo: sl(),
-  ));
-
-  sl.registerFactory(() => CropHistoryBloc(
-    getCropHistoryUseCase: sl(),
-  ));
+  await initAprendizHomeDependencies(sl);
+  await initHistorialDependencies(sl);
 }
