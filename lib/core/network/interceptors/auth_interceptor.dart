@@ -81,6 +81,9 @@ class AuthInterceptor extends Interceptor {
 
     _isRefreshing = true;
 
+    // Paso 1: renovar el token. Un fallo AQUI es la unica senal confiable
+    // de que la sesion realmente vencio (refresh_token invalido/expirado).
+    String newAccessToken;
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
 
@@ -98,7 +101,7 @@ class AuthInterceptor extends Interceptor {
       );
 
       final data = refreshResponse.data as Map<String, dynamic>;
-      final newAccessToken = data['access_token'] as String;
+      newAccessToken = data['access_token'] as String;
       final newRefreshToken = data['refresh_token'] as String;
 
       // Persistir el nuevo par de tokens (rotación).
@@ -106,22 +109,37 @@ class AuthInterceptor extends Interceptor {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
       );
-
-      // Reintentar el request original con el nuevo access_token.
-      err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-      err.requestOptions.extra['_retried'] = true;
-
-      final retryResponse = await _refreshDio.fetch(err.requestOptions);
-      handler.resolve(retryResponse);
     } on DioException {
       // El refresh también falló (token expirado/revocado): limpiar sesión.
       await _tokenStorage.clearTokens();
       SessionManager.instance.notifySessionInvalidated();
       handler.next(err);
+      _isRefreshing = false;
+      return;
     } catch (_) {
       await _tokenStorage.clearTokens();
       SessionManager.instance.notifySessionInvalidated();
       handler.next(err);
+      _isRefreshing = false;
+      return;
+    }
+
+    // Paso 2: reintentar el request original con el token ya renovado.
+    // IMPORTANTE: si este reintento vuelve a fallar (ej. un microservicio
+    // distinto al de Usuarios rechaza el token por otra razon: audiencia,
+    // permisos, endpoint especifico), el access_token que acabamos de
+    // obtener SIGUE SIENDO VALIDO — no es evidencia de que la sesion
+    // vencio. Antes este catch estaba unido al del paso 1 y cualquier
+    // fallo aqui tambien cerraba la sesion completa del usuario, aunque
+    // el token fuera valido y el problema fuera exclusivo de ese endpoint.
+    try {
+      err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+      err.requestOptions.extra['_retried'] = true;
+
+      final retryResponse = await _refreshDio.fetch(err.requestOptions);
+      handler.resolve(retryResponse);
+    } on DioException catch (retryError) {
+      handler.next(retryError);
     } finally {
       _isRefreshing = false;
     }

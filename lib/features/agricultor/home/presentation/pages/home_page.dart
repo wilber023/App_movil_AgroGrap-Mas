@@ -228,10 +228,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildPremiumBanner(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SubscriptionPage()),
-      ),
+      onTap: () => Navigator.push(context, SubscriptionPage.route()),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(

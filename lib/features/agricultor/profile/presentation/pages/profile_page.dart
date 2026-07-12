@@ -363,10 +363,7 @@ class _ProfileScaffold extends StatelessWidget {
   }
 
   void _goToSubscription(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const SubscriptionPage()),
-    );
+    Navigator.push(context, SubscriptionPage.route());
   }
 
   /// Espera a que el logout realmente termine (exito o fallo) antes de

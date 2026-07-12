@@ -9,7 +9,7 @@ import 'cnn_engine/tflite_runner.dart';
 export 'cnn_engine/cnn_result.dart';
 
 // =============================================================================
-// AgroGraph-MAS — Motor CNN Real (TFLite + EfficientNet-B4)
+// AgroGraph-MAS — Motor CNN Real (TFLite + MobileNetV3-Large)
 // Pipeline: imagen → preprocessing isolate → TFLite → softmax → top-K
 // El modelo detecta cultivo + enfermedad directamente desde el rawLabel.
 // =============================================================================
@@ -29,7 +29,7 @@ class CnnEngine {
     await GlobalModelManager.instance.initialize();
 
     // 3. Preprocesar imagen en isolate (no bloquea la UI)
-    //    → Float32List [1×380×380×3] NHWC, normalizado ImageNet
+    //    → Float32List NCHW [1×3×224×224], normalizado ImageNet
     final inputTensor = await compute(preprocessImageIsolate, imagePath);
 
     // 4. Inferencia TFLite en el hilo principal (donde vive el Interpreter)

@@ -17,10 +17,21 @@ abstract final class ApiEndpoints {
   // Base URL del microservicio LLM/RAG (diagnóstico enriquecido).
   static const String llmBaseUrl = 'http://52.1.110.21:8000';
 
+  // Base URL del microservicio de pagos/suscripciones (PayPal Sandbox).
+  // Acepta el mismo JWT emitido por el microservicio de Usuarios.
+  static const String subscriptionsBaseUrl = 'http://44.196.107.153:3000/api/payments';
+
+  // Base URL del servicio de diagnóstico/RAG offline (mismo host que
+  // llmBaseUrl -- ver README_ofline.md). Este es el ÚNICO lugar a cambiar
+  // para apuntar features/offline_knowledge/ a otro servidor.
+  static const String offlineKnowledgeBaseUrl = 'http://52.1.110.21:8000';
+
   static const int defaultTimeoutMs = 30000;
   static const int connectTimeoutMs = 15000;
   // Timeout extendido para el LLM (Ollama puede tardar hasta 120 s).
   static const int llmTimeoutMs = 180000;
+  // Timeout de descarga del paquete offline (puede pesar varios MB).
+  static const int offlineKnowledgeTimeoutMs = 60000;
 
   // -- AUTH (Bienvenida / Registro de Cuenta) --
   static const AuthEndpoints auth = AuthEndpoints._();
@@ -75,6 +86,10 @@ abstract final class ApiEndpoints {
   );
 
   static const ProductsEndpoints products = ProductsEndpoints._();
+
+  // -- OFFLINE KNOWLEDGE (Diagnóstico offline por embeddings) --
+  static const OfflineKnowledgeEndpoints offlineKnowledge =
+      OfflineKnowledgeEndpoints._();
 }
 
 class AuthEndpoints {
@@ -100,12 +115,13 @@ class AuthEndpoints {
       ];
 }
 
+// Endpoints del microservicio de pagos (base: [ApiEndpoints.subscriptionsBaseUrl]).
+// Ver API.md para el contrato completo (PayPal Subscriptions API).
 class SubscriptionEndpoints {
   const SubscriptionEndpoints._();
-  String get plans => '/subscriptions/plans';
-  String get current => '/subscriptions/current';
-  String get subscribe => '/subscriptions/subscribe';
-  String get cancel => '/subscriptions/cancel';
+  String get subscribe => '/subscribe';
+  String get current => '/subscription';
+  String get cancel => '/cancel';
 }
 
 class HomeEndpoints {
@@ -241,5 +257,22 @@ class ProductsEndpoints {
 
   /// GET /products?disease=&crop=&per_page= — lista de productos.
   String get products => '/products';
+}
+
+// =============================================================================
+// OFFLINE KNOWLEDGE (host: ApiEndpoints.offlineKnowledgeBaseUrl)
+// Contrato real confirmado en README_ofline.md (raíz del proyecto),
+// secciones 7 y 8. Reemplaza el contrato asumido en el Sprint 2
+// (GET /catalog/{cultivo}/offline-package, nunca existió).
+// =============================================================================
+
+class OfflineKnowledgeEndpoints {
+  const OfflineKnowledgeEndpoints._();
+
+  /// GET /api/v1/offline/catalog — catálogo completo (todos los cultivos).
+  String get catalog => '/api/v1/offline/catalog';
+
+  /// GET /api/v1/offline/documents/{doc_id} — un documento con embeddings.
+  String documentById(String docId) => '/api/v1/offline/documents/$docId';
 }
 

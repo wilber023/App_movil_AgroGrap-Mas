@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../subscription/presentation/pages/subscription_page.dart';
 
 /// Tarjeta de suscripcion, compacta y poco invasiva: plan actual,
 /// beneficios disponibles y una unica opcion para conocer AgroGraph Pro.
@@ -41,7 +42,7 @@ class ProfileSubscriptionCard extends StatelessWidget {
               ),
               const Spacer(),
               GestureDetector(
-                onTap: () {},
+                onTap: () => Navigator.push(context, SubscriptionPage.route()),
                 child: Text(
                   'Conocer Pro →',
                   style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOrange, fontWeight: FontWeight.w600),

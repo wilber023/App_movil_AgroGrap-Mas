@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-const int _kImgSize = 380;
+const int _kImgSize = 224;
 
 /// Singleton que gestiona el ciclo de vida del intérprete TFLite.
 class GlobalModelManager {

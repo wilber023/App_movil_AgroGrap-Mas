@@ -1,77 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/security/screen_security.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../main.dart'; // Para navegar al MainShell
+import '../bloc/subscription_bloc.dart';
+import '../utils/subscription_plans.dart';
+import '../utils/subscription_snackbar.dart';
+import '../widgets/card_number_field.dart';
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({super.key});
+  final String plan; // 'monthly' | 'yearly'
+
+  const CheckoutPage({super.key, required this.plan});
+
+  /// Reutiliza el [SubscriptionBloc] ya creado por [SubscriptionPage] para
+  /// que el estado (suscripcion activa, etc.) se comparta entre ambas
+  /// pantallas sin volver a consultar el backend al regresar.
+  static Future<void> push(BuildContext context, {required String plan}) {
+    final bloc = context.read<SubscriptionBloc>();
+    return Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(value: bloc, child: CheckoutPage(plan: plan)),
+      ),
+    );
+  }
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
-class _CheckoutPageState extends State<CheckoutPage> {
-  int _currentStep = 1; // 1: Billing, 2: Payment, 3: Success
-  bool _isProcessing = false;
+class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver {
+  bool _waitingPaypal = false;
 
-  // Controladores Etapa 1
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _rfcController = TextEditingController();
+  SubscriptionPlanInfo get _planInfo => SubscriptionPlans.byId(widget.plan);
 
-  // Controladores Etapa 2
-  final _cardController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
-
-  final _formKey1 = GlobalKey<FormState>();
-  final _formKey2 = GlobalKey<FormState>();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // MASVS-STORAGE: evita capturas de pantalla en esta vista de pago.
+    ScreenSecurity.enable();
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _rfcController.dispose();
-    _cardController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    ScreenSecurity.disable();
     super.dispose();
   }
 
-  void _goToPayment() {
-    if (_formKey1.currentState?.validate() ?? false) {
-      setState(() {
-        _currentStep = 2;
-      });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _waitingPaypal) {
+      _waitingPaypal = false;
+      context.read<SubscriptionBloc>().add(const SubscriptionApprovalPollRequested());
     }
   }
 
-  Future<void> _processPayment() async {
-    if (_formKey2.currentState?.validate() ?? false) {
-      setState(() {
-        _isProcessing = true;
-      });
-
-      // Simular carga de 1.5 segundos
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-          _currentStep = 3;
-        });
-      }
+  Future<void> _openApprovalPage(String approveUrl) async {
+    final uri = Uri.tryParse(approveUrl);
+    if (uri == null) return;
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (opened) {
+      _waitingPaypal = true;
+    } else if (mounted) {
+      showSubscriptionSnack(context, 'No se pudo abrir PayPal. Intenta de nuevo.');
     }
-  }
-
-  void _finishCheckout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainShell()),
-      (route) => false,
-    );
   }
 
   @override
@@ -79,198 +76,221 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(_getAppBarTitle()),
+        title: const Text('Pago Seguro'),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.onSurface,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: _buildCurrentStep(),
-          ),
-        ),
+      body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
+        listener: (context, state) {
+          if (state is SubscriptionApprovalUrlReady) {
+            _openApprovalPage(state.approveUrl);
+          } else if (state is SubscriptionActionFailure) {
+            showSubscriptionSnack(context, state.message);
+          } else if (state is SubscriptionPollingTimedOut) {
+            showSubscriptionSnack(
+              context,
+              'Verificando tu pago... puede tardar unos segundos.',
+              isError: false,
+            );
+          }
+        },
+        builder: (context, state) {
+          final activeSubscription = state is SubscriptionLoaded ? state.subscription : null;
+          final justActivated = activeSubscription != null &&
+              activeSubscription.isActive &&
+              activeSubscription.planType == widget.plan;
+
+          final Widget child;
+          if (justActivated) {
+            child = _buildSuccess(context);
+          } else if (state is SubscriptionPolling) {
+            child = _buildProcessing(
+              icon: Icons.hourglass_top_rounded,
+              title: 'Verificando tu pago...',
+              subtitle: 'Esto puede tardar unos segundos. No cierres la aplicación.',
+            );
+          } else if (state is SubscriptionSubscribing || state is SubscriptionApprovalUrlReady) {
+            child = _buildProcessing(
+              icon: Icons.lock_clock_rounded,
+              title: 'Conectando con PayPal...',
+              subtitle: 'Te llevaremos a la página segura de PayPal para completar tu pago.',
+            );
+          } else {
+            child = _buildPaymentForm(context, state);
+          }
+
+          return AnimatedSwitcher(duration: const Duration(milliseconds: 280), child: child);
+        },
       ),
     );
   }
 
-  String _getAppBarTitle() {
-    switch (_currentStep) {
-      case 1:
-        return 'Datos de Facturacion';
-      case 2:
-        return 'Pago Seguro';
-      case 3:
-        return 'Confirmacion';
-      default:
-        return 'Checkout';
-    }
-  }
-
-  Widget _buildCurrentStep() {
-    switch (_currentStep) {
-      case 1:
-        return _buildStage1(key: const ValueKey(1));
-      case 2:
-        return _buildStage2(key: const ValueKey(2));
-      case 3:
-        return _buildStage3(key: const ValueKey(3));
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
   // ==========================================
-  // ETAPA 1: DATOS DE FACTURACION
+  // Formulario de pago
   // ==========================================
-  Widget _buildStage1({Key? key}) {
-    return Form(
-      key: _formKey1,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildStepIndicator(1, 'Facturacion'),
-          const SizedBox(height: 32),
-          Text(
-            'Informacion Personal',
-            style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _nameController,
-            label: 'Nombre completo',
-            icon: Icons.person_outline,
-            validator: (val) => val == null || val.isEmpty ? 'Campo requerido' : null,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _emailController,
-            label: 'Correo electronico',
-            icon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-            validator: (val) => val == null || val.isEmpty ? 'Campo requerido' : null,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _phoneController,
-            label: 'Telefono',
-            icon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
-            validator: (val) => val == null || val.isEmpty ? 'Campo requerido' : null,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _rfcController,
-            label: 'Identificacion Fiscal (RFC/ID)',
-            icon: Icons.badge_outlined,
-            validator: (val) => val == null || val.isEmpty ? 'Campo requerido' : null,
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _goToPayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text(
-                'Continuar al Pago \u2192',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+
+  Widget _buildPaymentForm(BuildContext context, SubscriptionState state) {
+    return SafeArea(
+      key: const ValueKey('form'),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildPlanTicket(),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                const Icon(Icons.credit_card_rounded, size: 20, color: AppColors.onSurface),
+                const SizedBox(width: 8),
+                Text(
+                  'Método de pago',
+                  style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // ETAPA 2: DATOS DE LA TARJETA
-  // ==========================================
-  Widget _buildStage2({Key? key}) {
-    return Form(
-      key: _formKey2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildStepIndicator(2, 'Pago'),
-          const SizedBox(height: 32),
-          Text(
-            'Metodo de Pago',
-            style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
-          ),
-          const SizedBox(height: 16),
-          // Logos de tarjetas
-          Row(
-            children: [
-              _buildCardLogo('Visa', Colors.indigo),
-              const SizedBox(width: 8),
-              _buildCardLogo('Mastercard', Colors.orange),
-              const SizedBox(width: 8),
-              _buildCardLogo('Amex', Colors.blue),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildTextField(
-            controller: _cardController,
-            label: 'Numero de tarjeta',
-            icon: Icons.credit_card_rounded,
-            keyboardType: TextInputType.number,
-            maxLength: 16,
-            validator: (val) => val == null || val.length < 16 ? 'Tarjeta invalida' : null,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: _expiryController,
-                  label: 'Vencimiento',
-                  hintText: 'MM/AA',
-                  icon: Icons.calendar_today_rounded,
-                  maxLength: 5,
-                  validator: (val) => val == null || val.length < 5 ? 'Invalido' : null,
-                ),
+            const SizedBox(height: 16),
+            CardNumberField(onCardTypeChanged: (_) {}),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.infoBlue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.infoBlue.withValues(alpha: 0.25)),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(
-                  controller: _cvvController,
-                  label: 'CVV',
-                  icon: Icons.lock_outline_rounded,
-                  keyboardType: TextInputType.number,
-                  maxLength: 3,
-                  obscureText: true,
-                  validator: (val) => val == null || val.length < 3 ? 'Invalido' : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isProcessing ? null : _processPayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.forestGreen, // Verde oscuro
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: _isProcessing
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const Text(
-                      'Procesar Pago Seguro',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.infoBlue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Serás redirigido a PayPal para confirmar el pago de forma segura.',
+                      style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: () => context
+                    .read<SubscriptionBloc>()
+                    .add(SubscriptionSubscribeRequested(plan: widget.plan)),
+                icon: const Icon(Icons.lock_outline_rounded, color: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                label: const Text(
+                  'Pagar con PayPal',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Tarjeta tipo "boleto" con el resumen del plan: icono, nombre, precio y
+  /// los beneficios principales, para que el checkout se sienta como una
+  /// compra premium y no como un formulario bancario.
+  Widget _buildPlanTicket() {
+    final plan = _planInfo;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.onSurface.withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.forestGreen],
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(plan.icon, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    plan.title,
+                    style: AppTypography.tituloMd.copyWith(color: Colors.white),
+                  ),
+                ),
+                Text(
+                  plan.priceLabel,
+                  style: AppTypography.labelMd.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Incluye',
+                  style: AppTypography.labelMd.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+                const SizedBox(height: 10),
+                ...plan.features.take(3).map(
+                      (feature) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                feature,
+                                style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+              ],
             ),
           ),
         ],
@@ -279,158 +299,123 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   // ==========================================
-  // ETAPA 3: PANTALLA DE EXITO
-  // ==========================================
-  Widget _buildStage3({Key? key}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 40),
-        const Icon(
-          Icons.check_circle_outline_rounded,
-          color: AppColors.statusHealthyText,
-          size: 100,
-        ),
-        const SizedBox(height: 24),
-        Text(
-          '\u00A1Pago Procesado\ncon Exito!',
-          style: AppTypography.tituloLg.copyWith(
-            color: AppColors.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 32),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildReceiptRow('Referencia:', '#AG-2026-001'),
-              const Divider(height: 24),
-              _buildReceiptRow('Plan adquirido:', 'PLAN PRO', isHighlighted: true),
-              const Divider(height: 24),
-              _buildReceiptRow('Monto pagado:', '\$9.99'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 48),
-        SizedBox(
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _finishCheckout,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Comenzar a usar Pro',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-
-  // ==========================================
-  // UTILIDADES VISUALES
+  // Estado de procesamiento
   // ==========================================
 
-  Widget _buildStepIndicator(int step, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            step.toString(),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: AppTypography.labelMd.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
-        ),
-        const Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(left: 16.0),
-            child: Divider(color: AppColors.outlineVariant),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
+  Widget _buildProcessing({
     required IconData icon,
-    String? hintText,
-    bool obscureText = false,
-    TextInputType keyboardType = TextInputType.text,
-    int? maxLength,
-    String? Function(String?)? validator,
+    required String title,
+    required String subtitle,
   }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      maxLength: maxLength,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        prefixIcon: Icon(icon, color: AppColors.onSurfaceVariant),
-        counterText: '',
-        filled: true,
-        fillColor: AppColors.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.outlineVariant),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+    return Center(
+      key: const ValueKey('processing'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 34),
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCardLogo(String name, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
-      child: Text(
-        name,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12, fontStyle: FontStyle.italic),
+  // ==========================================
+  // Pantalla de exito
+  // ==========================================
+
+  Widget _buildSuccess(BuildContext context) {
+    return SafeArea(
+      key: const ValueKey('success'),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 40),
+            Center(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) => Transform.scale(scale: value, child: child),
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: AppColors.statusHealthyText,
+                  size: 100,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              '¡Pago Procesado\ncon Éxito!',
+              style: AppTypography.tituloLg.copyWith(
+                color: AppColors.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.cardSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+              ),
+              child: Column(
+                children: [
+                  _buildReceiptRow('Plan adquirido', _planInfo.title, isHighlighted: true),
+                  const Divider(height: 24),
+                  _buildReceiptRow('Monto pagado', _planInfo.priceLabel),
+                ],
+              ),
+            ),
+            const SizedBox(height: 48),
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'Listo',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -439,10 +424,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+        Flexible(
+          child: Text(label, style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant)),
         ),
+        const SizedBox(width: 12),
         Text(
           value,
           style: AppTypography.labelMd.copyWith(

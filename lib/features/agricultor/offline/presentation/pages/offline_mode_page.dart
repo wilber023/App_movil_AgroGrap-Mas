@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
-import '../../domain/entities/offline_document_entity.dart';
+import '../../../../offline_knowledge/presentation/cubit/offline_package_manager_cubit.dart';
 import '../cubit/offline_cubit.dart';
 
 // =============================================================================
@@ -39,110 +40,43 @@ class _OfflineModePageState extends State<OfflineModePage> {
     });
   }
 
-  void _showDownloadToast(BuildContext ctx, String message) {
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        padding: EdgeInsets.zero,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C2128),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.burntOrange.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.info_outline_rounded,
-                    color: AppColors.burntOrange, size: 19),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Función no disponible aún',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(message,
-                        style: const TextStyle(
-                            color: Color(0xFFADB5BD),
-                            fontSize: 11.5,
-                            height: 1.4)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Diagnóstico sin Conexión',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 17,
-                    color: Colors.white)),
-            Text('Descarga guías para usar sin internet',
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white70)),
-          ],
+    return BlocProvider(
+      create: (_) => sl<OfflinePackageManagerCubit>()..loadStatuses(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.forestGreen,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Diagnóstico sin Conexión',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      color: Colors.white)),
+              Text('Descarga paquetes de diagnóstico para usar sin internet',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white70)),
+            ],
+          ),
         ),
-      ),
-      body: BlocConsumer<OfflineCubit, OfflineState>(
-        listener: (context, state) {
-          if (state is OfflineLoaded && state.toastError != null) {
-            _showDownloadToast(context, state.toastError!);
-            context.read<OfflineCubit>().clearToastError();
-          }
-        },
-        builder: (context, state) => switch (state) {
-          OfflineInitial() || OfflineLoading() => const _LoadingBody(),
-          OfflineError(:final message) => _ErrorBody(
-              message: message,
-              onRetry: () => context.read<OfflineCubit>().loadStatus(),
-            ),
-          OfflineLoaded() => _LoadedBody(state: state),
-        },
+        body: BlocBuilder<OfflineCubit, OfflineState>(
+          builder: (context, state) => switch (state) {
+            OfflineInitial() || OfflineLoading() => const _LoadingBody(),
+            OfflineError(:final message) => _ErrorBody(
+                message: message,
+                onRetry: () => context.read<OfflineCubit>().loadStatus(),
+              ),
+            OfflineLoaded() => _LoadedBody(state: state),
+          },
+        ),
       ),
     );
   }
@@ -183,72 +117,82 @@ class _LoadedBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _groupByCrop(state.documents);
-    final downloaded = state.documents.where((d) => d.isDownloaded).toList();
-
     return RefreshIndicator(
       color: AppColors.forestGreen,
-      onRefresh: () async => context.read<OfflineCubit>().loadStatus(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-        children: [
-          _OfflineToggleCard(state: state),
-          const SizedBox(height: 28),
+      onRefresh: () async =>
+          context.read<OfflinePackageManagerCubit>().loadStatuses(),
+      child: BlocBuilder<OfflinePackageManagerCubit, OfflinePackageManagerState>(
+        builder: (context, pkgState) {
+          final crops = OfflinePackageManagerCubit.supportedCrops
+              .map((c) => pkgState.statuses[c])
+              .whereType<CropPackageStatus>()
+              .toList();
+          final downloaded = crops
+              .where((c) => c.phase == PackageDownloadPhase.downloaded)
+              .toList();
 
-          // ── Cultivos ──────────────────────────────────────────────────────
-          _SectionLabel(
-            title: 'CULTIVOS DISPONIBLES',
-            subtitle:
-                'Toca un cultivo para descargar sus guías fitosanitarias',
-          ),
-          const SizedBox(height: 14),
-          ...grouped.entries.map(
-            (e) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _CropCard(
-                cropName: e.key,
-                documents: e.value,
-                downloadingDocId: state.downloadingDocId,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            children: [
+              _OfflineToggleCard(state: state),
+              const SizedBox(height: 28),
 
-          // ── Descargado ────────────────────────────────────────────────────
-          _SectionLabel(
-            title: 'DESCARGADO',
-            subtitle: downloaded.isEmpty
-                ? 'Sin guías locales aún'
-                : '${downloaded.length} guía${downloaded.length > 1 ? "s" : ""} disponible${downloaded.length > 1 ? "s" : ""} sin conexión',
-          ),
-          const SizedBox(height: 14),
-          if (downloaded.isEmpty)
-            const _EmptyDownloadedState()
-          else
-            ...downloaded.map(
-              (doc) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _DownloadedDocTile(doc: doc),
+              // ── Cultivos ──────────────────────────────────────────────────
+              _SectionLabel(
+                title: 'CULTIVOS DISPONIBLES',
+                subtitle: 'Toca un cultivo para descargar su paquete de '
+                    'diagnóstico offline',
               ),
-            ),
-        ],
+              const SizedBox(height: 14),
+              if (pkgState.loading && crops.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.forestGreen,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                )
+              else
+                ...crops.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _CropPackageCard(status: c),
+                  ),
+                ),
+              const SizedBox(height: 8),
+
+              // ── Descargado ────────────────────────────────────────────────
+              _SectionLabel(
+                title: 'DESCARGADO',
+                subtitle: downloaded.isEmpty
+                    ? 'Sin paquetes locales aún'
+                    : '${downloaded.length} paquete${downloaded.length > 1 ? "s" : ""} '
+                        'disponible${downloaded.length > 1 ? "s" : ""} sin conexión',
+              ),
+              const SizedBox(height: 14),
+              if (downloaded.isEmpty)
+                const _EmptyDownloadedState()
+              else
+                ...downloaded.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _DownloadedPackageTile(status: c),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
-  }
-
-  Map<String, List<OfflineDocumentEntity>> _groupByCrop(
-      List<OfflineDocumentEntity> docs) {
-    final map = <String, List<OfflineDocumentEntity>>{};
-    for (final doc in docs) {
-      map.putIfAbsent(doc.cropName, () => []).add(doc);
-    }
-    return map;
   }
 }
 
 // =============================================================================
-// TOGGLE — modo sin conexión
+// TOGGLE — modo sin conexión (sin cambios: sigue leyendo el OfflineCubit
+// legacy, es una preferencia independiente del estado real de los paquetes)
 // =============================================================================
 
 class _OfflineToggleCard extends StatelessWidget {
@@ -386,57 +330,35 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // =============================================================================
-// CROP CARD — emoji + modern design
+// CROP PACKAGE CARD — un paquete completo por cultivo (offline_knowledge)
 // =============================================================================
 
-class _CropCard extends StatelessWidget {
-  final String cropName;
-  final List<OfflineDocumentEntity> documents;
-  final String? downloadingDocId;
-
-  const _CropCard({
-    required this.cropName,
-    required this.documents,
-    required this.downloadingDocId,
-  });
-
-  bool get _isThisCropDownloading =>
-      downloadingDocId != null &&
-      documents.any((d) => d.id == downloadingDocId);
-  bool get _isAnyDownloading => downloadingDocId != null;
-  int get _downloadedCount => documents.where((d) => d.isDownloaded).length;
-  bool get _allDownloaded => _downloadedCount == documents.length;
-  bool get _noneDownloaded => _downloadedCount == 0;
-
-  String get _totalSizeLabel {
-    final bytes = documents.fold(0, (sum, d) => sum + d.sizeBytes);
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
+class _CropPackageCard extends StatelessWidget {
+  final CropPackageStatus status;
+  const _CropPackageCard({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final dc = _downloadedCount;
-    final total = documents.length;
-    final allDone = _allDownloaded;
-    final isThisDownloading = _isThisCropDownloading;
+    final downloaded = status.phase == PackageDownloadPhase.downloaded;
+    final downloading = status.phase == PackageDownloadPhase.downloading;
+    final hasError = status.phase == PackageDownloadPhase.error;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: allDone
+        color: downloaded
             ? AppColors.forestGreen.withValues(alpha: 0.05)
             : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: allDone
+          color: downloaded
               ? AppColors.forestGreen.withValues(alpha: 0.45)
               : const Color(0xFFE5EAF0),
-          width: allDone ? 1.4 : 1.0,
+          width: downloaded ? 1.4 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: allDone ? 0.01 : 0.05),
+            color: Colors.black.withValues(alpha: downloaded ? 0.01 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -444,260 +366,123 @@ class _CropCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: AppColors.forestGreen.withValues(alpha: 0.07),
-            highlightColor: AppColors.forestGreen.withValues(alpha: 0.03),
-            onTap: (!isThisDownloading && !_isAnyDownloading && !allDone)
-                ? () {
-                    final ids = documents
-                        .where((d) => !d.isDownloaded)
-                        .map((d) => d.id)
-                        .toList();
-                    context.read<OfflineCubit>().downloadCropDocs(ids);
-                  }
-                : null,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-              child: Column(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ────────────────────────────────────────────────
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ────────────────────────────────────────────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Emoji
-                      Text(_cropEmoji(cropName),
-                          style: const TextStyle(fontSize: 36)),
-                      const SizedBox(width: 12),
-                      // Nombre + enfermedades
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cropName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
-                                  letterSpacing: -0.4,
-                                  color: allDone
-                                      ? AppColors.forestGreen
-                                      : AppColors.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                documents.map((d) => d.diseaseName).join(' · '),
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: AppColors.onSurfaceVariant,
-                                  height: 1.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                  Text(_cropEmoji(status.cultivo),
+                      style: const TextStyle(fontSize: 36)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            status.cultivo,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 17,
+                              letterSpacing: -0.4,
+                              color: downloaded
+                                  ? AppColors.forestGreen
+                                  : AppColors.onSurface,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Paquete de diagnóstico offline',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      // Indicador de progreso / completado
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: allDone
-                            ? Container(
-                                width: 28,
-                                height: 28,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.forestGreen,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.check_rounded,
-                                    color: Colors.white, size: 16),
-                              )
-                            : _ProgressDots(
-                                downloaded: dc, total: total),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 14),
-                  Divider(
-                    height: 1,
-                    thickness: 0.6,
-                    color: allDone
-                        ? AppColors.forestGreen.withValues(alpha: 0.2)
-                        : const Color(0xFFE5EAF0),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Acción ────────────────────────────────────────────────
-                  if (isThisDownloading)
-                    _DownloadingRow(
-                      documents: documents,
-                      downloadingDocId: downloadingDocId!,
-                    )
-                  else
-                    _ActionRow(
-                      downloadedCount: dc,
-                      total: total,
-                      allDone: allDone,
-                      noneDownloaded: _noneDownloaded,
-                      totalSizeLabel: _totalSizeLabel,
-                      isAnyDownloading: _isAnyDownloading,
-                      onDownload: () {
-                        final ids = documents
-                            .where((d) => !d.isDownloaded)
-                            .map((d) => d.id)
-                            .toList();
-                        context.read<OfflineCubit>().downloadCropDocs(ids);
-                      },
-                      onDelete: () => _confirmDelete(context),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: downloaded
+                        ? Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: AppColors.forestGreen,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 16),
+                          )
+                        : (downloading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                  color: AppColors.forestGreen,
+                                ),
+                              )
+                            : const SizedBox.shrink()),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  void _confirmDelete(BuildContext context) {
-    showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Eliminar $cropName'),
-        content: Text(
-          '¿Eliminar las $_downloadedCount guía${_downloadedCount > 1 ? "s" : ""} '
-          'descargadas de $cropName?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    ).then((confirmed) {
-      if (confirmed == true && context.mounted) {
-        final ids = documents
-            .where((d) => d.isDownloaded)
-            .map((d) => d.id)
-            .toList();
-        context.read<OfflineCubit>().deleteCropDocs(ids);
-      }
-    });
-  }
-}
-
-// =============================================================================
-// DOWNLOADING ROW
-// =============================================================================
-
-class _DownloadingRow extends StatelessWidget {
-  final List<OfflineDocumentEntity> documents;
-  final String downloadingDocId;
-
-  const _DownloadingRow({
-    required this.documents,
-    required this.downloadingDocId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final doc = documents.firstWhere(
-      (d) => d.id == downloadingDocId,
-      orElse: () => documents.first,
-    );
-    final done = documents.where((d) => d.isDownloaded).length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const SizedBox(
-              width: 13,
-              height: 13,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.forestGreen,
+              const SizedBox(height: 14),
+              Divider(
+                height: 1,
+                thickness: 0.6,
+                color: downloaded
+                    ? AppColors.forestGreen.withValues(alpha: 0.2)
+                    : const Color(0xFFE5EAF0),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Descargando ${doc.diseaseName}...',
-                style: const TextStyle(
-                  color: AppColors.forestGreen,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(height: 12),
+
+              if (hasError) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline_rounded,
+                        size: 15, color: AppColors.error),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        status.errorMessage ??
+                            'No se pudo descargar el paquete.',
+                        style: AppTypography.etiquetaSm
+                            .copyWith(color: AppColors.error, fontSize: 11.5),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            Text(
-              '${done + 1}/${documents.length}',
-              style: const TextStyle(
-                color: AppColors.forestGreen,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: const LinearProgressIndicator(
-            minHeight: 4,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
+                const SizedBox(height: 10),
+              ],
+
+              // ── Acción ────────────────────────────────────────────────
+              _buildActionRow(context, downloaded: downloaded, downloading: downloading),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
-}
 
-// =============================================================================
-// ACTION ROW
-// =============================================================================
-
-class _ActionRow extends StatelessWidget {
-  final int downloadedCount;
-  final int total;
-  final bool allDone;
-  final bool noneDownloaded;
-  final String totalSizeLabel;
-  final bool isAnyDownloading;
-  final VoidCallback onDownload;
-  final VoidCallback onDelete;
-
-  const _ActionRow({
-    required this.downloadedCount,
-    required this.total,
-    required this.allDone,
-    required this.noneDownloaded,
-    required this.totalSizeLabel,
-    required this.isAnyDownloading,
-    required this.onDownload,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (allDone) {
+  Widget _buildActionRow(
+    BuildContext context, {
+    required bool downloaded,
+    required bool downloading,
+  }) {
+    if (downloaded) {
       return Row(
         children: [
           const Icon(Icons.offline_pin_rounded,
@@ -711,25 +496,6 @@ class _ActionRow extends StatelessWidget {
               fontSize: 12,
             ),
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: onDelete,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(
-                    color: AppColors.error.withValues(alpha: 0.3)),
-              ),
-            ),
-            child: const Text('Eliminar',
-                style:
-                    TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
         ],
       );
     }
@@ -737,9 +503,7 @@ class _ActionRow extends StatelessWidget {
     return Row(
       children: [
         Text(
-          noneDownloaded
-              ? '~$totalSizeLabel'
-              : '$downloadedCount/$total descargadas',
+          downloading ? 'Descargando…' : 'No descargado',
           style: AppTypography.etiquetaSm.copyWith(
             color: AppColors.onSurfaceVariant,
             fontSize: 12,
@@ -747,7 +511,11 @@ class _ActionRow extends StatelessWidget {
         ),
         const Spacer(),
         FilledButton.icon(
-          onPressed: isAnyDownloading ? null : onDownload,
+          onPressed: downloading
+              ? null
+              : () => context
+                  .read<OfflinePackageManagerCubit>()
+                  .download(status.cultivo),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.forestGreen,
             disabledBackgroundColor: AppColors.surfaceContainerHigh,
@@ -762,13 +530,13 @@ class _ActionRow extends StatelessWidget {
             ),
           ),
           icon: Icon(
-            noneDownloaded
-                ? Icons.download_rounded
-                : Icons.download_for_offline_rounded,
+            downloading
+                ? Icons.hourglass_top_rounded
+                : Icons.download_rounded,
             size: 15,
           ),
           label: Text(
-            noneDownloaded ? 'Descargar' : 'Continuar',
+            downloading ? 'Descargando' : 'Descargar',
             style:
                 const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
@@ -779,45 +547,12 @@ class _ActionRow extends StatelessWidget {
 }
 
 // =============================================================================
-// PROGRESS DOTS
+// DOWNLOADED PACKAGE TILE
 // =============================================================================
 
-class _ProgressDots extends StatelessWidget {
-  final int downloaded;
-  final int total;
-  const _ProgressDots({required this.downloaded, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(total, (i) {
-        final isDone = i < downloaded;
-        return Padding(
-          padding: EdgeInsets.only(left: i > 0 ? 4 : 0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color:
-                  isDone ? AppColors.forestGreen : AppColors.outlineVariant,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-// =============================================================================
-// DOWNLOADED DOC TILE
-// =============================================================================
-
-class _DownloadedDocTile extends StatelessWidget {
-  final OfflineDocumentEntity doc;
-  const _DownloadedDocTile({required this.doc});
+class _DownloadedPackageTile extends StatelessWidget {
+  final CropPackageStatus status;
+  const _DownloadedPackageTile({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -855,12 +590,12 @@ class _DownloadedDocTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(_cropEmoji(doc.cropName),
+                    Text(_cropEmoji(status.cultivo),
                         style: const TextStyle(fontSize: 14)),
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        doc.diseaseName,
+                        status.cultivo,
                         style: AppTypography.labelMd.copyWith(
                           color: AppColors.onSurface,
                           fontWeight: FontWeight.w600,
@@ -874,7 +609,7 @@ class _DownloadedDocTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${doc.cropName} · ${doc.source} · ${doc.sizeLabel}',
+                  'Paquete de diagnóstico offline disponible',
                   style: AppTypography.etiquetaSm.copyWith(
                     color: AppColors.onSurfaceVariant,
                     fontSize: 11,
@@ -882,16 +617,6 @@ class _DownloadedDocTile extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: () =>
-                context.read<OfflineCubit>().deleteDocument(doc.id),
-            icon: const Icon(Icons.delete_outline_rounded,
-                size: 18, color: AppColors.error),
-            padding: EdgeInsets.zero,
-            constraints:
-                const BoxConstraints(minWidth: 34, minHeight: 34),
-            tooltip: 'Eliminar',
           ),
         ],
       ),
@@ -932,7 +657,7 @@ class _EmptyDownloadedState extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Sin guías descargadas',
+            'Sin paquetes descargados',
             style: AppTypography.labelMd.copyWith(
               color: AppColors.onSurface,
               fontWeight: FontWeight.w700,
@@ -940,7 +665,7 @@ class _EmptyDownloadedState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Selecciona un cultivo arriba y descarga\nsus guías para diagnóstico sin internet.',
+            'Selecciona un cultivo arriba y descarga\nsu paquete para diagnóstico sin internet.',
             textAlign: TextAlign.center,
             style: AppTypography.etiquetaSm.copyWith(
               color: AppColors.onSurfaceVariant,

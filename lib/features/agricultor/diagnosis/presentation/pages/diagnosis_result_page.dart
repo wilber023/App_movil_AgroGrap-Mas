@@ -9,7 +9,11 @@ import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/network/network_info.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../offline_knowledge/domain/cultivo_slug.dart';
+import '../../../../offline_knowledge/presentation/cubit/offline_knowledge_cubit.dart';
+import '../../../../offline_knowledge/presentation/widgets/diagnosis_detail_view.dart';
 import '../../data/services/cnn_engine/cnn_result.dart';
 import '../../domain/entities/diagnosis_entity.dart';
 import '../../domain/entities/llm_response_entity.dart';
@@ -62,6 +66,7 @@ class DiagnosisResultPage extends StatelessWidget {
           },
         ),
         BlocProvider(create: (_) => sl<ProductRecommendationCubit>()),
+        BlocProvider(create: (_) => sl<OfflineKnowledgeCubit>()),
       ],
       child: _ResultView(diagnosis: diagnosis, userText: userText),
     );
@@ -98,13 +103,28 @@ class _ResultViewState extends State<_ResultView> {
     super.initState();
     _isAddedToAgenda = _agendaBox.get(_agendaKey) != null;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       if (widget.diagnosis.llmResponse == null) {
-        context.read<LlmDiagnosisCubit>().consultar(
-          diagnosis: widget.diagnosis,
-          userText: widget.userText,
-        );
+        // === Punto de integración offline_knowledge ===
+        // Único lugar que decide entre el flujo online existente
+        // (LlmDiagnosisCubit, sin cambios) y el fallback offline
+        // (GetOfflineDiagnosisDetailUseCase vía OfflineKnowledgeCubit).
+        // Revertir: eliminar este if/else y dejar solo la rama `consultar`.
+        final isOnline = await sl<NetworkInfo>().isConnected;
+        if (!mounted) return;
+        if (isOnline) {
+          context.read<LlmDiagnosisCubit>().consultar(
+            diagnosis: widget.diagnosis,
+            userText: widget.userText,
+          );
+        } else {
+          context.read<OfflineKnowledgeCubit>().load(
+            cultivo: cultivoSlug(widget.diagnosis.cropName),
+            enfermedadId: _offlineEnfermedadId(widget.diagnosis),
+            confianzaCnn: widget.diagnosis.confidence,
+          );
+        }
       } else {
         context.read<ProductRecommendationCubit>().getRecommendations(
           disease: widget.diagnosis.diseaseName,
@@ -113,6 +133,21 @@ class _ResultViewState extends State<_ResultView> {
       }
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // offline_knowledge — helpers de mapeo hacia el paquete local
+  // ---------------------------------------------------------------------------
+
+  /// El `id` de ficha del paquete offline debe coincidir con `disease_name`
+  /// del catálogo real (README_ofline.md, GET /api/v1/offline/catalog),
+  /// normalizado igual que el flujo online ya envía `resultado_cnn.enfermedad`
+  /// a /api/v1/consultar (ver LlmDiagnosisDataSourceImpl). El raw label de
+  /// la CNN (`topK.first.rawLabel`) YA NO se usa aquí: es un identificador
+  /// interno del modelo (ej. "Calabaza_Powdery Mildew") sin relación con
+  /// los `doc_id` opacos del backend, a diferencia de lo asumido en el
+  /// documento de especificación original (Sprint 1).
+  String _offlineEnfermedadId(DiagnosisEntity diagnosis) =>
+      cultivoSlug(diagnosis.diseaseName);
 
   Future<void> _addToAgenda() async {
     final confirmed = await showDialog<bool>(
@@ -401,106 +436,94 @@ class _ResultViewState extends State<_ResultView> {
       margin: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _track, width: 0.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Text(
-              'Resumen del diagnóstico',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: _textPrimary,
+          // ── Encabezado con gradiente verde ──────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.forestGreen.withValues(alpha: 0.10),
+                  AppColors.forestGreen.withValues(alpha: 0.02),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Container(height: 0.5, color: _track),
-          // Cuerpo LLM
-          BlocBuilder<LlmDiagnosisCubit, LlmDiagnosisState>(
-            builder: (context, state) {
-              if (state is LlmDiagnosisIdle || state is LlmDiagnosisLoading) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          color: AppColors.forestGreen,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Generando análisis IA...',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: _textSecondary,
-                        ),
-                      ),
-                    ],
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.forestGreen.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
                   ),
-                );
-              }
-              if (state is LlmDiagnosisError) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.wifi_off_outlined,
-                        size: 16,
+                  child: const Icon(
+                    Icons.biotech_outlined,
+                    size: 18,
+                    color: AppColors.forestGreen,
+                  ),
+                ),
+                const SizedBox(width: 11),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resumen del diagnóstico',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Análisis generado por IA agrícola',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
                         color: _textSecondary,
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          state.message,
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: _textSecondary,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            context.read<LlmDiagnosisCubit>().consultar(
-                              diagnosis: widget.diagnosis,
-                              userText: widget.userText,
-                            ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.forestGreen,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        child: Text(
-                          'Reintentar',
-                          style: GoogleFonts.inter(fontSize: 11),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(height: 0.5, color: _track),
+          // ── Cuerpo: offline u online ─────────────────────────────────────
+          BlocBuilder<OfflineKnowledgeCubit, OfflineKnowledgeState>(
+            builder: (context, offlineState) {
+              if (offlineState is OfflineKnowledgeLoaded) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: DiagnosisDetailView(detail: offlineState.detail),
                 );
               }
-              if (state is LlmDiagnosisLoaded) {
-                return _buildSummaryBody(state.response);
-              }
-              return const SizedBox.shrink();
+              return _buildLlmBody(context);
             },
           ),
           Container(height: 0.5, color: _track),
-          // Métricas
+          // ── Métricas ─────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(14),
             child: _buildMetricTiles(conf, isHealthy),
           ),
-          // Top-K colapsable
+          // ── Top-K colapsable ─────────────────────────────────────────────
           if (widget.diagnosis.topK.length > 1) ...[
             Container(height: 0.5, color: _track),
             _buildTopKCollapsed(),
@@ -510,18 +533,94 @@ class _ResultViewState extends State<_ResultView> {
     );
   }
 
+  Widget _buildLlmBody(BuildContext context) {
+    return BlocBuilder<LlmDiagnosisCubit, LlmDiagnosisState>(
+      builder: (context, state) {
+        if (state is LlmDiagnosisIdle || state is LlmDiagnosisLoading) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    color: AppColors.forestGreen,
+                    strokeWidth: 2,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Generando análisis IA...',
+                  style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+                ),
+              ],
+            ),
+          );
+        }
+        if (state is LlmDiagnosisError) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.wifi_off_outlined,
+                  size: 16,
+                  color: _textSecondary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    state.message,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: _textSecondary,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.read<LlmDiagnosisCubit>().consultar(
+                    diagnosis: widget.diagnosis,
+                    userText: widget.userText,
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.forestGreen,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: Text(
+                    'Reintentar',
+                    style: GoogleFonts.inter(fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        if (state is LlmDiagnosisLoaded) {
+          return _buildSummaryBody(state.response);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
   Widget _buildSummaryBody(LlmResponseEntity r) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Avisos (ámbar) ────────────────────────────────────────────
           if (r.avisos.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: _chipAmberBg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFFFFCC80),
+                  width: 0.8,
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,37 +646,114 @@ class _ResultViewState extends State<_ResultView> {
             ),
             const SizedBox(height: 12),
           ],
-          if (r.diagnostico.isNotEmpty) ...[
-            Text(
-              r.diagnostico,
-              maxLines: _diagnosticoExpanded ? null : _diagnosticoCollapsedLines,
-              overflow: _diagnosticoExpanded
-                  ? TextOverflow.visible
-                  : TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 12.5,
-                color: _textPrimary,
-                height: 1.55,
-              ),
-            ),
-            if (r.diagnostico.length > _diagnosticoCollapseThreshold)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: GestureDetector(
-                  onTap: () => setState(
-                    () => _diagnosticoExpanded = !_diagnosticoExpanded,
+          // ── Texto diagnóstico IA ───────────────────────────────────────
+          if (r.diagnostico.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F8F4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border(
+                  left: const BorderSide(
+                    color: AppColors.forestGreen,
+                    width: 3,
                   ),
-                  child: Text(
-                    _diagnosticoExpanded ? 'Ver menos' : 'Ver más',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.forestGreen,
-                    ),
+                  top: BorderSide(
+                    color: AppColors.forestGreen.withValues(alpha: 0.18),
+                    width: 0.8,
+                  ),
+                  right: BorderSide(
+                    color: AppColors.forestGreen.withValues(alpha: 0.18),
+                    width: 0.8,
+                  ),
+                  bottom: BorderSide(
+                    color: AppColors.forestGreen.withValues(alpha: 0.18),
+                    width: 0.8,
                   ),
                 ),
               ),
-          ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Etiqueta "Análisis IA"
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.psychology_outlined,
+                        size: 13,
+                        color: AppColors.forestGreen,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Análisis IA',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.forestGreen,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Texto expandible
+                  Text(
+                    r.diagnostico,
+                    maxLines: _diagnosticoExpanded
+                        ? null
+                        : _diagnosticoCollapsedLines,
+                    overflow: _diagnosticoExpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: _textPrimary,
+                      height: 1.6,
+                    ),
+                  ),
+                  // Botón "Ver más / Ver menos"
+                  if (r.diagnostico.length > _diagnosticoCollapseThreshold) ...[
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () => setState(
+                        () => _diagnosticoExpanded = !_diagnosticoExpanded,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.forestGreen.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _diagnosticoExpanded ? 'Ver menos' : 'Ver más',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.forestGreen,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(
+                              _diagnosticoExpanded
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 14,
+                              color: AppColors.forestGreen,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -671,8 +847,16 @@ class _ResultViewState extends State<_ResultView> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border.all(color: _track, width: 0.8),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

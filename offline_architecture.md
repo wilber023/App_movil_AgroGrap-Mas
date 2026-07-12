@@ -522,7 +522,7 @@ interface OfflineLoaded {
 
 ```mermaid
 flowchart LR
-    A([Foto cultivo]) --> B[CNN TFLite\nEfficientNetB4]
+    A([Foto cultivo]) --> B[CNN TFLite\nMobileNetV3-Large]
     B --> C{Online?}
     C -->|Sí| D[LLM remoto\n52.1.110.21:8000]
     C -->|No| E{Docs descargados?}

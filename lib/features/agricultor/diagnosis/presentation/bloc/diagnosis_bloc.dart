@@ -11,7 +11,7 @@ import '../../domain/entities/llm_response_entity.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- DiagnosisBloc
-// Inferencia CNN real vía TFLite (EfficientNet-B4).
+// Inferencia CNN real vía TFLite (MobileNetV3-Large).
 // El modelo detecta cultivo y enfermedad directamente del rawLabel.
 // =============================================================================
 

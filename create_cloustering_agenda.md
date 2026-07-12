@@ -35,7 +35,7 @@ El usuario tiene además control explícito: solo los diagnósticos para los que
 
 | Capa | Responsabilidad |
 |------|----------------|
-| CNN (EfficientNetB4 TFLite) | Detecta qué enfermedad afecta al cultivo con confianza cuantificada |
+| CNN (MobileNetV3-Large TFLite) | Detecta qué enfermedad afecta al cultivo con confianza cuantificada |
 | LLM/RAG (`52.1.110.21:8000`) | Interpreta el diagnóstico en contexto agronómico: tratamiento, prevención, fuentes |
 | Diagnóstico (`DiagnosisEntity`) | Consolida CNN + LLM en un registro persistente en Hive |
 | Agenda (`TreatmentEntity`) | Proyecta el diagnóstico en el tiempo como eventos accionables |
@@ -48,7 +48,7 @@ Imagen de cultivo
        │
        ▼
   CNN TFLite (local)
-  EfficientNetB4 · 50 clases · NCHW
+  MobileNetV3-Large · 33 clases · NCHW
        │ CnnResult {cropName, diseaseName, confidence, topK[]}
        ▼
   LLM/RAG (remoto)
@@ -79,7 +79,7 @@ Imagen de cultivo
 | App móvil | Flutter 3.x / Dart | iOS + Android |
 | Estado | `flutter_bloc` (BLoC pattern) | `TreatmentBloc`, `DiagnosisBloc`, `LlmDiagnosisCubit` |
 | Persistencia local | Hive (`Box<String>`) | JSON codificado manualmente |
-| CNN | TFLite EfficientNetB4 | 50 clases crop×disease, layout NCHW |
+| CNN | TFLite MobileNetV3-Large | 33 clases crop×disease, layout NCHW |
 | LLM/RAG | Microservicio HTTP REST | `http://52.1.110.21:8000/api/v1/consultar` |
 | Arquitectura | Clean Architecture | Presentation → Domain → Data |
 | Inyección de dependencias | GetIt (`sl`) | Lazy singletons |
@@ -116,7 +116,7 @@ Imagen de cultivo
 
 ```mermaid
 flowchart TD
-    A([Imagen de cultivo]) --> B[CNN TFLite\nEfficientNetB4 · 50 clases]
+    A([Imagen de cultivo]) --> B[CNN TFLite\nMobileNetV3-Large · 33 clases]
     B --> C{StatusLabel}
     C -->|Saludable| D[No genera agenda\nNo pasa al LLM]
     C -->|Enfermedad detectada| E[LLM/RAG\nPOST /api/v1/consultar]
@@ -166,7 +166,7 @@ class CnnResult {
 }
 ```
 
-El modelo EfficientNetB4 produce un `CnnResult` con confianza cuantificada. Si `statusLabel == 'Saludable'`, el flujo termina aquí — no se genera agenda.
+El modelo MobileNetV3-Large produce un `CnnResult` con confianza cuantificada. Si `statusLabel == 'Saludable'`, el flujo termina aquí — no se genera agenda.
 
 #### Paso 2 — LLM interpreta contexto agronómico
 

@@ -32,7 +32,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
   Timer? _subtitleTimer;
 
   static const List<String> _subtitles = [
-    'Ejecutando modelo CNN EfficientNetB4...',
+    'Ejecutando modelo CNN MobileNet...',
     'Procesando localmente \u00B7 sin necesidad de internet...',
     'Comparando con 40+ patolog\u00EDas conocidas...',
     'Calculando nivel de confianza...',

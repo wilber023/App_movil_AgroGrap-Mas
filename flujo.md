@@ -235,8 +235,7 @@ E --> F[Resultado]
 ### Arquitecturas recomendadas
 
 * ResNet50
-* EfficientNet
-* MobileNet
+* MobileNet (arquitectura actual del proyecto)
 * YOLO
 
 ---
