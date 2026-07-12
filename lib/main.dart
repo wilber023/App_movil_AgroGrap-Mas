@@ -1,18 +1,29 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/di/injection_container.dart';
+import 'core/services/fcm_background_handler.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/session/session_manager.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/usecases/usecase.dart';
 import 'features/login/auth/presentation/bloc/auth_bloc.dart';
 import 'features/login/auth/presentation/bloc/auth_event.dart';
+import 'features/login/auth/presentation/bloc/auth_state.dart';
 import 'features/login/auth/presentation/pages/select_profile_page.dart';
 import 'features/login/auth/presentation/pages/splash_page.dart';
+import 'features/notifications/domain/usecases/cancel_alert_subscription_usecase.dart';
+import 'features/notifications/domain/usecases/notification_preferences_usecases.dart';
+import 'features/notifications/domain/usecases/subscribe_to_alerts_usecase.dart';
 import 'features/agricultor/diagnosis/presentation/bloc/diagnosis_bloc.dart';
 import 'features/agricultor/diagnosis/presentation/pages/diagnosis_page.dart';
 import 'features/agricultor/home/presentation/bloc/home_bloc.dart';
@@ -40,6 +51,27 @@ Future<void> main() async {
 
   await Hive.initFlutter();
   await initDependencies();
+
+  // Notificaciones push (FCM) -- unicamente Android, ver
+  // integrar_notificaciones.md. Envuelto en try/catch: mientras
+  // android/app/google-services.json no exista (o sea invalido), la app
+  // debe arrancar normalmente con el push simplemente inactivo.
+  if (Platform.isAndroid) {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      await PushNotificationService(
+        saveNotificationUseCase: sl(),
+        getPreferencesUseCase: sl(),
+        subscribeUseCase: sl(),
+        navigatorKey: AgroGraphApp.navigatorKey,
+      ).init();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FCM] Inicialización falló (¿falta google-services.json?): $e');
+      }
+    }
+  }
 
   runApp(const AgroGraphApp());
 }
@@ -79,6 +111,45 @@ class _AgroGraphAppState extends State<AgroGraphApp> {
     super.dispose();
   }
 
+  // ---------------------------------------------------------------------------
+  // Notificaciones push -- re-suscripcion/cancelacion best-effort en cada
+  // cambio de sesion (ver integrar_notificaciones.md: "cuando el usuario
+  // cierra sesion: eliminar la suscripcion"; "si el usuario cambia de
+  // cuenta: actualizar la suscripcion"). Nunca bloquea ni rompe el flujo de
+  // login/logout: cualquier error solo se loguea en debug.
+  // ---------------------------------------------------------------------------
+
+  Future<void> _onLoggedIn() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final prefsResult = await sl<GetNotificationPreferencesUseCase>()(const NoParams());
+      await prefsResult.fold(
+        (_) async {},
+        (prefs) async {
+          if (!prefs.enabled || prefs.estado.isEmpty) return;
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token == null) return;
+          await sl<SubscribeToAlertsUseCase>()(SubscribeParams(
+            fcmToken: token,
+            estado: prefs.estado,
+            cultivos: prefs.cultivos,
+          ));
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FCM] Re-suscripción tras login falló: $e');
+    }
+  }
+
+  Future<void> _onLoggedOut() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await sl<CancelAlertSubscriptionUseCase>()(const NoParams());
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FCM] Cancelación tras logout falló: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -100,12 +171,21 @@ class _AgroGraphAppState extends State<AgroGraphApp> {
           create: (_) => sl<OfflineCubit>()..loadStatus(),
         ),
       ],
-      child: MaterialApp(
-        navigatorKey: AgroGraphApp.navigatorKey,
-        title: 'AgroGraph-MAS',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        home: const SplashPage(),
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            _onLoggedIn();
+          } else if (state is AuthUnauthenticated) {
+            _onLoggedOut();
+          }
+        },
+        child: MaterialApp(
+          navigatorKey: AgroGraphApp.navigatorKey,
+          title: 'AgroGraph-MAS',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          home: const SplashPage(),
+        ),
       ),
     );
   }

@@ -13,12 +13,13 @@ import '../repositories/llm_diagnosis_repository.dart';
 
 class LlmConsultaParams extends Equatable {
   final DiagnosisEntity diagnosis;
+  final String rol;
   final String? userText;
 
-  const LlmConsultaParams({required this.diagnosis, this.userText});
+  const LlmConsultaParams({required this.diagnosis, required this.rol, this.userText});
 
   @override
-  List<Object?> get props => [diagnosis, userText];
+  List<Object?> get props => [diagnosis, rol, userText];
 }
 
 class GetLlmDiagnosisUseCase
@@ -31,6 +32,7 @@ class GetLlmDiagnosisUseCase
   Future<Either<Failure, LlmResponseEntity>> call(LlmConsultaParams params) {
     return _repository.consultar(
       diagnosis: params.diagnosis,
+      rol: params.rol,
       userText: params.userText,
     );
   }

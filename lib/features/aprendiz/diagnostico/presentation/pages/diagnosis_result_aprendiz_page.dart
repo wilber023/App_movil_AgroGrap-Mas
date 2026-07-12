@@ -82,7 +82,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
     if (diagnosis.llmResponse == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<LlmDiagnosisCubit>().consultar(diagnosis: diagnosis);
+        context.read<LlmDiagnosisCubit>().consultar(diagnosis: diagnosis, rol: 'aprendiz');
       });
     }
   }
@@ -227,7 +227,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
             return const DiagnosisLlmLoadingCard();
           }
           if (state is LlmDiagnosisError) {
-            return DiagnosisLlmErrorCard(onRetry: () => context.read<LlmDiagnosisCubit>().consultar(diagnosis: diagnosis));
+            return DiagnosisLlmErrorCard(onRetry: () => context.read<LlmDiagnosisCubit>().consultar(diagnosis: diagnosis, rol: 'aprendiz'));
           }
           if (state is LlmDiagnosisLoaded) {
             return _LoadedDiagnosisSections(

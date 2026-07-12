@@ -11,6 +11,7 @@ import '../entities/llm_response_entity.dart';
 abstract class LlmDiagnosisRepository {
   Future<Either<Failure, LlmResponseEntity>> consultar({
     required DiagnosisEntity diagnosis,
+    required String rol,
     String? userText,
   });
 }

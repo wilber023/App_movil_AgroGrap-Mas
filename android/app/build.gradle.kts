@@ -5,6 +5,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") apply false
 }
 
 val keyPropertiesFile = rootProject.file("app/key.properties")
@@ -13,8 +14,17 @@ if (keyPropertiesFile.exists()) {
     keyProperties.load(FileInputStream(keyPropertiesFile))
 }
 
+// FCM: aplica el plugin de Google Services solo si el archivo de credenciales
+// ya fue agregado (evita que el build falle mientras aun no se entrega;
+// sin el archivo, Firebase.initializeApp() falla en runtime de forma
+// controlada, ver main.dart — nunca se genera un archivo falso).
+val googleServicesFile = rootProject.file("app/google-services.json")
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
-    namespace = "com.agrograp.ia.agrograp_movil"
+    namespace = "com.integrador.AgroGrap"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +40,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.agrograp.ia.agrograp_movil"
+        applicationId = "com.integrador.AgroGrap"
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

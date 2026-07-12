@@ -24,5 +24,7 @@
         <domain includeSubdomains="false">52.1.110.21</domain>
         <!-- Microservicio de Productos (recomendaciones) -->
         <domain includeSubdomains="false">44.196.107.153</domain>
+        <!-- Microservicio de Notificaciones (suscripcion a alertas push) -->
+        <domain includeSubdomains="false">3.218.172.128</domain>
     </domain-config>
 </network-security-config>

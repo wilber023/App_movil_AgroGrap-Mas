@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../notifications/presentation/pages/notifications_page.dart';
 
 /// Encabezado de Inicio: logo + marca + subtitulo, notificaciones, y saludo
 /// con icono segun la hora real del dispositivo — todo en el mismo bloque
@@ -78,33 +79,36 @@ class HomeHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.aOnPrimary.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                GestureDetector(
+                  onTap: () => Navigator.push(context, NotificationsPage.route()),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.aOnPrimary.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.notifications_outlined, color: AppColors.aOnPrimary, size: 18),
                       ),
-                      child: const Icon(Icons.notifications_outlined, color: AppColors.aOnPrimary, size: 18),
-                    ),
-                    if (hasNotices)
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            color: AppColors.aOrange,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.aPrimaryContainer, width: 1.5),
+                      if (hasNotices)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: AppColors.aOrange,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.aPrimaryContainer, width: 1.5),
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

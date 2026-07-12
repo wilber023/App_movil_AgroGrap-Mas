@@ -116,6 +116,7 @@ class _ResultViewState extends State<_ResultView> {
         if (isOnline) {
           context.read<LlmDiagnosisCubit>().consultar(
             diagnosis: widget.diagnosis,
+            rol: 'agricultor',
             userText: widget.userText,
           );
         } else {
@@ -581,6 +582,7 @@ class _ResultViewState extends State<_ResultView> {
                 TextButton(
                   onPressed: () => context.read<LlmDiagnosisCubit>().consultar(
                     diagnosis: widget.diagnosis,
+                    rol: 'agricultor',
                     userText: widget.userText,
                   ),
                   style: TextButton.styleFrom(
@@ -647,110 +649,114 @@ class _ResultViewState extends State<_ResultView> {
             const SizedBox(height: 12),
           ],
           // ── Texto diagnóstico IA ───────────────────────────────────────
+          // Border con colores no uniformes + borderRadius no es válido en
+          // Flutter (lanza "borderRadius can only be given on borders with
+          // uniform colors"). Se usa clipBehavior + Border.all uniforme y el
+          // acento izquierdo como Container separado dentro de un Stack.
           if (r.diagnostico.isNotEmpty)
             Container(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: const Color(0xFFF2F8F4),
                 borderRadius: BorderRadius.circular(12),
-                border: Border(
-                  left: const BorderSide(
-                    color: AppColors.forestGreen,
-                    width: 3,
-                  ),
-                  top: BorderSide(
-                    color: AppColors.forestGreen.withValues(alpha: 0.18),
-                    width: 0.8,
-                  ),
-                  right: BorderSide(
-                    color: AppColors.forestGreen.withValues(alpha: 0.18),
-                    width: 0.8,
-                  ),
-                  bottom: BorderSide(
-                    color: AppColors.forestGreen.withValues(alpha: 0.18),
-                    width: 0.8,
-                  ),
+                border: Border.all(
+                  color: AppColors.forestGreen.withValues(alpha: 0.18),
+                  width: 0.8,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  // Etiqueta "Análisis IA"
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.psychology_outlined,
-                        size: 13,
-                        color: AppColors.forestGreen,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Análisis IA',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.forestGreen,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+                  // Acento izquierdo (reemplaza el left border de color sólido)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(width: 3, color: AppColors.forestGreen),
                   ),
-                  const SizedBox(height: 8),
-                  // Texto expandible
-                  Text(
-                    r.diagnostico,
-                    maxLines: _diagnosticoExpanded
-                        ? null
-                        : _diagnosticoCollapsedLines,
-                    overflow: _diagnosticoExpanded
-                        ? TextOverflow.visible
-                        : TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      color: _textPrimary,
-                      height: 1.6,
-                    ),
-                  ),
-                  // Botón "Ver más / Ver menos"
-                  if (r.diagnostico.length > _diagnosticoCollapseThreshold) ...[
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () => setState(
-                        () => _diagnosticoExpanded = !_diagnosticoExpanded,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.forestGreen.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 12, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Etiqueta "Análisis IA"
+                        Row(
                           children: [
-                            Text(
-                              _diagnosticoExpanded ? 'Ver menos' : 'Ver más',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.forestGreen,
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            Icon(
-                              _diagnosticoExpanded
-                                  ? Icons.keyboard_arrow_up_rounded
-                                  : Icons.keyboard_arrow_down_rounded,
-                              size: 14,
+                            const Icon(
+                              Icons.psychology_outlined,
+                              size: 13,
                               color: AppColors.forestGreen,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'Análisis IA',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.forestGreen,
+                                letterSpacing: 0.3,
+                              ),
                             ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        // Texto expandible
+                        Text(
+                          r.diagnostico,
+                          maxLines: _diagnosticoExpanded
+                              ? null
+                              : _diagnosticoCollapsedLines,
+                          overflow: _diagnosticoExpanded
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: _textPrimary,
+                            height: 1.6,
+                          ),
+                        ),
+                        // Botón "Ver más / Ver menos"
+                        if (r.diagnostico.length > _diagnosticoCollapseThreshold) ...[
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () => setState(
+                              () => _diagnosticoExpanded = !_diagnosticoExpanded,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.forestGreen.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _diagnosticoExpanded ? 'Ver menos' : 'Ver más',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.forestGreen,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Icon(
+                                    _diagnosticoExpanded
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: AppColors.forestGreen,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),

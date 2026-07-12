@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1029418337523",
+    "project_id": "agrograph-mas",
+    "storage_bucket": "agrograph-mas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1029418337523:android:e77cb9c7a23e0748082386",
+        "android_client_info": {
+          "package_name": "com.integrador.AgroGrap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWbq_ZIsjJeL71Uhnm1FsKO6hhF6Wev2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -110,6 +110,22 @@ import '../../features/subscription/domain/usecases/get_subscription_status_usec
 import '../../features/subscription/domain/usecases/subscribe_usecase.dart';
 import '../../features/subscription/presentation/bloc/subscription_bloc.dart';
 
+// -- Notifications (FCM + historial local) --
+import '../../features/notifications/data/datasources/notification_remote_datasource.dart';
+import '../../features/notifications/data/datasources/notification_local_datasource.dart';
+import '../../features/notifications/data/repositories/notification_subscription_repository_impl.dart';
+import '../../features/notifications/data/repositories/notification_history_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notification_subscription_repository.dart';
+import '../../features/notifications/domain/repositories/notification_history_repository.dart';
+import '../../features/notifications/domain/usecases/subscribe_to_alerts_usecase.dart';
+import '../../features/notifications/domain/usecases/get_alert_subscription_usecase.dart';
+import '../../features/notifications/domain/usecases/cancel_alert_subscription_usecase.dart';
+import '../../features/notifications/domain/usecases/get_notification_history_usecase.dart';
+import '../../features/notifications/domain/usecases/save_notification_usecase.dart';
+import '../../features/notifications/domain/usecases/notification_preferences_usecases.dart';
+import '../../features/notifications/presentation/bloc/notification_subscription_bloc.dart';
+import '../../features/notifications/presentation/cubit/notification_history_cubit.dart';
+
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
 
@@ -137,6 +153,7 @@ Future<void> initDependencies() async {
   await _initOfflineFeature();
   _initOfflineKnowledgeFeature();
   await _initAprendizFeature();
+  _initNotificationsFeature();
 }
 
 // =============================================================================
@@ -168,6 +185,12 @@ Future<void> _initCore() async {
   sl.registerLazySingleton<Box<String>>(
     () => seleccionesBox,
     instanceName: 'seleccionesBox',
+  );
+
+  final notificationsBox = await Hive.openBox<String>('notifications_box');
+  sl.registerLazySingleton<Box<String>>(
+    () => notificationsBox,
+    instanceName: 'notificationsBox',
   );
 
   // -- Secure Storage: Keystore (Android) / Keychain (iOS) --
@@ -698,4 +721,56 @@ Future<void> _initAprendizFeature() async {
   await initPerfilDependencies(sl);
   await initAprendizHomeDependencies(sl);
   await initHistorialDependencies(sl);
+}
+
+// =============================================================================
+// FEATURE: NOTIFICATIONS (Suscripción a alertas push / FCM + historial local)
+// Microservicio: http://3.218.172.128:8100 (ver integrar_notificaciones.md)
+// Compartida entre Agricultor y Aprendiz (misma pantalla, mismo componente).
+// =============================================================================
+
+void _initNotificationsFeature() {
+  // -- DataSources --
+  // Reutiliza el Dio principal (mismo patron que Subscription/Offline
+  // Knowledge): el backend de notificaciones solo necesita el JWT
+  // compartido, sin headers/timeouts especiales — no se crea un Dio
+  // dedicado, para no duplicar el AuthInterceptor.
+  sl.registerLazySingleton<NotificationRemoteDataSource>(
+    () => NotificationRemoteDataSourceImpl(client: sl()),
+  );
+  sl.registerLazySingleton<NotificationLocalDataSource>(
+    () => NotificationLocalDataSourceImpl(
+      box: sl<Box<String>>(instanceName: 'notificationsBox'),
+    ),
+  );
+
+  // -- Repositories --
+  sl.registerLazySingleton<NotificationSubscriptionRepository>(
+    () => NotificationSubscriptionRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<NotificationHistoryRepository>(
+    () => NotificationHistoryRepositoryImpl(localDataSource: sl()),
+  );
+
+  // -- UseCases --
+  sl.registerLazySingleton(() => SubscribeToAlertsUseCase(sl()));
+  sl.registerLazySingleton(() => GetAlertSubscriptionUseCase(sl()));
+  sl.registerLazySingleton(() => CancelAlertSubscriptionUseCase(sl()));
+  sl.registerLazySingleton(() => GetNotificationHistoryUseCase(sl()));
+  sl.registerLazySingleton(() => SaveNotificationUseCase(sl()));
+  sl.registerLazySingleton(() => GetNotificationPreferencesUseCase(sl()));
+  sl.registerLazySingleton(() => SaveNotificationPreferencesUseCase(sl()));
+
+  // -- Bloc/Cubit (Factory: nueva instancia por pantalla) --
+  sl.registerFactory(
+    () => NotificationSubscriptionBloc(
+      subscribeUseCase: sl(),
+      cancelUseCase: sl(),
+      getPreferencesUseCase: sl(),
+      savePreferencesUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => NotificationHistoryCubit(getHistoryUseCase: sl()),
+  );
 }

@@ -25,6 +25,7 @@ class LlmDiagnosisRepositoryImpl implements LlmDiagnosisRepository {
   @override
   Future<Either<Failure, LlmResponseEntity>> consultar({
     required DiagnosisEntity diagnosis,
+    required String rol,
     String? userText,
   }) async {
     if (!await _networkInfo.isConnected) {
@@ -33,6 +34,7 @@ class LlmDiagnosisRepositoryImpl implements LlmDiagnosisRepository {
     try {
       final result = await _dataSource.consultar(
         diagnosis: diagnosis,
+        rol: rol,
         userText: userText,
       );
       return Right(result);

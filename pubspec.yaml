@@ -90,6 +90,8 @@ dependencies:
   crypto: ^3.0.6
   flutter_local_notifications: ^20.1.0
   timezone: ^0.10.1
+  firebase_core: ^4.11.0
+  firebase_messaging: ^16.4.1
 
 dev_dependencies:
   flutter_test:

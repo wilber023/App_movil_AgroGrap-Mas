@@ -21,6 +21,9 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.9.1" apply false
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    // Firebase Cloud Messaging (notificaciones push) — se aplica condicionalmente
+    // en app/build.gradle.kts solo si google-services.json ya existe.
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")

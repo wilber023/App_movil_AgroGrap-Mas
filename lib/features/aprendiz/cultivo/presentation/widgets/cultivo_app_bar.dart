@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../notifications/presentation/pages/notifications_page.dart';
 
 /// Barra superior de Mi Cultivo: menu, marca "AgroGraph IA" y notificaciones.
 ///
-/// Los botones son marcadores visuales sin accion, igual que el resto de la
-/// barra superior de Aprendiz, hasta que el proyecto incorpore un
-/// drawer/centro de notificaciones real.
+/// El boton de menu sigue siendo un marcador visual sin accion, igual que el
+/// resto de la barra superior de Aprendiz; el de notificaciones abre el
+/// historial de alertas push (compartido con Agricultor).
 class CultivoAppBar extends StatelessWidget {
   const CultivoAppBar({super.key});
 
@@ -38,7 +39,7 @@ class CultivoAppBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: AppColors.aOnPrimary),
-            onPressed: () {},
+            onPressed: () => Navigator.push(context, NotificationsPage.route()),
           ),
         ],
       ),

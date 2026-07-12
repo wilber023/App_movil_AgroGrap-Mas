@@ -1,4 +1,4 @@
-package com.agrograp.ia.agrograp_movil
+package com.integrador.AgroGrap
 
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity

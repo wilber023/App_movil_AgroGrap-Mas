@@ -54,11 +54,12 @@ class LlmDiagnosisCubit extends Cubit<LlmDiagnosisState> {
 
   Future<void> consultar({
     required DiagnosisEntity diagnosis,
+    required String rol,
     String? userText,
   }) async {
     emit(const LlmDiagnosisLoading());
     final result = await _useCase(
-      LlmConsultaParams(diagnosis: diagnosis, userText: userText),
+      LlmConsultaParams(diagnosis: diagnosis, rol: rol, userText: userText),
     );
     result.fold(
       (failure) => emit(LlmDiagnosisError(failure.message)),

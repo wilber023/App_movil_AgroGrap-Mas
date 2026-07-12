@@ -8,6 +8,7 @@ import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../login/auth/presentation/bloc/auth_event.dart';
 import '../../../../login/auth/presentation/bloc/auth_state.dart';
 import '../../../../login/auth/presentation/pages/select_profile_page.dart';
+import '../../../../notifications/presentation/pages/notification_settings_page.dart';
 import '../../../agenda/agenda.dart';
 import '../../../cultivo/cultivo.dart';
 import '../../../diagnostico/diagnostico.dart';
@@ -174,7 +175,7 @@ class _AprendizProfileView extends StatelessWidget {
                             ProfileSettingsRow(
                               icon: Icons.notifications_outlined,
                               label: 'Notificaciones',
-                              onTap: () {},
+                              onTap: () => Navigator.push(context, NotificationSettingsPage.route()),
                             ),
                             const ProfileRowDivider(),
                             ProfileSettingsRow(

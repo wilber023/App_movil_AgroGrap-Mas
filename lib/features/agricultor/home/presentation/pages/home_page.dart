@@ -5,6 +5,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../login/auth/presentation/bloc/auth_state.dart';
+import '../../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../../subscription/presentation/pages/subscription_page.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
 import '../../../parcels/domain/entities/parcel_entity.dart';
@@ -189,29 +190,32 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                      if (hasUnread)
-                        Positioned(
-                          right: -1,
-                          top: -1,
-                          child: Container(
-                            width: 9,
-                            height: 9,
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.forestGreen, width: 1.5),
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, NotificationsPage.route()),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                        if (hasUnread)
+                          Positioned(
+                            right: -1,
+                            top: -1,
+                            child: Container(
+                              width: 9,
+                              height: 9,
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.forestGreen, width: 1.5),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

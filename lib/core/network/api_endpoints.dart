@@ -26,6 +26,11 @@ abstract final class ApiEndpoints {
   // para apuntar features/offline_knowledge/ a otro servidor.
   static const String offlineKnowledgeBaseUrl = 'http://52.1.110.21:8000';
 
+  // Base URL del microservicio de notificaciones push (FCM).
+  // Acepta el mismo JWT emitido por el microservicio de Usuarios.
+  // Fuente: integrar_notificaciones.md (raíz del proyecto).
+  static const String notificationsBaseUrl = 'http://3.218.172.128:8100';
+
   static const int defaultTimeoutMs = 30000;
   static const int connectTimeoutMs = 15000;
   // Timeout extendido para el LLM (Ollama puede tardar hasta 120 s).
@@ -90,6 +95,9 @@ abstract final class ApiEndpoints {
   // -- OFFLINE KNOWLEDGE (Diagnóstico offline por embeddings) --
   static const OfflineKnowledgeEndpoints offlineKnowledge =
       OfflineKnowledgeEndpoints._();
+
+  // -- NOTIFICATIONS (Suscripción a alertas push / FCM) --
+  static const NotificationEndpoints notifications = NotificationEndpoints._();
 }
 
 class AuthEndpoints {
@@ -274,5 +282,23 @@ class OfflineKnowledgeEndpoints {
 
   /// GET /api/v1/offline/documents/{doc_id} — un documento con embeddings.
   String documentById(String docId) => '/api/v1/offline/documents/$docId';
+}
+
+// =============================================================================
+// NOTIFICATIONS MICROSERVICIO (host: ApiEndpoints.notificationsBaseUrl)
+// Contrato confirmado en integrar_notificaciones.md (raíz del proyecto).
+// Mismo JWT del microservicio de Usuarios (JWT_SECRET compartido).
+// =============================================================================
+
+class NotificationEndpoints {
+  const NotificationEndpoints._();
+
+  /// POST /api/v1/suscripciones — crea o actualiza (idempotente) la
+  /// suscripción del usuario actual.
+  String get subscribe => '/api/v1/suscripciones';
+
+  /// GET/DELETE /api/v1/suscripciones/yo — consultar o cancelar la
+  /// suscripción del usuario actual.
+  String get mine => '/api/v1/suscripciones/yo';
 }
 
