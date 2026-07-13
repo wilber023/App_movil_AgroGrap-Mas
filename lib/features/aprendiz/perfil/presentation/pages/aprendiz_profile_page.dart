@@ -9,6 +9,7 @@ import '../../../../login/auth/presentation/bloc/auth_event.dart';
 import '../../../../login/auth/presentation/bloc/auth_state.dart';
 import '../../../../login/auth/presentation/pages/select_profile_page.dart';
 import '../../../../notifications/presentation/pages/notification_settings_page.dart';
+import '../../../../clustering/presentation/pages/epidemiological_map_page.dart';
 import '../../../agenda/agenda.dart';
 import '../../../cultivo/cultivo.dart';
 import '../../../diagnostico/diagnostico.dart';
@@ -176,6 +177,12 @@ class _AprendizProfileView extends StatelessWidget {
                               icon: Icons.notifications_outlined,
                               label: 'Notificaciones',
                               onTap: () => Navigator.push(context, NotificationSettingsPage.route()),
+                            ),
+                            const ProfileRowDivider(),
+                            ProfileSettingsRow(
+                              icon: Icons.map_outlined,
+                              label: 'Mapa epidemiológico',
+                              onTap: () => Navigator.push(context, EpidemiologicalMapPage.route()),
                             ),
                             const ProfileRowDivider(),
                             ProfileSettingsRow(

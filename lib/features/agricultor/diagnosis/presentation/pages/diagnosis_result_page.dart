@@ -5,12 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/network/network_info.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../treatment/domain/usecases/treatment_usecases.dart';
 import '../../../../offline_knowledge/domain/cultivo_slug.dart';
 import '../../../../offline_knowledge/presentation/cubit/offline_knowledge_cubit.dart';
 import '../../../../offline_knowledge/presentation/widgets/diagnosis_detail_view.dart';
@@ -95,13 +96,11 @@ class _ResultViewState extends State<_ResultView> {
   static const _diagnosticoCollapsedLines = 4;
   static const _diagnosticoCollapseThreshold = 220;
 
-  Box<String> get _agendaBox => sl<Box<String>>(instanceName: 'agendaBox');
-  String get _agendaKey => 'agenda_added_${widget.diagnosis.id}';
 
   @override
   void initState() {
     super.initState();
-    _isAddedToAgenda = _agendaBox.get(_agendaKey) != null;
+    _isAddedToAgenda = sl<IsActivePlanForUseCase>()(widget.diagnosis.id);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -151,17 +150,30 @@ class _ResultViewState extends State<_ResultView> {
       cultivoSlug(diagnosis.diseaseName);
 
   Future<void> _addToAgenda() async {
+    final llmState = context.read<LlmDiagnosisCubit>().state;
+    if (llmState is! LlmDiagnosisLoaded) return;
+    final r = llmState.response;
+
+    final existingResult = await sl<GetTreatmentAgendaUseCase>()(const NoParams());
+    final hasActivePlan = existingResult.fold((_) => false, (list) => list.isNotEmpty);
+
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          'Agregar a la agenda',
+          hasActivePlan ? 'Reemplazar plan actual' : 'Agregar a la agenda',
           style: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
         content: Text(
-          '¿Deseas agregar un plan de tratamiento para '
-          '${widget.diagnosis.diseaseName} en ${widget.diagnosis.cropName} '
-          'a tu agenda agronómica?',
+          hasActivePlan
+              ? 'Ya tienes un plan de tratamiento activo en tu agenda. '
+                  'Agregar el plan para ${widget.diagnosis.diseaseName} en '
+                  '${widget.diagnosis.cropName} lo va a reemplazar por completo. '
+                  '¿Deseas continuar?'
+              : '¿Deseas agregar un plan de tratamiento para '
+                  '${widget.diagnosis.diseaseName} en ${widget.diagnosis.cropName} '
+                  'a tu agenda agronómica?',
           style: GoogleFonts.inter(fontSize: 13),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -184,7 +196,7 @@ class _ResultViewState extends State<_ResultView> {
               elevation: 0,
             ),
             child: Text(
-              'Agregar',
+              hasActivePlan ? 'Reemplazar' : 'Agregar',
               style: GoogleFonts.inter(fontWeight: FontWeight.w600),
             ),
           ),
@@ -194,10 +206,43 @@ class _ResultViewState extends State<_ResultView> {
 
     if (confirmed != true || !mounted) return;
 
-    await _agendaBox.put(_agendaKey, 'true');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.forestGreen),
+      ),
+    );
+
+    context.read<TreatmentBloc>().add(TreatmentGenerateFromDiagnosisRequested(
+      diagnosisId: widget.diagnosis.id,
+      diseaseName: widget.diagnosis.diseaseName,
+      cropName: widget.diagnosis.cropName,
+      llmDiagnostico: r.diagnostico,
+      llmTratamiento: r.tratamiento,
+      llmPrevencion: r.prevencion,
+    ));
+    final treatmentState = await context.read<TreatmentBloc>().stream.firstWhere(
+          (s) => s is TreatmentAgendaLoaded || s is TreatmentFailure,
+        );
+
+    if (!mounted) return;
+    Navigator.pop(context); // cierra el dialogo de carga
+
+    if (treatmentState is TreatmentFailure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(treatmentState.message, style: GoogleFonts.inter()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _isAddedToAgenda = true);
-    context.read<TreatmentBloc>().add(const TreatmentAgendaRequested());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

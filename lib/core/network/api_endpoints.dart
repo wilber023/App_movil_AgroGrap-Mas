@@ -78,6 +78,9 @@ abstract final class ApiEndpoints {
   // -- LLM / RAG (Diagnóstico enriquecido) --
   static const LlmEndpoints llm = LlmEndpoints._();
 
+  // -- CLUSTERING (Mapa epidemiológico, mismo host que llm) --
+  static const ClusteringEndpoints clustering = ClusteringEndpoints._();
+
   // -- PRODUCTOS (Recomendaciones post-diagnóstico) --
   // Host: 44.196.107.153:80 — servicio independiente con X-API-Key
   static const String productsBaseUrl = 'http://44.196.107.153';
@@ -206,14 +209,18 @@ class AprendizEndpoints {
   String get history => '/aprendiz/history';
 }
 
-/// Endpoints del modulo Agenda (independiente de crop-plan).
-/// TODO: reemplazar por la URL real cuando el backend exponga el modulo.
+/// Endpoints del modulo Agenda (independiente de crop-plan) -- backend real
+/// en produccion, mismo host que `llmBaseUrl` (`http://52.1.110.21:8000`).
+/// Auto-generada por rol: `{rol}` es `agricultor` o `aprendiz`.
 class AgendaEndpoints {
   const AgendaEndpoints._();
 
-  String get overview => '/aprendiz/agenda';
-  String completeActivity(String activityId) => '/aprendiz/agenda/activities/$activityId/complete';
-  String postponeActivity(String activityId) => '/aprendiz/agenda/activities/$activityId/postpone';
+  String generar(String rol) => '/api/v1/$rol/agenda/generar';
+  String overview(String rol) => '/api/v1/$rol/agenda';
+  String completeActivity(String rol, String activityId) =>
+      '/api/v1/$rol/agenda/activities/$activityId/complete';
+  String postponeActivity(String rol, String activityId) =>
+      '/api/v1/$rol/agenda/activities/$activityId/postpone';
 }
 
 // =============================================================================
@@ -250,6 +257,21 @@ class LlmEndpoints {
 
   /// Endpoint principal: CNN result + texto de usuario → diagnóstico enriquecido.
   String get consultar => '/api/v1/consultar';
+}
+
+// =============================================================================
+// CLUSTERING (Mapa epidemiológico) — http://52.1.110.21:8000 (mismo host que llm)
+// Fuente: README_CLUSTERING_MAPA_Y_AGENDA.md, sección 2.
+// =============================================================================
+
+class ClusteringEndpoints {
+  const ClusteringEndpoints._();
+
+  /// Resumen por estado (campañas, superficie, campaña/cultivo dominante).
+  String get mapaCampanias => '/api/v1/clustering/mapa-campanias';
+
+  /// Alerta epidemiológica nacional (sin `estado`) o por estado (`?estado=`).
+  String get alertas => '/api/v1/alertas';
 }
 
 // =============================================================================

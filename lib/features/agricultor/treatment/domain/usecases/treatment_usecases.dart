@@ -16,6 +16,53 @@ class GetTreatmentAgendaUseCase
   }
 }
 
+class GenerateTreatmentFromDiagnosisUseCase
+    implements UseCase<void, GenerateTreatmentFromDiagnosisParams> {
+  final TreatmentRepository repository;
+  const GenerateTreatmentFromDiagnosisUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, void>> call(GenerateTreatmentFromDiagnosisParams params) {
+    return repository.generateFromDiagnosis(
+      diagnosisId: params.diagnosisId,
+      diseaseName: params.diseaseName,
+      cropName: params.cropName,
+      llmDiagnostico: params.llmDiagnostico,
+      llmTratamiento: params.llmTratamiento,
+      llmPrevencion: params.llmPrevencion,
+    );
+  }
+}
+
+class GenerateTreatmentFromDiagnosisParams extends Equatable {
+  final String diagnosisId;
+  final String diseaseName;
+  final String cropName;
+  final String llmDiagnostico;
+  final String llmTratamiento;
+  final String llmPrevencion;
+
+  const GenerateTreatmentFromDiagnosisParams({
+    required this.diagnosisId,
+    required this.diseaseName,
+    required this.cropName,
+    required this.llmDiagnostico,
+    required this.llmTratamiento,
+    required this.llmPrevencion,
+  });
+
+  @override
+  List<Object?> get props =>
+      [diagnosisId, diseaseName, cropName, llmDiagnostico, llmTratamiento, llmPrevencion];
+}
+
+class IsActivePlanForUseCase {
+  final TreatmentRepository repository;
+  const IsActivePlanForUseCase(this.repository);
+
+  bool call(String diagnosisId) => repository.isActivePlanFor(diagnosisId);
+}
+
 class MarkStepCompleteUseCase
     implements UseCase<void, MarkStepCompleteParams> {
   final TreatmentRepository repository;

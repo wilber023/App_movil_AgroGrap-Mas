@@ -11,6 +11,7 @@ import '../../../../login/auth/presentation/pages/select_profile_page.dart';
 import '../../../offline/presentation/cubit/offline_cubit.dart';
 import '../../../offline/presentation/pages/offline_mode_page.dart';
 import '../../../../notifications/presentation/pages/notification_settings_page.dart';
+import '../../../../clustering/presentation/pages/epidemiological_map_page.dart';
 import '../../../../subscription/presentation/pages/subscription_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -67,6 +68,11 @@ class _ProfileScaffold extends StatelessWidget {
               title: 'Notificaciones y recordatorios',
               icon: Icons.notifications_none_rounded,
               onTap: () => Navigator.push(context, NotificationSettingsPage.route()),
+            ),
+            _buildListTile(
+              title: 'Mapa epidemiológico',
+              icon: Icons.map_outlined,
+              onTap: () => Navigator.push(context, EpidemiologicalMapPage.route()),
             ),
             _buildOfflineCard(context),
             const SizedBox(height: 32),

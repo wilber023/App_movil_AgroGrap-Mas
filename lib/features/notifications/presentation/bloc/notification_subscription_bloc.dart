@@ -90,16 +90,22 @@ class NotificationSubscriptionBloc
   final CancelAlertSubscriptionUseCase _cancelUseCase;
   final GetNotificationPreferencesUseCase _getPreferencesUseCase;
   final SaveNotificationPreferencesUseCase _savePreferencesUseCase;
+  final Future<String?> Function() _getFcmToken;
 
   NotificationSubscriptionBloc({
     required SubscribeToAlertsUseCase subscribeUseCase,
     required CancelAlertSubscriptionUseCase cancelUseCase,
     required GetNotificationPreferencesUseCase getPreferencesUseCase,
     required SaveNotificationPreferencesUseCase savePreferencesUseCase,
+    // Inyectable solo para tests (evita depender del plugin real de
+    // Firebase, no disponible en flutter_test) -- en producción siempre usa
+    // el default real.
+    Future<String?> Function()? getFcmToken,
   })  : _subscribeUseCase = subscribeUseCase,
         _cancelUseCase = cancelUseCase,
         _getPreferencesUseCase = getPreferencesUseCase,
         _savePreferencesUseCase = savePreferencesUseCase,
+        _getFcmToken = getFcmToken ?? FirebaseMessaging.instance.getToken,
         super(const NotificationSubscriptionInitial()) {
     on<NotificationPreferencesRequested>(_onPreferencesRequested);
     on<NotificationSubscribeRequested>(_onSubscribeRequested);
@@ -125,30 +131,56 @@ class NotificationSubscriptionBloc
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // El guardado LOCAL de estado/cultivos (lo único que alimenta el banner de
+  // alerta epidemiológica de Inicio, feature de clustering) es independiente
+  // de la suscripción push remota (`POST/DELETE /suscripciones` contra
+  // `3.218.172.128:8100`, un microservicio externo que puede estar caído o
+  // lento). Por eso aquí el guardado local SIEMPRE se completa y se confirma
+  // primero -- la llamada remota se intenta después, sin que su resultado
+  // (éxito, error o timeout de hasta 15 s) bloquee ni revierta esa
+  // confirmación. Si la llamada remota no se pudo confirmar,
+  // `pushSyncPending` queda en `true` (guardado localmente también) para no
+  // perder esa información, sin mostrarle un error al usuario por algo que
+  // sí se guardó correctamente.
+  // ---------------------------------------------------------------------------
+
   Future<void> _onSubscribeRequested(
     NotificationSubscribeRequested event,
     Emitter<NotificationSubscriptionState> emit,
   ) async {
-    final current = _prefsOf(state);
     final newPrefs = NotificationPreferencesEntity(
       enabled: true,
       estado: event.estado,
       cultivos: event.cultivos,
+      pushSyncPending: true,
     );
     emit(NotificationSubscriptionSaving(preferences: newPrefs));
 
+    final saveResult = await _savePreferencesUseCase(newPrefs);
+    final saveFailed = saveResult.fold(
+      (f) {
+        emit(NotificationSubscriptionFailure(message: f.message, preferences: _prefsOf(state)));
+        return true;
+      },
+      (_) => false,
+    );
+    if (saveFailed) return;
+
+    // Confirmación inmediata: el guardado local ya se completó.
+    emit(NotificationSubscriptionLoaded(preferences: newPrefs));
+
+    // Suscripción push remota, en segundo plano -- no bloquea lo anterior.
     String? fcmToken;
     try {
-      fcmToken = await FirebaseMessaging.instance.getToken();
+      fcmToken = await _getFcmToken();
     } catch (e) {
       if (kDebugMode) debugPrint('[Notifications] getToken falló: $e');
     }
-
     if (fcmToken == null) {
-      emit(NotificationSubscriptionFailure(
-        message: 'No se pudo obtener el identificador de este dispositivo. Verifica los permisos de notificación e intenta de nuevo.',
-        preferences: current,
-      ));
+      if (kDebugMode) {
+        debugPrint('[Notifications] Sin token FCM: suscripción push remota omitida (queda pendiente).');
+      }
       return;
     }
 
@@ -157,18 +189,18 @@ class NotificationSubscriptionBloc
       estado: event.estado,
       cultivos: event.cultivos,
     ));
-
-    final failed = result.fold(
-      (f) {
-        emit(NotificationSubscriptionFailure(message: f.message, preferences: current));
-        return true;
+    await result.fold(
+      (f) async {
+        if (kDebugMode) debugPrint('[Notifications] Suscripción push remota falló: ${f.message}');
       },
-      (_) => false,
+      (_) async {
+        final syncedPrefs = newPrefs.copyWith(pushSyncPending: false);
+        await _savePreferencesUseCase(syncedPrefs);
+        if (!isClosed && _prefsOf(state) == newPrefs) {
+          emit(NotificationSubscriptionLoaded(preferences: syncedPrefs));
+        }
+      },
     );
-    if (failed) return;
-
-    await _savePreferencesUseCase(newPrefs);
-    emit(NotificationSubscriptionLoaded(preferences: newPrefs));
   }
 
   Future<void> _onUnsubscribeRequested(
@@ -180,20 +212,36 @@ class NotificationSubscriptionBloc
       enabled: false,
       estado: current.estado,
       cultivos: current.cultivos,
+      pushSyncPending: true,
     );
     emit(NotificationSubscriptionSaving(preferences: disabledPrefs));
 
-    final result = await _cancelUseCase(const NoParams());
-    final failed = result.fold(
+    final saveResult = await _savePreferencesUseCase(disabledPrefs);
+    final saveFailed = saveResult.fold(
       (f) {
         emit(NotificationSubscriptionFailure(message: f.message, preferences: current));
         return true;
       },
       (_) => false,
     );
-    if (failed) return;
+    if (saveFailed) return;
 
-    await _savePreferencesUseCase(disabledPrefs);
+    // Confirmación inmediata: el guardado local ya se completó.
     emit(NotificationSubscriptionLoaded(preferences: disabledPrefs));
+
+    // Cancelación remota, en segundo plano -- no bloquea lo anterior.
+    final result = await _cancelUseCase(const NoParams());
+    await result.fold(
+      (f) async {
+        if (kDebugMode) debugPrint('[Notifications] Cancelación push remota falló: ${f.message}');
+      },
+      (_) async {
+        final syncedPrefs = disabledPrefs.copyWith(pushSyncPending: false);
+        await _savePreferencesUseCase(syncedPrefs);
+        if (!isClosed && _prefsOf(state) == disabledPrefs) {
+          emit(NotificationSubscriptionLoaded(preferences: syncedPrefs));
+        }
+      },
+    );
   }
 }

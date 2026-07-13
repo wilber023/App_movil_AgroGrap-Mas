@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../clustering/presentation/cubit/epidemiological_alert_cubit.dart';
+import '../../../../clustering/presentation/widgets/epidemiological_alert_banner.dart';
 import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../login/auth/presentation/bloc/auth_state.dart';
 import '../../../../notifications/presentation/pages/notifications_page.dart';
@@ -117,7 +120,7 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 24),
                     _buildActiveCropsSection(context),
                     const SizedBox(height: 24),
-                    _buildRegionalAlertCard(context),
+                    _buildEpidemiologicalAlertBanner(context),
                     const SizedBox(height: 24),
                     _buildTodayTasksSection(context),
                     const SizedBox(height: 24),
@@ -545,169 +548,22 @@ class HomePage extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Alerta regional — ahora usa DashboardEntity.recentAlerts (dato real que
-  // ya cargaba HomeBloc pero la tarjeta anterior ignoraba por completo).
+  // Alerta epidemiológica regional — dato real de
+  // GET /api/v1/alertas (clustering SENASICA), filtrado por el estado que el
+  // usuario configuró en Ajustes > Notificaciones (o alerta nacional si no
+  // configuró ninguno). Independiente de HomeBloc: una sola carga al entrar
+  // a Inicio, sin polling.
   // ---------------------------------------------------------------------------
 
-  Widget _buildRegionalAlertCard(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(
-      builder: (context, state) {
-        final dashboard = state is HomeLoaded ? state.dashboard : null;
-        if (dashboard == null || dashboard.recentAlerts.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        final alert = dashboard.recentAlerts.first;
-        final risk = switch (alert.severity.toLowerCase()) {
-          'alta' => (label: 'ALTO', color: AppColors.error),
-          'media' => (label: 'MEDIO', color: AppColors.burntOrange),
-          _ => (label: 'BAJO', color: AppColors.warmAmber),
-        };
-        // Ilustrativo: cultivos propios del agricultor, no una correlacion
-        // cientifica verificada con esta alerta especifica (esa relacion no
-        // existe todavia en los datos que expone el backend).
-        final ownCrops = context.select<ParcelBloc, List<String>>((bloc) {
-          final s = bloc.state;
-          if (s is! ParcelLoaded) return const [];
-          return s.parcels.map((p) => p.cropName).toSet().take(3).toList();
-        });
-
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF1EE),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.error.withValues(alpha: 0.25), width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'ALERTA REGIONAL',
-                      style: AppTypography.labelMd.copyWith(
-                        color: AppColors.error,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _showComingSoon(context, 'El detalle de alertas'),
-                    child: const Icon(Icons.chevron_right_rounded, color: AppColors.error, size: 20),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                alert.title,
-                style: AppTypography.tituloLg.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                alert.description,
-                style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 10,
-                runSpacing: 6,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Nivel de riesgo: ',
-                        style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: risk.color,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          risk.label,
-                          style: AppTypography.etiquetaSm.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Actualizado ${_timeAgo(alert.createdAt)}',
-                    style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
-                  ),
-                ],
-              ),
-              if (ownCrops.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tus cultivos en la zona',
-                        style: AppTypography.etiquetaSm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ownCrops
-                            .map((c) => Chip(
-                                  avatar: Icon(_cropIcon(c), size: 14, color: AppColors.forestGreen),
-                                  label: Text(c),
-                                  labelStyle: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurface),
-                                  backgroundColor: Colors.white,
-                                  side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showComingSoon(context, 'El mapa de alertas'),
-                  icon: const Icon(Icons.map_outlined, size: 17),
-                  label: const Text('Ver mapa de alertas'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  Widget _buildEpidemiologicalAlertBanner(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<EpidemiologicalAlertCubit>()..load(),
+      child: BlocBuilder<EpidemiologicalAlertCubit, EpidemiologicalAlertState>(
+        builder: (context, state) {
+          final alerta = state is EpidemiologicalAlertLoaded ? state.alerta : null;
+          return EpidemiologicalAlertBanner(alerta: alerta);
+        },
+      ),
     );
   }
 
@@ -765,17 +621,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  void _showComingSoon(BuildContext context, String what) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('$what estará disponible próximamente.'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-  }
 }
 
 // =============================================================================

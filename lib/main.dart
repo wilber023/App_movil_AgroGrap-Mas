@@ -63,6 +63,7 @@ Future<void> main() async {
       await PushNotificationService(
         saveNotificationUseCase: sl(),
         getPreferencesUseCase: sl(),
+        savePreferencesUseCase: sl(),
         subscribeUseCase: sl(),
         navigatorKey: AgroGraphApp.navigatorKey,
       ).init();
@@ -129,11 +130,16 @@ class _AgroGraphAppState extends State<AgroGraphApp> {
           if (!prefs.enabled || prefs.estado.isEmpty) return;
           final token = await FirebaseMessaging.instance.getToken();
           if (token == null) return;
-          await sl<SubscribeToAlertsUseCase>()(SubscribeParams(
+          final result = await sl<SubscribeToAlertsUseCase>()(SubscribeParams(
             fcmToken: token,
             estado: prefs.estado,
             cultivos: prefs.cultivos,
           ));
+          // Re-suscripcion exitosa en segundo plano: refleja que ya no hay
+          // nada pendiente de sincronizar (ver notificaciones_fix.md).
+          if (result.isRight()) {
+            await sl<SaveNotificationPreferencesUseCase>()(prefs.copyWith(pushSyncPending: false));
+          }
         },
       );
     } catch (e) {

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/error/failures.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/usecases/usecase.dart';
 import '../../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../../../agenda/agenda.dart';
+import '../../../agenda/domain/usecases/generate_agenda_usecase.dart';
+import '../../../agenda/domain/usecases/get_agenda_overview_usecase.dart';
 
 const String _kFont = 'Inter';
 
@@ -121,12 +126,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const AprendizAgendaPage()),
-                          );
-                        },
+                        onPressed: r == null ? null : () => _addToAgenda(context, r),
                         icon: const Icon(Icons.event_available, color: AppColors.aOnPrimary),
                         label: const Text(
                           'Agregar a mi agenda',
@@ -158,6 +158,74 @@ class AprendizRecommendedActionPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _addToAgenda(BuildContext context, LlmResponseEntity r) async {
+    final overviewResult = await sl<GetAgendaOverviewUseCase>()(const NoParams());
+    final hasActivePlan = overviewResult.fold(
+      (_) => false,
+      (overview) => overview.activities.isNotEmpty,
+    );
+
+    if (hasActivePlan && context.mounted) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Reemplazar plan actual'),
+          content: const Text(
+            'Ya tienes un plan de tratamiento activo en tu agenda. Agregar '
+            'este te lo va a reemplazar por completo. ¿Deseas continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.aOrange),
+              child: const Text('Reemplazar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.aOrange),
+      ),
+    );
+
+    final result = await sl<GenerateAgendaUseCase>()(GenerateAgendaParams(
+      cultivo: cropName,
+      enfermedad: diseaseName,
+      tratamiento: r.tratamiento,
+      prevencion: r.prevencion.isNotEmpty ? r.prevencion : null,
+    ));
+
+    if (!context.mounted) return;
+    Navigator.pop(context); // cierra el dialogo de carga
+
+    result.fold(
+      (failure) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            failure is NetworkFailure
+                ? 'Necesitas conexión a internet para generar tu plan de tratamiento.'
+                : failure.message,
+          ),
+        ),
+      ),
+      (_) => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AprendizAgendaPage()),
       ),
     );
   }

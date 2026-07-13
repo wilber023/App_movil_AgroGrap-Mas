@@ -173,6 +173,21 @@ class _SettingsFormState extends State<_SettingsForm> {
                 'Te avisamos cuando cambie la campaña fitosanitaria activa en tu estado.',
                 style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
               ),
+              if (widget.preferences.enabled && widget.preferences.pushSyncPending && !widget.saving) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.sync_rounded, size: 13, color: AppColors.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Guardado en el dispositivo. Sincronizando la suscripción push con el servidor…',
+                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               if (_enabled) ...[
                 const SizedBox(height: 16),
                 Text('Estado', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onSurface)),

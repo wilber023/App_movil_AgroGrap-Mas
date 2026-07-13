@@ -3,8 +3,10 @@ import 'package:dartz/dartz.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
+import '../../../../clustering/domain/usecases/get_alerta_usecase.dart';
 import '../../../../login/auth/domain/entities/user_entity.dart';
 import '../../../../login/auth/domain/usecases/get_current_user_usecase.dart';
+import '../../../../notifications/domain/usecases/notification_preferences_usecases.dart';
 import '../../../agenda/domain/entities/agenda_activity_entity.dart';
 import '../../../agenda/domain/entities/agenda_overview_entity.dart';
 import '../../../agenda/domain/usecases/get_agenda_overview_usecase.dart';
@@ -20,14 +22,14 @@ import '../../domain/entities/crop_catalog_item_entity.dart';
 import '../../domain/entities/crop_status_summary_entity.dart';
 import '../../domain/entities/home_notice_entity.dart';
 import '../../domain/entities/home_recommendation_entity.dart';
+import '../../domain/entities/phytosanitary_alert_entity.dart';
 import '../../domain/entities/recent_activity_item_entity.dart';
 import '../../domain/repositories/aprendiz_home_repository.dart';
-import '../datasources/phytosanitary_alert_local_datasource.dart';
 
 /// Compone el resumen de Inicio a partir de casos de uso ya existentes de
-/// Auth, Cultivo, Diagnostico y Agenda — no persiste ni duplica datos, solo
-/// los agrega. Ver [AprendizHomeOverviewEntity] para el detalle de cada
-/// seccion.
+/// Auth, Cultivo, Diagnostico, Agenda y Clustering — no persiste ni duplica
+/// datos, solo los agrega. Ver [AprendizHomeOverviewEntity] para el detalle
+/// de cada seccion.
 class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final GetSavedCropPlanUseCase getSavedCropPlanUseCase;
@@ -35,7 +37,8 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
   final GetCropHealthIndicatorUseCase getCropHealthIndicatorUseCase;
   final GetDiagnosisHistoryAprendizUseCase getDiagnosisHistoryUseCase;
   final GetAgendaOverviewUseCase getAgendaOverviewUseCase;
-  final PhytosanitaryAlertLocalDataSource localDataSource;
+  final GetAlertaUseCase getAlertaUseCase;
+  final GetNotificationPreferencesUseCase getNotificationPreferencesUseCase;
 
   AprendizHomeRepositoryImpl({
     required this.getCurrentUserUseCase,
@@ -44,7 +47,8 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
     required this.getCropHealthIndicatorUseCase,
     required this.getDiagnosisHistoryUseCase,
     required this.getAgendaOverviewUseCase,
-    required this.localDataSource,
+    required this.getAlertaUseCase,
+    required this.getNotificationPreferencesUseCase,
   });
 
   /// Catalogo real de cultivos que el Aprendiz puede sembrar — el mismo que
@@ -93,7 +97,7 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
       (_) => null,
       (o) => o,
     );
-    final phytosanitaryAlert = await localDataSource.getNeutralAlert();
+    final phytosanitaryAlert = await _resolvePhytosanitaryAlert();
     final latestDiagnosis = _latestDiagnosis(diagnoses);
 
     return Right(
@@ -112,6 +116,34 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
             ? latestDiagnosis!.llmResponse!.explicacion.trim()
             : null,
       ),
+    );
+  }
+
+  /// El "estado" del usuario no tiene una fuente dedicada en la app -- se
+  /// reusa `NotificationPreferencesEntity.estado`, ya capturado en Ajustes >
+  /// Notificaciones para este mismo propósito (alertas por estado). Si el
+  /// usuario nunca lo configuró, se consulta la alerta nacional (`estado:
+  /// null`), comportamiento explícitamente soportado por el backend.
+  ///
+  /// El backend solo expone `hay_alerta` (bool), sin niveles de severidad;
+  /// se mapea a `moderate` como único nivel "activo" -- no se inventa una
+  /// escala de riesgo que el backend no reporta.
+  Future<PhytosanitaryAlertEntity> _resolvePhytosanitaryAlert() async {
+    final prefs = (await getNotificationPreferencesUseCase(const NoParams())).fold(
+      (_) => null,
+      (p) => p,
+    );
+    final estado = (prefs != null && prefs.estado.trim().isNotEmpty) ? prefs.estado.trim() : null;
+
+    final alerta = (await getAlertaUseCase(GetAlertaParams(estado: estado))).fold(
+      (_) => null,
+      (a) => a,
+    );
+    if (alerta == null || !alerta.hayAlerta) return PhytosanitaryAlertEntity.none;
+
+    return PhytosanitaryAlertEntity(
+      level: PhytosanitaryAlertLevel.moderate,
+      message: alerta.mensaje,
     );
   }
 

@@ -23,6 +23,7 @@ import '../widgets/home_section_skeleton.dart';
 import '../widgets/home_today_tasks_section.dart';
 import '../../domain/entities/crop_catalog_item_entity.dart';
 import '../../domain/entities/home_recommendation_entity.dart';
+import '../../domain/entities/phytosanitary_alert_entity.dart';
 
 class AprendizHomePage extends StatelessWidget {
   const AprendizHomePage({super.key});
@@ -232,25 +233,35 @@ class _HomeContent extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: HomePhytosanitaryAlertCard(alert: overview.phytosanitaryAlert)),
-              if (overview.funFact != null) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: HomeFunFactCard(
-                    funFact: overview.funFact,
-                    onViewMore: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DiagnosisEntryAprendizPage()),
-                    ),
-                  ),
+          Builder(builder: (context) {
+            final hasAlert = overview.phytosanitaryAlert.level != PhytosanitaryAlertLevel.none;
+            final hasFunFact = overview.funFact != null;
+            if (!hasAlert && !hasFunFact) return const SizedBox.shrink();
+            return Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasAlert) ...[
+                      Expanded(child: HomePhytosanitaryAlertCard(alert: overview.phytosanitaryAlert)),
+                      if (hasFunFact) const SizedBox(width: 10),
+                    ],
+                    if (hasFunFact)
+                      Expanded(
+                        child: HomeFunFactCard(
+                          funFact: overview.funFact,
+                          onViewMore: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const DiagnosisEntryAprendizPage()),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+                const SizedBox(height: 18),
               ],
-            ],
-          ),
-          const SizedBox(height: 18),
+            );
+          }),
 
           HomeTodayTasksSection(
             tasks: overview.upcomingTasks,

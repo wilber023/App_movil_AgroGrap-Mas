@@ -2,21 +2,20 @@ import 'dart:convert';
 
 import 'package:hive/hive.dart';
 
-import '../../domain/entities/agenda_activity_entity.dart';
 import '../../domain/entities/agenda_crop_context_entity.dart';
 import '../models/agenda_activity_model.dart';
 import '../models/agenda_overview_model.dart';
 
 /// Fuente local (offline-first) del modulo Agenda.
 ///
-/// Usa una caja Hive propia (ver `agenda_injection_container.dart`), separada
-/// de la caja de Mi Cultivo, para no acoplar ambos modulos.
+/// Reutilizable por Agricultor y Aprendiz: cada uno registra su propia
+/// instancia con su propia caja Hive (ver `agenda_injection_container.dart`
+/// y `_initTreatmentFeature()`).
 ///
-/// Mientras el backend de Agenda no exista, [getCachedOverview] siembra una
-/// unica vez datos base (`_seedOverview`) para que la pantalla no quede
-/// vacia. Ese seed vive exclusivamente aqui: ni el BLoC ni los widgets lo
-/// conocen, y se reemplaza automaticamente en cuanto haya datos reales
-/// cacheados desde el remoto.
+/// Si nunca se genero ni se cacheo una agenda real, [getCachedOverview]
+/// devuelve el mismo "vacio" que ya usa el backend para un usuario nuevo
+/// (`cropName`/`currentStage` vacios, sin actividades) -- nunca datos de
+/// ejemplo inventados.
 abstract class AgendaLocalDataSource {
   Future<void> cacheOverview(AgendaOverviewModel overview);
   Future<AgendaOverviewModel> getCachedOverview();
@@ -40,9 +39,7 @@ class AgendaLocalDataSourceImpl implements AgendaLocalDataSource {
     if (jsonString != null) {
       return AgendaOverviewModel.fromJson(jsonDecode(jsonString));
     }
-    final seed = _seedOverview();
-    await cacheOverview(seed);
-    return seed;
+    return _empty;
   }
 
   @override
@@ -60,53 +57,11 @@ class AgendaLocalDataSourceImpl implements AgendaLocalDataSource {
     return activity;
   }
 
-  /// Datos base de arranque, calculados en relacion a la fecha actual para
-  /// que la Agenda siempre muestre "Hoy" correctamente. Se reemplazan por
-  /// datos reales del backend en cuanto el modulo remoto quede disponible.
-  AgendaOverviewModel _seedOverview() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    return AgendaOverviewModel(
-      cropContext: const AgendaCropContextEntity(
-        cropName: 'Calabaza',
-        currentStage: 'Desarrollo Vegetativo',
-        currentWeek: 6,
-      ),
-      activities: [
-        AgendaActivityModel(
-          id: 'seed-today',
-          title: 'Desarrollo Vegetativo',
-          description: 'En esta etapa tu planta esta creciendo sus hojas y tallos.',
-          checklist: const [
-            'Revisa la aparicion de nuevas hojas',
-            'Controla la maleza alrededor de la planta',
-            'Verifica que el suelo este humedo',
-          ],
-          scheduledDate: today,
-          weekNumber: 6,
-          status: AgendaActivityStatus.pending,
-          category: AgendaActivityCategory.tracking,
-        ),
-        AgendaActivityModel(
-          id: 'seed-upcoming-1',
-          title: 'Seguimiento y revision',
-          description: 'Verificar respuesta de la planta a los cuidados de la semana.',
-          scheduledDate: today.add(const Duration(days: 7)),
-          weekNumber: 7,
-          status: AgendaActivityStatus.pending,
-          category: AgendaActivityCategory.tracking,
-        ),
-        AgendaActivityModel(
-          id: 'seed-upcoming-2',
-          title: 'Nueva inspeccion con foto',
-          description: 'Inspeccion fotografica programada para diagnostico.',
-          scheduledDate: today.add(const Duration(days: 14)),
-          weekNumber: 8,
-          status: AgendaActivityStatus.pending,
-          category: AgendaActivityCategory.inspection,
-        ),
-      ],
-    );
-  }
+  /// Mismo "vacio" que devuelve el backend para un usuario que aun no ha
+  /// generado ninguna agenda (verificado con curl -- ver
+  /// agenda_backend_implementacion.md).
+  static const _empty = AgendaOverviewModel(
+    cropContext: AgendaCropContextEntity(cropName: '', currentStage: '', currentWeek: 0),
+    activities: [],
+  );
 }

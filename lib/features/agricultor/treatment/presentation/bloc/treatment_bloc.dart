@@ -15,6 +15,28 @@ final class TreatmentAgendaRequested extends TreatmentEvent {
   const TreatmentAgendaRequested();
 }
 
+final class TreatmentGenerateFromDiagnosisRequested extends TreatmentEvent {
+  final String diagnosisId;
+  final String diseaseName;
+  final String cropName;
+  final String llmDiagnostico;
+  final String llmTratamiento;
+  final String llmPrevencion;
+
+  const TreatmentGenerateFromDiagnosisRequested({
+    required this.diagnosisId,
+    required this.diseaseName,
+    required this.cropName,
+    required this.llmDiagnostico,
+    required this.llmTratamiento,
+    required this.llmPrevencion,
+  });
+
+  @override
+  List<Object?> get props =>
+      [diagnosisId, diseaseName, cropName, llmDiagnostico, llmTratamiento, llmPrevencion];
+}
+
 final class TreatmentStepCompleted extends TreatmentEvent {
   final String treatmentId;
   final String stepId;
@@ -86,21 +108,25 @@ final class TreatmentFailure extends TreatmentState {
 // -- Bloc --
 class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
   final GetTreatmentAgendaUseCase _getAgendaUseCase;
+  final GenerateTreatmentFromDiagnosisUseCase _generateFromDiagnosisUseCase;
   final MarkStepCompleteUseCase _markStepCompleteUseCase;
   final RescheduleStepUseCase _rescheduleStepUseCase;
   final SetRemindersActiveUseCase _setRemindersActiveUseCase;
 
   TreatmentBloc({
     required GetTreatmentAgendaUseCase getAgendaUseCase,
+    required GenerateTreatmentFromDiagnosisUseCase generateFromDiagnosisUseCase,
     required MarkStepCompleteUseCase markStepCompleteUseCase,
     required RescheduleStepUseCase rescheduleStepUseCase,
     required SetRemindersActiveUseCase setRemindersActiveUseCase,
   })  : _getAgendaUseCase = getAgendaUseCase,
+        _generateFromDiagnosisUseCase = generateFromDiagnosisUseCase,
         _markStepCompleteUseCase = markStepCompleteUseCase,
         _rescheduleStepUseCase = rescheduleStepUseCase,
         _setRemindersActiveUseCase = setRemindersActiveUseCase,
         super(const TreatmentInitial()) {
     on<TreatmentAgendaRequested>(_onLoadAgenda);
+    on<TreatmentGenerateFromDiagnosisRequested>(_onGenerateFromDiagnosis);
     on<TreatmentStepCompleted>(_onMarkStep);
     on<TreatmentStepRescheduled>(_onRescheduleStep);
     on<TreatmentRemindersToggled>(_onToggleReminders);
@@ -113,6 +139,23 @@ class TreatmentBloc extends Bloc<TreatmentEvent, TreatmentState> {
     result.fold(
       (f) => emit(TreatmentFailure(message: f.message)),
       (list) => emit(TreatmentAgendaLoaded(treatments: list)),
+    );
+  }
+
+  Future<void> _onGenerateFromDiagnosis(
+      TreatmentGenerateFromDiagnosisRequested event, Emitter<TreatmentState> emit) async {
+    emit(const TreatmentLoading());
+    final result = await _generateFromDiagnosisUseCase(GenerateTreatmentFromDiagnosisParams(
+      diagnosisId: event.diagnosisId,
+      diseaseName: event.diseaseName,
+      cropName: event.cropName,
+      llmDiagnostico: event.llmDiagnostico,
+      llmTratamiento: event.llmTratamiento,
+      llmPrevencion: event.llmPrevencion,
+    ));
+    result.fold(
+      (f) => emit(TreatmentFailure(message: f.message)),
+      (_) => add(const TreatmentAgendaRequested()),
     );
   }
 

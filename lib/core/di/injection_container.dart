@@ -59,12 +59,16 @@ import '../../features/agricultor/diagnosis/presentation/bloc/diagnosis_bloc.dar
 import '../../features/agricultor/diagnosis/presentation/bloc/llm_diagnosis_cubit.dart';
 import '../../features/agricultor/diagnosis/presentation/cubit/product_recommendation_cubit.dart';
 
-// -- Treatment --
+// -- Treatment (agenda real de Agricultor, ver AgendaRepository/aprendiz/agenda) --
 import '../../features/agricultor/treatment/data/datasources/treatment_local_datasource.dart';
 import '../../features/agricultor/treatment/data/repositories/treatment_repository_impl.dart';
 import '../../features/agricultor/treatment/domain/repositories/treatment_repository.dart';
 import '../../features/agricultor/treatment/domain/usecases/treatment_usecases.dart';
 import '../../features/agricultor/treatment/presentation/bloc/treatment_bloc.dart';
+import '../../features/aprendiz/agenda/data/datasources/agenda_local_datasource.dart';
+import '../../features/aprendiz/agenda/data/datasources/agenda_remote_datasource.dart';
+import '../../features/aprendiz/agenda/data/repositories/agenda_repository_impl.dart';
+import '../../features/aprendiz/agenda/domain/repositories/agenda_repository.dart';
 
 // -- Offline Mode --
 import '../../features/agricultor/offline/data/datasources/offline_local_datasource.dart';
@@ -126,6 +130,15 @@ import '../../features/notifications/domain/usecases/notification_preferences_us
 import '../../features/notifications/presentation/bloc/notification_subscription_bloc.dart';
 import '../../features/notifications/presentation/cubit/notification_history_cubit.dart';
 
+// -- Clustering (Mapa epidemiológico -- mismo host que LLM/RAG) --
+import '../../features/clustering/data/datasources/clustering_remote_datasource.dart';
+import '../../features/clustering/data/repositories/clustering_repository_impl.dart';
+import '../../features/clustering/domain/repositories/clustering_repository.dart';
+import '../../features/clustering/domain/usecases/get_alerta_usecase.dart';
+import '../../features/clustering/domain/usecases/get_mapa_campanias_usecase.dart';
+import '../../features/clustering/presentation/cubit/epidemiological_alert_cubit.dart';
+import '../../features/clustering/presentation/cubit/epidemiological_map_cubit.dart';
+
 /// Instancia global del Service Locator.
 final GetIt sl = GetIt.instance;
 
@@ -154,6 +167,7 @@ Future<void> initDependencies() async {
   _initOfflineKnowledgeFeature();
   await _initAprendizFeature();
   _initNotificationsFeature();
+  _initClusteringFeature();
 }
 
 // =============================================================================
@@ -474,16 +488,38 @@ void _initDiagnosisFeature() {
 void _initTreatmentFeature() {
   sl.registerLazySingleton<TreatmentLocalDataSource>(
     () => TreatmentLocalDataSourceImpl(
-      diagnosisBox: sl<Box<String>>(instanceName: 'diagnosisBox'),
       agendaBox: sl<Box<String>>(instanceName: 'agendaBox'),
     ),
   );
 
+  // -- Agenda real del Agricultor (rol 'agricultor'): reutiliza el mismo
+  // AgendaRemoteDataSource generico que Aprendiz (ver
+  // initAgendaDependencies), con su propia cache local en 'agendaBox' (ya
+  // registrada arriba, sin colisionar claves con el resto de Treatment) --
+  sl.registerLazySingleton<AgendaLocalDataSource>(
+    () => AgendaLocalDataSourceImpl(box: sl<Box<String>>(instanceName: 'agendaBox')),
+    instanceName: 'agricultorAgendaLocalDataSource',
+  );
+  sl.registerLazySingleton<AgendaRepository>(
+    () => AgendaRepositoryImpl(
+      remoteDataSource: sl<AgendaRemoteDataSource>(),
+      localDataSource: sl<AgendaLocalDataSource>(instanceName: 'agricultorAgendaLocalDataSource'),
+      networkInfo: sl<NetworkInfo>(),
+      rol: 'agricultor',
+    ),
+    instanceName: 'agricultorAgendaRepository',
+  );
+
   sl.registerLazySingleton<TreatmentRepository>(
-    () => TreatmentRepositoryImpl(localDataSource: sl()),
+    () => TreatmentRepositoryImpl(
+      agendaRepository: sl<AgendaRepository>(instanceName: 'agricultorAgendaRepository'),
+      localDataSource: sl(),
+    ),
   );
 
   sl.registerLazySingleton(() => GetTreatmentAgendaUseCase(sl()));
+  sl.registerLazySingleton(() => GenerateTreatmentFromDiagnosisUseCase(sl()));
+  sl.registerLazySingleton(() => IsActivePlanForUseCase(sl()));
   sl.registerLazySingleton(() => MarkStepCompleteUseCase(sl()));
   sl.registerLazySingleton(() => RescheduleStepUseCase(sl()));
   sl.registerLazySingleton(() => SetRemindersActiveUseCase(sl()));
@@ -491,6 +527,7 @@ void _initTreatmentFeature() {
   sl.registerFactory(
     () => TreatmentBloc(
       getAgendaUseCase: sl(),
+      generateFromDiagnosisUseCase: sl(),
       markStepCompleteUseCase: sl(),
       rescheduleStepUseCase: sl(),
       setRemindersActiveUseCase: sl(),
@@ -772,5 +809,37 @@ void _initNotificationsFeature() {
   );
   sl.registerFactory(
     () => NotificationHistoryCubit(getHistoryUseCase: sl()),
+  );
+}
+
+// =============================================================================
+// CLUSTERING -- Mapa epidemiológico (http://52.1.110.21:8000, mismo host y
+// Dio 'llmDio' que el diagnóstico LLM/RAG -- ver _initDiagnosisFeature()).
+// =============================================================================
+
+void _initClusteringFeature() {
+  // -- DataSource --
+  sl.registerLazySingleton<ClusteringRemoteDataSource>(
+    () => ClusteringRemoteDataSourceImpl(client: sl<Dio>(instanceName: 'llmDio')),
+  );
+
+  // -- Repository --
+  sl.registerLazySingleton<ClusteringRepository>(
+    () => ClusteringRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // -- UseCases --
+  sl.registerLazySingleton(() => GetMapaCampaniasUseCase(sl()));
+  sl.registerLazySingleton(() => GetAlertaUseCase(sl()));
+
+  // -- Cubits (Factory: nueva instancia por pantalla) --
+  sl.registerFactory(
+    () => EpidemiologicalMapCubit(getMapaCampaniasUseCase: sl()),
+  );
+  sl.registerFactory(
+    () => EpidemiologicalAlertCubit(
+      getAlertaUseCase: sl(),
+      getNotificationPreferencesUseCase: sl(),
+    ),
   );
 }

@@ -23,16 +23,19 @@ import '../usecases/usecase.dart';
 class PushNotificationService {
   final SaveNotificationUseCase _saveNotificationUseCase;
   final GetNotificationPreferencesUseCase _getPreferencesUseCase;
+  final SaveNotificationPreferencesUseCase _savePreferencesUseCase;
   final SubscribeToAlertsUseCase _subscribeUseCase;
   final GlobalKey<NavigatorState> _navigatorKey;
 
   PushNotificationService({
     required SaveNotificationUseCase saveNotificationUseCase,
     required GetNotificationPreferencesUseCase getPreferencesUseCase,
+    required SaveNotificationPreferencesUseCase savePreferencesUseCase,
     required SubscribeToAlertsUseCase subscribeUseCase,
     required GlobalKey<NavigatorState> navigatorKey,
   })  : _saveNotificationUseCase = saveNotificationUseCase,
         _getPreferencesUseCase = getPreferencesUseCase,
+        _savePreferencesUseCase = savePreferencesUseCase,
         _subscribeUseCase = subscribeUseCase,
         _navigatorKey = navigatorKey;
 
@@ -106,11 +109,16 @@ class PushNotificationService {
       (_) {},
       (prefs) async {
         if (!prefs.enabled || prefs.estado.isEmpty) return;
-        await _subscribeUseCase(SubscribeParams(
+        final result = await _subscribeUseCase(SubscribeParams(
           fcmToken: newToken,
           estado: prefs.estado,
           cultivos: prefs.cultivos,
         ));
+        // Re-suscripcion exitosa en segundo plano: refleja que ya no hay
+        // nada pendiente de sincronizar (ver notificaciones_fix.md).
+        if (result.isRight()) {
+          await _savePreferencesUseCase(prefs.copyWith(pushSyncPending: false));
+        }
       },
     );
   }

@@ -59,6 +59,7 @@ class NotificationHistoryRepositoryImpl implements NotificationHistoryRepository
         cultivos: cultivosRaw is List
             ? cultivosRaw.map((e) => e.toString()).toList()
             : const [],
+        pushSyncPending: raw['push_sync_pending'] == true,
       ));
     } catch (_) {
       return const Right(NotificationPreferencesEntity.empty);
@@ -72,6 +73,7 @@ class NotificationHistoryRepositoryImpl implements NotificationHistoryRepository
         'enabled': prefs.enabled,
         'estado': prefs.estado,
         'cultivos': prefs.cultivos,
+        'push_sync_pending': prefs.pushSyncPending,
       });
       return const Right(null);
     } on CacheException catch (e) {
