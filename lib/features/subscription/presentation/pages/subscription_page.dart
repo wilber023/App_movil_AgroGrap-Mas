@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,6 +19,7 @@ class SubscriptionPage extends StatelessWidget {
   /// Crea la pantalla con su propio [SubscriptionBloc] (DI propia de la
   /// feature, sin tocar el contenedor global) y dispara la carga inicial.
   static Route<void> route() {
+    if (kDebugMode) debugPrint('[SUB-TRACE] 1) SubscriptionPage.route() -- abriendo pantalla');
     return MaterialPageRoute(
       builder: (_) => BlocProvider(
         create: (_) => sl<SubscriptionBloc>()..add(const SubscriptionStatusRequested()),

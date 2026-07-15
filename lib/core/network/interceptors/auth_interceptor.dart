@@ -16,10 +16,16 @@
 // =============================================================================
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../api_endpoints.dart';
 import '../../session/session_manager.dart';
 import '../../storage/token_storage.dart';
+
+// DEBUG TEMPORAL (solicitado para trazar el flujo de Subscription end-to-end):
+// imprime solo para requests al microservicio de pagos, para no saturar el
+// log del resto de la app. Eliminar junto con sus dos llamadas mas abajo.
+bool _isSubDebugTarget(String path) => path.contains('/api/payments');
 
 class AuthInterceptor extends Interceptor {
   final TokenStorage _tokenStorage;
@@ -46,12 +52,28 @@ class AuthInterceptor extends Interceptor {
   ) async {
     final isPublic = ApiEndpoints.auth.publicPaths
         .any((p) => options.path.endsWith(p));
+    final debugTarget = kDebugMode && _isSubDebugTarget(options.path);
+
+    if (debugTarget) {
+      debugPrint('[SUB-TRACE] 7) AuthInterceptor.onRequest -- '
+          '${options.method} ${options.path} (isPublic=$isPublic)');
+    }
 
     if (!isPublic) {
       final token = await _tokenStorage.getAccessToken();
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7a) AuthInterceptor -- TokenStorage.getAccessToken() '
+            'devolvio: ${token == null ? "null" : "presente, largo=${token.length}, "
+                "inicio=${token.substring(0, token.length < 15 ? token.length : 15)}..."}');
+      }
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
+    }
+
+    if (debugTarget) {
+      debugPrint('[SUB-TRACE] 7b) AuthInterceptor -- header final antes de handler.next(): '
+          '${options.headers['Authorization'] ?? "(sin Authorization)"}');
     }
 
     handler.next(options);
@@ -64,6 +86,13 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final statusCode = err.response?.statusCode;
+    final debugTarget = kDebugMode && _isSubDebugTarget(err.requestOptions.path);
+
+    if (debugTarget) {
+      debugPrint('[SUB-TRACE] 7c) AuthInterceptor.onError -- statusCode=$statusCode '
+          'retried=${err.requestOptions.extra['_retried'] == true} '
+          'isRefreshing=$_isRefreshing');
+    }
 
     // Solo actuar en 401 y si este request no es ya un reintento.
     if (statusCode != 401 || err.requestOptions.extra['_retried'] == true) {
@@ -109,8 +138,17 @@ class AuthInterceptor extends Interceptor {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
       );
-    } on DioException {
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7d) AuthInterceptor -- Paso 1 (POST /auth/refresh) EXITOSO, '
+            'token renovado y guardado. La sesion NO se invalido.');
+      }
+    } on DioException catch (refreshError) {
       // El refresh también falló (token expirado/revocado): limpiar sesión.
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7e) AuthInterceptor -- Paso 1 (POST /auth/refresh) FALLO '
+            'statusCode=${refreshError.response?.statusCode} body=${refreshError.response?.data} '
+            '-> ESTA es la unica rama que invalida la sesion global (SessionManager).');
+      }
       await _tokenStorage.clearTokens();
       SessionManager.instance.notifySessionInvalidated();
       handler.next(err);
@@ -136,9 +174,24 @@ class AuthInterceptor extends Interceptor {
       err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
       err.requestOptions.extra['_retried'] = true;
 
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7f) AuthInterceptor -- Paso 2, reintentando '
+            '${err.requestOptions.method} ${err.requestOptions.path} con el token renovado.');
+      }
+
       final retryResponse = await _refreshDio.fetch(err.requestOptions);
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7g) AuthInterceptor -- Paso 2 EXITOSO '
+            '(statusCode=${retryResponse.statusCode}).');
+      }
       handler.resolve(retryResponse);
     } on DioException catch (retryError) {
+      if (debugTarget) {
+        debugPrint('[SUB-TRACE] 7h) AuthInterceptor -- Paso 2 (reintento) VOLVIO A FALLAR '
+            'statusCode=${retryError.response?.statusCode} body=${retryError.response?.data} -- '
+            'el token SIGUE SIENDO VALIDO, por eso NO se invalida la sesion aqui. '
+            'Se propaga el error tal cual al datasource de Subscription.');
+      }
       handler.next(retryError);
     } finally {
       _isRefreshing = false;

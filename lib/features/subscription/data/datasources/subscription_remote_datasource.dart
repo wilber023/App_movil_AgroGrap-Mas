@@ -62,8 +62,16 @@ class SubscriptionRemoteDataSourceImpl implements SubscriptionRemoteDataSource {
 
   @override
   Future<SubscriptionModel?> getSubscription() async {
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 6) SubscriptionRemoteDataSourceImpl.getSubscription -- '
+          'GET ${_url(ApiEndpoints.subscription.current)} (justo antes del request HTTP)');
+    }
     try {
       final response = await client.get(_url(ApiEndpoints.subscription.current));
+      if (kDebugMode) {
+        debugPrint('[SUB-TRACE] 9b) Respuesta OK ${response.statusCode} -- '
+            'Authorization enviado: ${_maskAuth(response.requestOptions.headers['Authorization'])}');
+      }
       return SubscriptionModel.fromJson(Map<String, dynamic>.from(response.data as Map));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
@@ -100,26 +108,38 @@ class SubscriptionRemoteDataSourceImpl implements SubscriptionRemoteDataSource {
       return ServerException(message: _networkMessage(e.type), statusCode: null);
     }
     final code = e.response!.statusCode;
-    return ServerException(message: _defaultMessage(code), statusCode: code);
+    final message = _defaultMessage(code);
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 9) AuthInterceptor/backend devolvieron el error final -- '
+          'statusCode=$code');
+      debugPrint('[SUB-TRACE] 9a) Body crudo del backend: ${e.response?.data}');
+      debugPrint('[SUB-TRACE] 10) _mapError -- statusCode=$code -> _defaultMessage() '
+          'transforma esto en el texto: "$message" (linea _defaultMessage en este archivo)');
+    }
+    return ServerException(message: message, statusCode: code);
   }
 
   // ---------------------------------------------------------------------------
   // DEBUG TEMPORAL -- instrumentacion para diagnosticar el 401 de /subscription.
   // Lee `e.requestOptions.headers`, es decir, el header EXACTO que Dio ya
   // adjunto (o no) a esta peticion especifica antes de fallar -- no es una
-  // suposicion, es el valor real que salio por la red. Eliminar este metodo
-  // y su unica llamada (arriba) una vez confirmada la causa del 401.
+  // suposicion, es el valor real que salio por la red. Eliminar este metodo,
+  // `_maskAuth` y sus llamadas una vez confirmada la causa del 401.
   // ---------------------------------------------------------------------------
   void _debugLogFailedRequest(DioException e) {
-    final authHeader = e.requestOptions.headers['Authorization']?.toString();
-    final masked = (authHeader != null && authHeader.length > 22)
-        ? '${authHeader.substring(0, 22)}...'
-        : (authHeader ?? '(ausente -- no se adjunto ningun Authorization header)');
-    debugPrint('[Subscription DEBUG] ${e.requestOptions.method} ${e.requestOptions.uri}');
-    debugPrint('[Subscription DEBUG] Authorization: $masked');
+    debugPrint('[SUB-TRACE] 8) Respuesta del backend -- '
+        '${e.requestOptions.method} ${e.requestOptions.uri}');
+    debugPrint('[SUB-TRACE] 8a) Authorization que salio en ESTA peticion (real, no supuesto): '
+        '${_maskAuth(e.requestOptions.headers['Authorization'])}');
     debugPrint(
-      '[Subscription DEBUG] Status: ${e.response?.statusCode ?? "sin respuesta (${e.type})"}',
+      '[SUB-TRACE] 8b) Status: ${e.response?.statusCode ?? "sin respuesta (${e.type})"}',
     );
+  }
+
+  String _maskAuth(Object? authHeader) {
+    final value = authHeader?.toString();
+    if (value == null) return '(ausente -- no se adjunto ningun Authorization header)';
+    return value.length > 22 ? '${value.substring(0, 22)}...' : value;
   }
 
   String _networkMessage(DioExceptionType type) => switch (type) {
@@ -133,11 +153,21 @@ class SubscriptionRemoteDataSourceImpl implements SubscriptionRemoteDataSource {
 
   // 400 == PAYPAL_API_ERROR (unico caso documentado para ese codigo en
   // API.md): restriccion o problema de autorizacion con PayPal.
+  //
+  // 401: NO se redacta como "tu sesion expiro". Evidencia (ver [SUB-TRACE]
+  // 7d/7g en AuthInterceptor): el Access Token del login es valido -- el
+  // Paso 1 (POST /auth/refresh) tiene exito y el Paso 2 (reintento con el
+  // token ya renovado) sigue recibiendo 401 del microservicio de pagos.
+  // Es decir, el 401 no indica una sesion vencida; el propio servicio de
+  // pagos esta rechazando un JWT valido (confirmado tambien con curl
+  // directo al backend, fuera de la app). Decirle al usuario "tu sesion
+  // expiro" lo manda a re-loguearse, algo que no soluciona nada.
   String _defaultMessage(int? code) => switch (code) {
         400 =>
           'PayPal no está disponible en este momento debido a un problema de autorización. '
               'Inténtalo nuevamente más tarde.',
-        401 => 'Tu sesión expiró. Vuelve a iniciar sesión.',
+        401 => 'No pudimos confirmar tu cuenta con el servicio de pagos en este momento. '
+            'Intenta nuevamente en unos minutos.',
         404 => 'No tienes una suscripción activa.',
         422 => 'No pudimos procesar tu solicitud. Intenta nuevamente más tarde.',
         500 => 'Ocurrió un error en el servidor. Intenta más tarde.',

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
@@ -169,11 +170,34 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     SubscriptionStatusRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 2) SubscriptionBloc._onStatusRequested -- entra al bloc');
+    }
     emit(const SubscriptionLoading());
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 3) SubscriptionBloc -- llamando a GetSubscriptionStatusUseCase');
+    }
     final result = await _getSubscriptionStatusUseCase(const NoParams());
     result.fold(
-      (f) => emit(SubscriptionLoadFailure(message: f.message)),
-      (sub) => emit(SubscriptionLoaded(subscription: sub)),
+      (f) {
+        if (kDebugMode) {
+          debugPrint(
+            '[SUB-TRACE] 11) SubscriptionBloc -- UseCase devolvio Failure '
+            'tipo=${f.runtimeType} statusCode=${f.statusCode} message="${f.message}" '
+            '-> emit(SubscriptionLoadFailure)',
+          );
+        }
+        emit(SubscriptionLoadFailure(message: f.message));
+      },
+      (sub) {
+        if (kDebugMode) {
+          debugPrint(
+            '[SUB-TRACE] 11) SubscriptionBloc -- UseCase devolvio Right(subscription='
+            '${sub == null ? "null (sin suscripcion)" : sub.status}) -> emit(SubscriptionLoaded)',
+          );
+        }
+        emit(SubscriptionLoaded(subscription: sub));
+      },
     );
   }
 

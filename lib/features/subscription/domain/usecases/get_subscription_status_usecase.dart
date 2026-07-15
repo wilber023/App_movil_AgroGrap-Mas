@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
@@ -11,6 +12,9 @@ class GetSubscriptionStatusUseCase implements UseCase<SubscriptionEntity?, NoPar
 
   @override
   Future<Either<Failure, SubscriptionEntity?>> call(NoParams params) {
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 4) GetSubscriptionStatusUseCase.call -- llamando al Repository');
+    }
     return repository.getSubscription();
   }
 }

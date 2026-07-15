@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -28,10 +29,18 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
 
   @override
   Future<Either<Failure, SubscriptionEntity?>> getSubscription() async {
+    if (kDebugMode) {
+      debugPrint('[SUB-TRACE] 5) SubscriptionRepositoryImpl.getSubscription -- '
+          'llamando al RemoteDataSource');
+    }
     try {
       final subscription = await remoteDataSource.getSubscription();
       return Right(subscription);
     } on ServerException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[SUB-TRACE] 10) SubscriptionRepositoryImpl -- capturo ServerException '
+            'statusCode=${e.statusCode} message="${e.message}" -> mapeando a Failure');
+      }
       return Left(_map(e));
     } catch (_) {
       return const Left(
