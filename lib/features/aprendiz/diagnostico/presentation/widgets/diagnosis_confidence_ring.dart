@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../models/diagnosis_result_view_data.dart';
 
@@ -53,7 +54,7 @@ class DiagnosisConfidenceRing extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           label,
           style: AppTypography.etiquetaSm.copyWith(color: color, fontWeight: FontWeight.w700),

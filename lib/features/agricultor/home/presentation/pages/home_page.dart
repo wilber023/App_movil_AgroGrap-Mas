@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../clustering/presentation/cubit/epidemiological_alert_cubit.dart';
 import '../../../../clustering/presentation/widgets/epidemiological_alert_banner.dart';
@@ -100,7 +102,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F8F4),
+      backgroundColor: AppColors.homeBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -108,22 +110,25 @@ class HomePage extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xxlPlus,
+                  vertical: AppSpacing.xhuge,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildPremiumBanner(context),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.huge),
                     _buildCameraActionCard(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xhuge),
                     _buildTodaySummary(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xhuge),
                     _buildActiveCropsSection(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xhuge),
                     _buildEpidemiologicalAlertBanner(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xhuge),
                     _buildTodayTasksSection(context),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xhuge),
                   ],
                 ),
               ),
@@ -152,7 +157,12 @@ class HomePage extends StatelessWidget {
 
             return Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xxlPlus,
+                AppSpacing.xxl,
+                AppSpacing.xxlPlus,
+                AppSpacing.xxxl,
+              ),
               color: AppColors.forestGreen,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,26 +175,26 @@ class HomePage extends StatelessWidget {
                         Text(
                           name.isEmpty ? _greeting() : '${_greeting()}, $name 👋',
                           style: AppTypography.etiquetaSm.copyWith(
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: AppColors.onPrimary.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.xxs),
                         Text(
                           'AgroGraph IA',
                           style: AppTypography.tituloLg.copyWith(
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 26,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.xxs),
                         Text(
                           'Tu asistente agrícola inteligente',
                           style: AppTypography.etiquetaSm.copyWith(
-                            color: Colors.white.withValues(alpha: 0.75),
+                            color: AppColors.onPrimary.withValues(alpha: 0.75),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -192,7 +202,7 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.xl),
                   GestureDetector(
                     onTap: () => Navigator.push(context, NotificationsPage.route()),
                     child: Stack(
@@ -200,7 +210,7 @@ class HomePage extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.notifications_none_rounded,
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           size: 26,
                         ),
                         if (hasUnread)
@@ -237,10 +247,10 @@ class HomePage extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(context, SubscriptionPage.route()),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xl),
         decoration: BoxDecoration(
           color: AppColors.primaryContainer.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lgXl),
           border: Border.all(
             color: AppColors.primaryContainer.withValues(alpha: 0.8),
             width: 0.5,
@@ -249,14 +259,14 @@ class HomePage extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.forestGreen,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
+              child: const Icon(Icons.star_rounded, color: AppColors.onPrimary, size: 14),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: RichText(
                 text: TextSpan(
@@ -290,9 +300,9 @@ class HomePage extends StatelessWidget {
   Widget _buildCameraActionCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.huge),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xhuge),
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
           begin: Alignment.topLeft,
@@ -319,31 +329,31 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppColors.onPrimary.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 26),
+                  child: const Icon(Icons.camera_alt_outlined, color: AppColors.onPrimary, size: 26),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSpacing.xxxl),
                 Text(
                   'Escanear cultivo',
                   style: AppTypography.tituloLg.copyWith(
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   // Etiqueta breve — reemplaza "Diagnóstico IA en segundos" a pedido.
                   'Detecta enfermedades al instante',
                   style: AppTypography.bodyMd.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: AppColors.onPrimary.withValues(alpha: 0.85),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSpacing.xxxl),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -360,10 +370,10 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: AppColors.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                       ),
                       elevation: 0,
                     ),
@@ -372,7 +382,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           const _ScanFrameIllustration(),
         ],
       ),
@@ -400,7 +410,7 @@ class HomePage extends StatelessWidget {
               action: 'Ver agenda',
               onTap: () => onNavigateToTab?.call(3),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
                 Expanded(
@@ -411,7 +421,7 @@ class HomePage extends StatelessWidget {
                     icon: Icons.error_outline_rounded,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: _HomeStat(
                     count: today,
@@ -420,7 +430,7 @@ class HomePage extends StatelessWidget {
                     icon: Icons.event_note_rounded,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: _HomeStat(
                     count: week,
@@ -429,7 +439,7 @@ class HomePage extends StatelessWidget {
                     icon: Icons.eco_rounded,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: _HomeStat(
                     count: completed,
@@ -468,7 +478,7 @@ class HomePage extends StatelessWidget {
               action: parcels.isEmpty ? null : 'Ver todos',
               onTap: () => onNavigateToTab?.call(2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             if (isLoading)
               const SizedBox(
                 height: 80,
@@ -488,7 +498,7 @@ class HomePage extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: parcels.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xl),
                   itemBuilder: (_, i) => _CropCard(
                     parcel: parcels[i],
                     treatments: treatments,
@@ -504,10 +514,10 @@ class HomePage extends StatelessWidget {
 
   Widget _buildEmptyParcels() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5), width: 0.5),
       ),
       child: Row(
@@ -516,12 +526,12 @@ class HomePage extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: const BoxDecoration(
-              color: Color(0xFFEAF3DE),
+              color: AppColors.homeEmptyIconBg,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.local_florist_outlined, color: Color(0xFF52B788), size: 18),
+            child: const Icon(Icons.local_florist_outlined, color: AppColors.homeEmptyIconFg, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,12 +606,12 @@ class HomePage extends StatelessWidget {
               action: 'Ver todas',
               onTap: () => onNavigateToTab?.call(3),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                color: AppColors.onPrimary,
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
                 border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5), width: 0.5),
               ),
               child: Column(
@@ -678,20 +688,20 @@ class _HomeStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl, horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '$count',
             style: AppTypography.headlineMd.copyWith(color: color, fontSize: 19, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             label,
             textAlign: TextAlign.center,
@@ -752,13 +762,13 @@ class _CropCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 172,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: AppColors.onPrimary,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
           border: Border(left: BorderSide(color: statusInfo.color, width: 3)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(color: AppColors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
           ],
         ),
         child: Column(
@@ -771,7 +781,7 @@ class _CropCard extends StatelessWidget {
                   height: 34,
                   decoration: BoxDecoration(
                     color: statusInfo.color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.mdLg),
                   ),
                   child: Icon(_cropIcon(parcel.cropName), color: statusInfo.color, size: 18),
                 ),
@@ -780,7 +790,7 @@ class _CropCard extends StatelessWidget {
                   _MiniRing(percent: tier, color: statusInfo.color),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               parcel.cropName,
               maxLines: 1,
@@ -793,12 +803,12 @@ class _CropCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.sm),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxsPlus),
               decoration: BoxDecoration(
                 color: statusInfo.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 statusInfo.label,
@@ -810,7 +820,7 @@ class _CropCard extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Divider(height: 14, thickness: 0.5),
+            const Divider(height: AppSpacing.xxl, thickness: 0.5),
             Text(
               actionLabel,
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant, fontSize: 9.5),
@@ -902,7 +912,7 @@ class _TaskRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Row(
           children: [
             Container(
@@ -910,7 +920,7 @@ class _TaskRow extends StatelessWidget {
               height: 10,
               decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -935,10 +945,10 @@ class _TaskRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxsPlus),
               decoration: BoxDecoration(
                 color: dotColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 badgeLabel,
@@ -963,7 +973,7 @@ class _ScanFrameIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const c = Colors.white70;
+    const c = AppColors.white70;
     return SizedBox(
       width: 96,
       height: 96,
@@ -975,10 +985,10 @@ class _ScanFrameIllustration extends StatelessWidget {
             width: 64,
             height: 2,
             decoration: BoxDecoration(
-              color: const Color(0xFF6FE3A5),
-              borderRadius: BorderRadius.circular(2),
+              color: AppColors.homeScanAccent,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               boxShadow: [
-                BoxShadow(color: const Color(0xFF6FE3A5).withValues(alpha: 0.6), blurRadius: 6),
+                BoxShadow(color: AppColors.homeScanAccent.withValues(alpha: 0.6), blurRadius: 6),
               ],
             ),
           ),
@@ -992,7 +1002,7 @@ class _ScanFrameIllustration extends StatelessWidget {
   }
 
   Widget _corner({required bool top, required bool left}) {
-    const side = BorderSide(color: Colors.white70, width: 2.5);
+    const side = BorderSide(color: AppColors.white70, width: 2.5);
     return Container(
       width: 18,
       height: 18,

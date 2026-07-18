@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../offline_knowledge/presentation/cubit/offline_package_manager_cubit.dart';
 import '../cubit/offline_cubit.dart';
@@ -48,7 +50,7 @@ class _OfflineModePageState extends State<OfflineModePage> {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.forestGreen,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onPrimary,
           elevation: 0,
           title: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,12 +60,12 @@ class _OfflineModePageState extends State<OfflineModePage> {
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 17,
-                      color: Colors.white)),
+                      color: AppColors.onPrimary)),
               Text('Descarga paquetes de diagnóstico para usar sin internet',
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
-                      color: Colors.white70)),
+                      color: AppColors.white70)),
             ],
           ),
         ),
@@ -97,7 +99,7 @@ class _LoadingBody extends StatelessWidget {
         children: [
           const CircularProgressIndicator(
               color: AppColors.forestGreen, strokeWidth: 2.5),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           Text('Cargando recursos...',
               style: AppTypography.etiquetaSm
                   .copyWith(color: AppColors.onSurfaceVariant)),
@@ -133,10 +135,10 @@ class _LoadedBody extends StatelessWidget {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.huge, AppSpacing.xxlPlus, AppSpacing.giant),
             children: [
               _OfflineToggleCard(state: state),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.xxhuge),
 
               // ── Cultivos ──────────────────────────────────────────────────
               _SectionLabel(
@@ -144,10 +146,10 @@ class _LoadedBody extends StatelessWidget {
                 subtitle: 'Toca un cultivo para descargar su paquete de '
                     'diagnóstico offline',
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xxl),
               if (pkgState.loading && crops.isEmpty)
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.xhuge),
                   child: Center(
                     child: CircularProgressIndicator(
                       color: AppColors.forestGreen,
@@ -158,11 +160,11 @@ class _LoadedBody extends StatelessWidget {
               else
                 ...crops.map(
                   (c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                     child: _CropPackageCard(status: c),
                   ),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.md),
 
               // ── Descargado ────────────────────────────────────────────────
               _SectionLabel(
@@ -172,13 +174,13 @@ class _LoadedBody extends StatelessWidget {
                     : '${downloaded.length} paquete${downloaded.length > 1 ? "s" : ""} '
                         'disponible${downloaded.length > 1 ? "s" : ""} sin conexión',
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xxl),
               if (downloaded.isEmpty)
                 const _EmptyDownloadedState()
               else
                 ...downloaded.map(
                   (c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: _DownloadedPackageTile(status: c),
                   ),
                 ),
@@ -218,7 +220,7 @@ class _OfflineToggleCard extends StatelessWidget {
               )
             : null,
         color: enabled ? null : AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         border: Border.all(
           color: enabled
               ? AppColors.forestGreen.withValues(alpha: 0.45)
@@ -228,14 +230,14 @@ class _OfflineToggleCard extends StatelessWidget {
         boxShadow: [
           if (!enabled)
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl, vertical: AppSpacing.xxl),
         child: Row(
           children: [
             Container(
@@ -254,7 +256,7 @@ class _OfflineToggleCard extends StatelessWidget {
                 size: 21,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.xxl),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +269,7 @@ class _OfflineToggleCard extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     enabled
                         ? 'Activo · $downloaded guía${downloaded != 1 ? "s" : ""} disponibles'
@@ -286,7 +288,7 @@ class _OfflineToggleCard extends StatelessWidget {
               value: enabled,
               onChanged: (val) =>
                   context.read<OfflineCubit>().toggleOfflineMode(enabled: val),
-              thumbColor: WidgetStateProperty.all(Colors.white),
+              thumbColor: WidgetStateProperty.all(AppColors.onPrimary),
               activeTrackColor: AppColors.forestGreen,
               inactiveTrackColor: AppColors.outlineVariant,
             ),
@@ -320,7 +322,7 @@ class _SectionLabel extends StatelessWidget {
             fontSize: 10.5,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: AppSpacing.xxsPlus),
         Text(subtitle,
             style: AppTypography.etiquetaSm
                 .copyWith(color: AppColors.onSurfaceVariant)),
@@ -349,25 +351,25 @@ class _CropPackageCard extends StatelessWidget {
         color: downloaded
             ? AppColors.forestGreen.withValues(alpha: 0.05)
             : AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         border: Border.all(
           color: downloaded
               ? AppColors.forestGreen.withValues(alpha: 0.45)
-              : const Color(0xFFE5EAF0),
+              : AppColors.offlineCardBorder,
           width: downloaded ? 1.4 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: downloaded ? 0.01 : 0.05),
+            color: AppColors.black.withValues(alpha: downloaded ? 0.01 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -377,10 +379,10 @@ class _CropPackageCard extends StatelessWidget {
                 children: [
                   Text(_cropEmoji(status.cultivo),
                       style: const TextStyle(fontSize: 36)),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.xl),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -395,7 +397,7 @@ class _CropPackageCard extends StatelessWidget {
                                   : AppColors.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: AppSpacing.xxsPlus),
                           Text(
                             'Paquete de diagnóstico offline',
                             style: TextStyle(
@@ -410,9 +412,9 @@ class _CropPackageCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.md),
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
                     child: downloaded
                         ? Container(
                             width: 28,
@@ -422,7 +424,7 @@ class _CropPackageCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 16),
+                                color: AppColors.onPrimary, size: 16),
                           )
                         : (downloading
                             ? const SizedBox(
@@ -438,15 +440,15 @@ class _CropPackageCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xxl),
               Divider(
                 height: 1,
                 thickness: 0.6,
                 color: downloaded
                     ? AppColors.forestGreen.withValues(alpha: 0.2)
-                    : const Color(0xFFE5EAF0),
+                    : AppColors.offlineCardBorder,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.xl),
 
               if (hasError) ...[
                 Row(
@@ -454,7 +456,7 @@ class _CropPackageCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.error_outline_rounded,
                         size: 15, color: AppColors.error),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         status.errorMessage ??
@@ -465,7 +467,7 @@ class _CropPackageCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
               ],
 
               // ── Acción ────────────────────────────────────────────────
@@ -487,7 +489,7 @@ class _CropPackageCard extends StatelessWidget {
         children: [
           const Icon(Icons.offline_pin_rounded,
               color: AppColors.forestGreen, size: 15),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             'Disponible sin conexión',
             style: AppTypography.etiquetaSm.copyWith(
@@ -519,14 +521,14 @@ class _CropPackageCard extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.forestGreen,
             disabledBackgroundColor: AppColors.surfaceContainerHigh,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onPrimary,
             disabledForegroundColor: AppColors.onSurfaceVariant,
             padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.mdLg),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
             ),
           ),
           icon: Icon(
@@ -557,15 +559,15 @@ class _DownloadedPackageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(
             color: AppColors.forestGreen.withValues(alpha: 0.28), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.black.withValues(alpha: 0.03),
             blurRadius: 5,
             offset: const Offset(0, 1),
           ),
@@ -583,7 +585,7 @@ class _DownloadedPackageTile extends StatelessWidget {
             child: const Icon(Icons.check_rounded,
                 color: AppColors.forestGreen, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,7 +594,7 @@ class _DownloadedPackageTile extends StatelessWidget {
                   children: [
                     Text(_cropEmoji(status.cultivo),
                         style: const TextStyle(fontSize: 14)),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: AppSpacing.xsPlus),
                     Expanded(
                       child: Text(
                         status.cultivo,
@@ -607,7 +609,7 @@ class _DownloadedPackageTile extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   'Paquete de diagnóstico offline disponible',
                   style: AppTypography.etiquetaSm.copyWith(
@@ -634,10 +636,10 @@ class _EmptyDownloadedState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge, vertical: AppSpacing.xxhuge),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         border: Border.all(
             color: AppColors.outlineVariant.withValues(alpha: 0.6),
             width: 0.6),
@@ -655,7 +657,7 @@ class _EmptyDownloadedState extends StatelessWidget {
             child: const Icon(Icons.cloud_download_outlined,
                 size: 28, color: AppColors.offlineGrey),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           Text(
             'Sin paquetes descargados',
             style: AppTypography.labelMd.copyWith(
@@ -663,7 +665,7 @@ class _EmptyDownloadedState extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Selecciona un cultivo arriba y descarga\nsu paquete para diagnóstico sin internet.',
             textAlign: TextAlign.center,
@@ -692,7 +694,7 @@ class _ErrorBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -706,31 +708,31 @@ class _ErrorBody extends StatelessWidget {
               child: const Icon(Icons.cloud_off_rounded,
                   size: 34, color: AppColors.offlineGrey),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSpacing.xxxl),
             Text(
               'Error al cargar recursos',
               style: AppTypography.labelMd.copyWith(
                   color: AppColors.onSurface, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTypography.etiquetaSm
                   .copyWith(color: AppColors.onSurfaceVariant, height: 1.4),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xhuge),
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Reintentar'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.forestGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
+                    horizontal: AppSpacing.xhuge, vertical: AppSpacing.xl),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(AppRadius.xl)),
               ),
             ),
           ],

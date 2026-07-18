@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Nivel de confianza que el motor de diagnostico asigna a un resultado.
@@ -42,11 +43,11 @@ class DiagnosisConfidenceIndicator extends StatelessWidget {
             Container(
               width: 10,
               height: 10,
-              margin: const EdgeInsets.only(right: 6),
+              margin: const EdgeInsets.only(right: AppSpacing.sm),
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             Text(label, style: AppTypography.etiquetaSm.copyWith(color: color, fontWeight: FontWeight.w600)),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.md),
             Text(
               '$percentage%',
               style: AppTypography.etiquetaBold.copyWith(color: AppColors.aOnSurface),

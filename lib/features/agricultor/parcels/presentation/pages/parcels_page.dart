@@ -8,6 +8,8 @@ import 'package:hive/hive.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/security/local_auth_gate.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../diagnosis/presentation/bloc/diagnosis_bloc.dart';
 import '../../../diagnosis/presentation/pages/diagnosis_page.dart';
@@ -19,22 +21,6 @@ import 'parcel_detail_page.dart';
 // =============================================================================
 // AgroGraph-MAS -- Mis Parcelas (lista principal)
 // =============================================================================
-
-const Color _bg = Color(0xFFF8FAF5);
-const Color _textPrimary = Color(0xFF1B2D27);
-const Color _textSecondary = Color(0xFF6B8F71);
-const Color _borderLight = Color(0xFFADB5BD);
-const Color _chipGreenBg = Color(0xFFEAF3DE);
-const Color _chipGreenText = Color(0xFF27500A);
-const Color _chipAlertBg = Color(0xFFFDECEA);
-const Color _chipAlertText = Color(0xFFA32D2D);
-const Color _chipFollowBg = Color(0xFFFFF3E0);
-const Color _chipFollowText = Color(0xFF7B4A10);
-const Color _trackGrey = Color(0xFFE2EBE6);
-const Color _chipBlueBg = Color(0xFFE6F1FB);
-const Color _chipBlueText = Color(0xFF0C447C);
-const Color _addGreen = Color(0xFF52B788);
-const Color _addBorder = Color(0xFFA8C5B0);
 
 class ParcelsPage extends StatelessWidget {
   const ParcelsPage({super.key});
@@ -76,19 +62,19 @@ class _ParcelsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.parcelsBg,
       appBar: AppBar(
         backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_outlined, color: Colors.white),
+          icon: const Icon(Icons.menu_outlined, color: AppColors.onPrimary),
           onPressed: () {},
         ),
         title: Text(
           'Mis Parcelas',
           style: AppTypography.labelMd.copyWith(
-            color: Colors.white,
+            color: AppColors.onPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -161,21 +147,21 @@ class _ParcelsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.lg, AppSpacing.xxlPlus, AppSpacing.none),
             child: _buildSearchBar(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
             child: Column(
               children: [
                 for (int i = 0; i < parcels.length; i++) ...[
                   _buildParcelCard(context, parcels[i]),
-                  if (i < parcels.length - 1) const SizedBox(height: 10),
+                  if (i < parcels.length - 1) const SizedBox(height: AppSpacing.lg),
                 ],
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
                 _buildAddParcelDashed(context),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.giant),
               ],
             ),
           ),
@@ -193,10 +179,10 @@ class _ParcelsView extends StatelessWidget {
       height: 48,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: AppColors.onPrimary,
+          borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
           border: Border.all(
-            color: _borderLight.withValues(alpha: 0.4),
+            color: AppColors.parcelsBorderLight.withValues(alpha: 0.4),
             width: 0.5,
           ),
         ),
@@ -204,18 +190,18 @@ class _ParcelsView extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Buscar parcela...',
             hintStyle: AppTypography.etiquetaSm.copyWith(
-              color: _borderLight,
+              color: AppColors.parcelsBorderLight,
               fontSize: 13,
             ),
             prefixIcon: const Icon(
               Icons.search_outlined,
-              color: _textSecondary,
+              color: AppColors.parcelsTextSecondary,
               size: 20,
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+              horizontal: AppSpacing.xxlPlus,
+              vertical: AppSpacing.xxl,
             ),
           ),
         ),
@@ -239,33 +225,33 @@ class _ParcelsView extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: AppColors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpacing.xxl),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.onPrimary,
               border: Border(
                 left: BorderSide(color: statusColors.border, width: 4),
                 top: BorderSide(
-                  color: _borderLight.withValues(alpha: 0.2),
+                  color: AppColors.parcelsBorderLight.withValues(alpha: 0.2),
                   width: 0.5,
                 ),
                 right: BorderSide(
-                  color: _borderLight.withValues(alpha: 0.2),
+                  color: AppColors.parcelsBorderLight.withValues(alpha: 0.2),
                   width: 0.5,
                 ),
                 bottom: BorderSide(
-                  color: _borderLight.withValues(alpha: 0.2),
+                  color: AppColors.parcelsBorderLight.withValues(alpha: 0.2),
                   width: 0.5,
                 ),
               ),
@@ -281,8 +267,8 @@ class _ParcelsView extends StatelessWidget {
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        color: _chipGreenBg,
-                        borderRadius: BorderRadius.circular(11),
+                        color: AppColors.parcelsChipGreenBg,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       child: Center(
                         child: Text(
@@ -291,7 +277,7 @@ class _ParcelsView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.lg),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,42 +285,42 @@ class _ParcelsView extends StatelessWidget {
                           Text(
                             p.name,
                             style: AppTypography.labelMd.copyWith(
-                              color: _textPrimary,
+                              color: AppColors.parcelsTextPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Row(
                             children: [
-                              _chip(p.cropName, _chipGreenBg, _chipGreenText),
-                              const SizedBox(width: 6),
+                              _chip(p.cropName, AppColors.parcelsChipGreenBg, AppColors.parcelsChipGreenText),
+                              const SizedBox(width: AppSpacing.sm),
                               Text(
                                 '${p.areaSize.toStringAsFixed(1)} ${p.areaUnit}',
                                 style: AppTypography.etiquetaSm.copyWith(
-                                  color: _textSecondary,
+                                  color: AppColors.parcelsTextSecondary,
                                   fontSize: 10,
                                 ),
                               ),
                             ],
                           ),
                           if (p.region.isNotEmpty) ...[
-                            const SizedBox(height: 3),
+                            const SizedBox(height: AppSpacing.xxsPlus),
                             Row(
                               children: [
                                 const Icon(
                                   Icons.place_outlined,
                                   size: 11,
-                                  color: _textSecondary,
+                                  color: AppColors.parcelsTextSecondary,
                                 ),
-                                const SizedBox(width: 2),
+                                const SizedBox(width: AppSpacing.xxs),
                                 Expanded(
                                   child: Text(
                                     p.region,
                                     style: AppTypography.etiquetaSm.copyWith(
-                                      color: _textSecondary,
+                                      color: AppColors.parcelsTextSecondary,
                                       fontSize: 10,
                                     ),
                                     maxLines: 1,
@@ -350,7 +336,7 @@ class _ParcelsView extends StatelessWidget {
                     _buildThreeDotMenu(context, p),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
                 Row(
                   children: [
                     _statusChip(
@@ -359,7 +345,7 @@ class _ParcelsView extends StatelessWidget {
                       statusColors.chipText,
                       statusColors.icon,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.sm),
                     // Conteo de diagnósticos locales
                     if (diagCount > 0)
                       _diagCountChip(diagCount)
@@ -368,22 +354,22 @@ class _ParcelsView extends StatelessWidget {
                         width: 4,
                         height: 4,
                         decoration: const BoxDecoration(
-                          color: _borderLight,
+                          color: AppColors.parcelsBorderLight,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         'Diag. ${_timeAgo(p.lastDiagnosisAt!)}',
                         style: AppTypography.etiquetaSm.copyWith(
-                          color: _textSecondary,
+                          color: AppColors.parcelsTextSecondary,
                           fontSize: 10,
                         ),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
                 _buildPhenologicalBar(p),
               ],
             ),
@@ -404,7 +390,7 @@ class _ParcelsView extends StatelessWidget {
       child: PopupMenuButton<String>(
         icon: const Icon(
           Icons.more_vert_outlined,
-          color: _borderLight,
+          color: AppColors.parcelsBorderLight,
           size: 16,
         ),
         onSelected: (value) {
@@ -497,35 +483,35 @@ class _ParcelsView extends StatelessWidget {
             Text(
               'Etapa fenologica',
               style: AppTypography.etiquetaSm.copyWith(
-                color: _textSecondary,
+                color: AppColors.parcelsTextSecondary,
                 fontSize: 10,
               ),
             ),
             Text(
               p.stageName,
               style: AppTypography.etiquetaSm.copyWith(
-                color: _textPrimary,
+                color: AppColors.parcelsTextPrimary,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           child: SizedBox(
             height: 6,
             child: LinearProgressIndicator(
               value: p.stageProgress,
-              backgroundColor: _trackGrey,
+              backgroundColor: AppColors.parcelsTrackGrey,
               valueColor: const AlwaysStoppedAnimation<Color>(
                 AppColors.forestGreen,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(ParcelsPage._stages.length, (i) {
@@ -537,15 +523,15 @@ class _ParcelsView extends StatelessWidget {
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: reached ? AppColors.forestGreen : _trackGrey,
+                    color: reached ? AppColors.forestGreen : AppColors.parcelsTrackGrey,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   ParcelsPage._stages[i],
                   style: GoogleFonts.inter(
                     fontSize: 8,
-                    color: reached ? _textPrimary : _textSecondary,
+                    color: reached ? AppColors.parcelsTextPrimary : AppColors.parcelsTextSecondary,
                   ),
                 ),
               ],
@@ -564,22 +550,22 @@ class _ParcelsView extends StatelessWidget {
     return GestureDetector(
       onTap: () => _openAddParcel(context),
       child: CustomPaint(
-        painter: _DashedBorderPainter(color: _addBorder, radius: 14),
+        painter: _DashedBorderPainter(color: AppColors.parcelsAddBorder, radius: 14),
         child: Container(
           height: 56,
           decoration: BoxDecoration(
-            color: _bg,
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.parcelsBg,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_outlined, color: _addGreen, size: 18),
-              const SizedBox(width: 8),
+              const Icon(Icons.add_outlined, color: AppColors.parcelsAddGreen, size: 18),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 'Agregar nueva parcela',
                 style: AppTypography.etiquetaSm.copyWith(
-                  color: _addGreen,
+                  color: AppColors.parcelsAddGreen,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -596,7 +582,7 @@ class _ParcelsView extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
       child: Column(
         children: [
           _buildSearchBar(),
@@ -605,33 +591,33 @@ class _ParcelsView extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: const BoxDecoration(
-              color: _chipGreenBg,
+              color: AppColors.parcelsChipGreenBg,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.local_florist_outlined,
-              color: _addGreen,
+              color: AppColors.parcelsAddGreen,
               size: 36,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           Text(
             'Aun no tienes parcelas',
             style: AppTypography.labelMd.copyWith(
-              color: _textPrimary,
+              color: AppColors.parcelsTextPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
             child: Text(
               'Registra tu primera parcela para recibir diagnosticos precisos.',
-              style: AppTypography.etiquetaSm.copyWith(color: _textSecondary),
+              style: AppTypography.etiquetaSm.copyWith(color: AppColors.parcelsTextSecondary),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -639,9 +625,9 @@ class _ParcelsView extends StatelessWidget {
               onPressed: () => _openAddParcel(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.warmAmber,
-                foregroundColor: const Color(0xFF4A2800),
+                foregroundColor: AppColors.onWarmAmber,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 ),
               ),
               child: const Text(
@@ -663,22 +649,22 @@ class _ParcelsView extends StatelessWidget {
   Widget _buildErrorState(BuildContext context, String message) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
               Icons.wifi_off_outlined,
-              color: _textSecondary,
+              color: AppColors.parcelsTextSecondary,
               size: 48,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTypography.etiquetaSm.copyWith(color: _textSecondary),
+              style: AppTypography.etiquetaSm.copyWith(color: AppColors.parcelsTextSecondary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             ElevatedButton(
               onPressed: () =>
                   context.read<ParcelBloc>().add(const ParcelLoadRequested()),
@@ -687,7 +673,7 @@ class _ParcelsView extends StatelessWidget {
               ),
               child: const Text(
                 'Reintentar',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.onPrimary),
               ),
             ),
           ],
@@ -702,10 +688,10 @@ class _ParcelsView extends StatelessWidget {
 
   Widget _chip(String label, Color bg, Color text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxsPlus),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
       ),
       child: Text(
         label,
@@ -720,16 +706,16 @@ class _ParcelsView extends StatelessWidget {
 
   Widget _statusChip(String label, Color bg, Color text, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxsPlus),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 10, color: text),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             label,
             style: GoogleFonts.inter(
@@ -765,22 +751,22 @@ class _ParcelsView extends StatelessWidget {
 
   Widget _diagCountChip(int count) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
       decoration: BoxDecoration(
-        color: _chipBlueBg,
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.parcelsChipBlueBg,
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.analytics_outlined, size: 10, color: _chipBlueText),
-          const SizedBox(width: 3),
+          const Icon(Icons.analytics_outlined, size: 10, color: AppColors.parcelsChipBlueText),
+          const SizedBox(width: AppSpacing.xxsPlus),
           Text(
             '$count ${count == 1 ? 'diagnóstico' : 'diagnósticos'}',
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: _chipBlueText,
+              color: AppColors.parcelsChipBlueText,
             ),
           ),
         ],
@@ -793,29 +779,29 @@ class _ParcelsView extends StatelessWidget {
       case 'Alerta':
         return _StatusColors(
           border: AppColors.burntOrange,
-          chipBg: _chipAlertBg,
-          chipText: _chipAlertText,
+          chipBg: AppColors.parcelsChipAlertBg,
+          chipText: AppColors.parcelsChipAlertText,
           icon: Icons.warning_amber_rounded,
         );
       case 'Seguimiento':
         return _StatusColors(
           border: AppColors.warmAmber,
-          chipBg: _chipFollowBg,
-          chipText: _chipFollowText,
+          chipBg: AppColors.parcelsChipFollowBg,
+          chipText: AppColors.parcelsChipFollowText,
           icon: Icons.visibility_outlined,
         );
       case 'Saludable':
         return _StatusColors(
           border: AppColors.forestGreen,
-          chipBg: _chipGreenBg,
-          chipText: _chipGreenText,
+          chipBg: AppColors.parcelsChipGreenBg,
+          chipText: AppColors.parcelsChipGreenText,
           icon: Icons.check_circle_outline_rounded,
         );
       default: // 'Sin diagnostico' y cualquier otro
         return _StatusColors(
-          border: _borderLight,
-          chipBg: const Color(0xFFF0F2F5),
-          chipText: _textSecondary,
+          border: AppColors.parcelsBorderLight,
+          chipBg: AppColors.parcelsNeutralChipBg,
+          chipText: AppColors.parcelsTextSecondary,
           icon: Icons.radio_button_unchecked_outlined,
         );
     }
@@ -823,8 +809,9 @@ class _ParcelsView extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inDays >= 1)
+    if (diff.inDays >= 1) {
       return 'hace ${diff.inDays} dia${diff.inDays > 1 ? 's' : ''}';
+    }
     if (diff.inHours >= 1) return 'hace ${diff.inHours} h';
     return 'hace un momento';
   }

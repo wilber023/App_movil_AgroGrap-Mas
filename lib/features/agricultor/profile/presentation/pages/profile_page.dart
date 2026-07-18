@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../login/auth/domain/entities/user_entity.dart';
 import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
@@ -47,15 +49,15 @@ class _ProfileScaffold extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xxlPlus),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildUserHeader(context, user),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
 
             _buildSectionTitle('MI CUENTA'),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             _buildListTile(
               title: 'Editar datos personales',
               icon: Icons.person_outline_rounded,
@@ -75,10 +77,10 @@ class _ProfileScaffold extends StatelessWidget {
               onTap: () => Navigator.push(context, EpidemiologicalMapPage.route()),
             ),
             _buildOfflineCard(context),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
 
             _buildSectionTitle('SUSCRIPCIÓN'),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             _buildListTile(
               title: 'Mi plan actual: Free',
               icon: Icons.workspace_premium_outlined,
@@ -103,19 +105,19 @@ class _ProfileScaffold extends StatelessWidget {
               textColor: AppColors.error,
               iconColor: AppColors.error,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
 
             _buildSectionTitle('LEGAL Y PRIVACIDAD'),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             _buildExternalLinkTile('Política de privacidad'),
             _buildExternalLinkTile('Términos de uso'),
             _buildExternalLinkTile('Cómo manejamos tus datos'),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
 
             _buildSectionTitle('ZONA DE PELIGRO'),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             _buildDangerZone(context),
-            const SizedBox(height: 40),
+            const SizedBox(height: AppSpacing.xgiant),
           ],
         ),
       ),
@@ -137,10 +139,10 @@ class _ProfileScaffold extends StatelessWidget {
     final displaySub = user.email ?? user.phone ?? 'Agricultor';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
         color: AppColors.statusHealthyBg.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -151,13 +153,13 @@ class _ProfileScaffold extends StatelessWidget {
             child: Text(
               initials,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.onPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.xxlPlus),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,20 +171,20 @@ class _ProfileScaffold extends StatelessWidget {
                     fontSize: 17,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   displaySub,
                   style: AppTypography.etiquetaSm.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.lgXl),
                     border: Border.all(
                         color: AppColors.outlineVariant, width: 0.5),
                   ),
@@ -226,7 +228,7 @@ class _ProfileScaffold extends StatelessWidget {
 
         return ListTile(
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxs),
           leading: Container(
             width: 40,
             height: 40,
@@ -234,7 +236,7 @@ class _ProfileScaffold extends StatelessWidget {
               color: isEnabled
                   ? AppColors.forestGreen.withValues(alpha: 0.15)
                   : AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Icon(
               Icons.cloud_off_rounded,
@@ -274,7 +276,7 @@ class _ProfileScaffold extends StatelessWidget {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      padding: const EdgeInsets.only(left: AppSpacing.md, bottom: AppSpacing.xs),
       child: Text(
         title,
         style: AppTypography.labelMd.copyWith(
@@ -296,7 +298,7 @@ class _ProfileScaffold extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.none),
       leading: Icon(icon, color: iconColor, size: 24),
       title: Text(
         title,
@@ -318,7 +320,7 @@ class _ProfileScaffold extends StatelessWidget {
 
   Widget _buildExternalLinkTile(String title) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.none),
       title: Text(
         title,
         style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
@@ -333,7 +335,7 @@ class _ProfileScaffold extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.errorContainer.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border:
             Border.all(color: AppColors.error.withValues(alpha: 0.5), width: 1),
       ),
@@ -341,7 +343,7 @@ class _ProfileScaffold extends StatelessWidget {
         children: [
           ListTile(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xs),
             leading: const Icon(Icons.logout_rounded, color: AppColors.error),
             title: Text(
               'Cerrar sesión',
@@ -352,7 +354,7 @@ class _ProfileScaffold extends StatelessWidget {
           const Divider(height: 1, color: AppColors.outlineVariant),
           ListTile(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xs),
             leading:
                 const Icon(Icons.delete_outline_rounded, color: AppColors.error),
             title: Text(

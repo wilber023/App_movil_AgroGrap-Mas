@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/alerta_epidemiologica_entity.dart';
 import '../pages/epidemiological_map_page.dart';
@@ -19,10 +21,10 @@ class EpidemiologicalAlertBanner extends StatelessWidget {
     if (alerta == null) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1EE),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.alertBannerBg,
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.25), width: 1),
       ),
       child: Column(
@@ -31,7 +33,7 @@ class EpidemiologicalAlertBanner extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'ALERTA EPIDEMIOLÓGICA · ${alerta.estado}',
@@ -44,12 +46,12 @@ class EpidemiologicalAlertBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             alerta.mensaje,
             style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -59,7 +61,9 @@ class EpidemiologicalAlertBanner extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.error),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
+                ),
               ),
             ),
           ),

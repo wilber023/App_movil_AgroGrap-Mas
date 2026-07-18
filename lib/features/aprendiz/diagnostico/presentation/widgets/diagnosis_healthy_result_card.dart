@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -15,7 +16,7 @@ class DiagnosisHealthyResultCard extends StatelessWidget {
     return DiagnosisResultCard(
       color: AppColors.aMint,
       borderColor: AppColors.aSecondaryContainer,
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxhuge, horizontal: AppSpacing.huge),
       child: Column(
         children: [
           Container(
@@ -24,13 +25,13 @@ class DiagnosisHealthyResultCard extends StatelessWidget {
             decoration: const BoxDecoration(color: AppColors.aSecondaryContainer, shape: BoxShape.circle),
             child: const Icon(Icons.check_circle_outline, color: AppColors.aSecondary, size: 34),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           Text(
             '¡Tu cultivo está sano!',
             style: AppTypography.agendaTitle.copyWith(fontSize: 21, color: AppColors.aSecondary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'No encontramos señales de enfermedad. Sigue cuidando tu cultivo como hasta ahora.',
             style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.5),

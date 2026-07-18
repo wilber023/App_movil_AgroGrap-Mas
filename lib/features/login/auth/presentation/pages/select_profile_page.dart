@@ -10,6 +10,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/profile_type.dart';
 import '../bloc/auth_bloc.dart';
@@ -31,56 +33,56 @@ class SelectProfilePage extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge),
             child: Column(
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: AppSpacing.xgiantPlus),
                 // Logo y titulo
                 _buildHeader(),
-                const SizedBox(height: 40),
+                const SizedBox(height: AppSpacing.xgiant),
                 // Pregunta
                 Text(
                   '¿Cómo quieres usar la app?',
                   style: AppTypography.headlineMd.copyWith(
-                    color: const Color(0xFF1B2D27),
+                    color: AppColors.authHeaderTitle,
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   'Puedes cambiar esto después desde tu perfil.',
                   style: AppTypography.etiquetaSm.copyWith(
-                    color: const Color(0xFF6B8F71),
+                    color: AppColors.authMutedSage,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.giant),
                 // Tarjeta Agricultor
                 _ProfileSelectorCard(
                   icon: Icons.agriculture_outlined,
-                  iconColor: const Color(0xFF2E7D32),
+                  iconColor: AppColors.authAgricultorAccent,
                   title: 'Agricultor',
                   description:
                       'Ya tengo parcelas y quiero diagnosticar problemas en mis cultivos.',
                   onTap: () => _navigateToRegister(context, ProfileType.agricultor),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSpacing.xxl),
                 // Tarjeta Aprendiz Agricola
                 _ProfileSelectorCard(
                   icon: Icons.spa_outlined,
-                  iconColor: const Color(0xFFF4A261),
+                  iconColor: AppColors.warmAmber,
                   title: 'Aprendiz Agrícola',
                   description:
                       'Estoy empezando y quiero que la app me guíe paso a paso.',
                   onTap: () =>
                       _navigateToRegister(context, ProfileType.aprendizAgricola),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: AppSpacing.xgiant),
                 // Link a login
                 _buildLoginLink(context),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.giant),
               ],
             ),
           ),
@@ -105,7 +107,7 @@ class SelectProfilePage extends StatelessWidget {
             color: AppColors.forestGreen,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.xxlPlus),
         Text(
           'AgroGraph-MAS',
           style: AppTypography.headlineMd.copyWith(
@@ -142,11 +144,11 @@ class SelectProfilePage extends StatelessWidget {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: RichText(
           text: TextSpan(
             style: AppTypography.etiquetaSm.copyWith(
-              color: const Color(0xFF6B8F71),
+              color: AppColors.authMutedSage,
               fontSize: 13,
             ),
             children: [
@@ -154,7 +156,7 @@ class SelectProfilePage extends StatelessWidget {
               TextSpan(
                 text: 'Iniciar sesión',
                 style: AppTypography.labelMd.copyWith(
-                  color: const Color(0xFF2E7D32),
+                  color: AppColors.authAgricultorAccent,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -189,16 +191,16 @@ class _ProfileSelectorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      color: AppColors.onPrimary,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.xxlPlus),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
               color: AppColors.cardBorder,
               width: 0.5,
@@ -212,11 +214,11 @@ class _ProfileSelectorCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 ),
                 child: Icon(icon, color: iconColor, size: 24),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.xxl),
               // Texto
               Expanded(
                 child: Column(
@@ -225,27 +227,27 @@ class _ProfileSelectorCard extends StatelessWidget {
                     Text(
                       title,
                       style: AppTypography.labelMd.copyWith(
-                        color: const Color(0xFF1B2D27),
+                        color: AppColors.authHeaderTitle,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       description,
                       style: AppTypography.etiquetaSm.copyWith(
-                        color: const Color(0xFF6B8F71),
+                        color: AppColors.authMutedSage,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               // Chevron
               const Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFFADB5BD),
+                color: AppColors.offlineGrey,
                 size: 24,
               ),
             ],

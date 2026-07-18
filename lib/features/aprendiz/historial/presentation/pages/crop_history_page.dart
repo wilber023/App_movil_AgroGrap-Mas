@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/crop_event_entity.dart';
 import '../bloc/crop_history_bloc.dart';
 
@@ -47,21 +49,21 @@ class _CropHistoryView extends StatelessWidget {
             Container(
               height: 56,
               color: AppColors.aPrimaryContainer,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.onPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(
                     child: Text(
                       'Mi historial',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: AppColors.onPrimary, fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  const SizedBox(width: AppSpacing.xgiantPlus),
                 ],
               ),
             ),
@@ -88,9 +90,9 @@ class _CropHistoryView extends StatelessWidget {
                             decoration: const BoxDecoration(color: AppColors.aSurfaceContainer, shape: BoxShape.circle),
                             child: const Icon(Icons.history_outlined, size: 36, color: AppColors.aOnSurfaceVariant),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.xxlPlus),
                           const Text('Sin eventos aún', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.aOnSurface)),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.md),
                           const Text('Aquí verás el historial de tu cultivo.', style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant)),
                         ],
                       ),
@@ -120,12 +122,17 @@ class _HistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.colossal,
+      ),
       itemCount: events.length + 1, // +1 for subtitle header
       itemBuilder: (context, index) {
         if (index == 0) {
           return const Padding(
-            padding: EdgeInsets.only(bottom: 16),
+            padding: EdgeInsets.only(bottom: AppSpacing.xxlPlus),
             child: Text(
               'Generado automáticamente con tu actividad.',
               style: TextStyle(fontSize: 13, color: AppColors.aOnSurfaceVariant),
@@ -154,15 +161,15 @@ class _HistoryRow extends StatelessWidget {
     final iconBg = _iconBg(event.type);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       decoration: BoxDecoration(
         color: isCritical ? AppColors.aDiseaseCardBg : AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
         border: Border.all(
           color: isCritical ? AppColors.aDiseaseCardBorder : AppColors.aOutlineVariant,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xl),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -171,7 +178,7 @@ class _HistoryRow extends StatelessWidget {
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(event.type.icon, color: iconColor, size: 16),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +193,7 @@ class _HistoryRow extends StatelessWidget {
                 ),
                 if (event.description.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: AppSpacing.xxs),
                     child: Text(
                       event.description,
                       style: TextStyle(
@@ -200,7 +207,7 @@ class _HistoryRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
           Text(
             dateStr,
             style: const TextStyle(
@@ -217,7 +224,7 @@ class _HistoryRow extends StatelessWidget {
   Color _iconBg(CropEventType type) => switch (type) {
     CropEventType.siembra || CropEventType.inspeccionSinPatologia || CropEventType.mejoraObservada =>
       AppColors.aSecondaryContainer,
-    CropEventType.fertilizacion => const Color(0xFFBBDEFB),
+    CropEventType.fertilizacion => AppColors.aFertilizerBg,
     CropEventType.deteccionEnfermedad => AppColors.errorContainer,
     CropEventType.tratamientoAplicado => AppColors.aTertiaryFixed,
     CropEventType.actividadPospuesta => AppColors.aSurfaceContainerHigh,
@@ -226,7 +233,7 @@ class _HistoryRow extends StatelessWidget {
   Color _iconColor(CropEventType type) => switch (type) {
     CropEventType.siembra || CropEventType.inspeccionSinPatologia || CropEventType.mejoraObservada =>
       AppColors.aSecondary,
-    CropEventType.fertilizacion => const Color(0xFF1565C0),
+    CropEventType.fertilizacion => AppColors.aFertilizerIcon,
     CropEventType.deteccionEnfermedad => AppColors.error,
     CropEventType.tratamientoAplicado => AppColors.aOnTertiaryFixedVariant,
     CropEventType.actividadPospuesta => AppColors.aOnSurfaceVariant,

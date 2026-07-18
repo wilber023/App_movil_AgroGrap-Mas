@@ -10,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/network/network_info.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../treatment/domain/usecases/treatment_usecases.dart';
 import '../../../../offline_knowledge/domain/cultivo_slug.dart';
@@ -28,16 +30,6 @@ import '../../../treatment/presentation/bloc/treatment_bloc.dart';
 // Paleta de colores
 // =============================================================================
 
-const Color _bg = Color(0xFFF5F7F2);
-const Color _textPrimary = Color(0xFF1B2D27);
-const Color _textSecondary = Color(0xFF6B8F71);
-const Color _track = Color(0xFFE2EBE6);
-const Color _chipAmberBg = Color(0xFFFFF3E0);
-const Color _chipAmberTxt = Color(0xFF7B4A10);
-const Color _riskHigh = Color(0xFFD32F2F);
-const Color _riskMed = Color(0xFFF57C00);
-const Color _riskLow = Color(0xFF388E3C);
-const Color _metricBlue = Color(0xFF1565C0);
 
 // =============================================================================
 // Punto de entrada: inyecta cubits y pasa a la vista con estado
@@ -176,22 +168,22 @@ class _ResultViewState extends State<_ResultView> {
                   'a tu agenda agronómica?',
           style: GoogleFonts.inter(fontSize: 13),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'No agregar',
-              style: GoogleFonts.inter(color: Colors.grey),
+              style: GoogleFonts.inter(color: AppColors.grey),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.forestGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onPrimary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               elevation: 0,
             ),
@@ -235,7 +227,7 @@ class _ResultViewState extends State<_ResultView> {
           content: Text(treatmentState.message, style: GoogleFonts.inter()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
         ),
       );
       return;
@@ -252,7 +244,7 @@ class _ResultViewState extends State<_ResultView> {
         backgroundColor: AppColors.forestGreen,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
       ),
     );
   }
@@ -266,7 +258,7 @@ class _ResultViewState extends State<_ResultView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: _bg,
+        backgroundColor: AppColors.diagnosisBg,
         body: BlocListener<LlmDiagnosisCubit, LlmDiagnosisState>(
           listener: (context, state) {
             if (state is LlmDiagnosisLoaded) {
@@ -291,13 +283,13 @@ class _ResultViewState extends State<_ResultView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.xxlPlus),
                     _buildSummaryCard(context),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xl),
                     _buildInfectionBar(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xl),
                     _buildRecommendationsSection(context),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xl),
                     if (widget.diagnosis.statusLabel != 'Saludable')
                       BlocBuilder<LlmDiagnosisCubit, LlmDiagnosisState>(
                         builder: (context, state) {
@@ -307,13 +299,13 @@ class _ResultViewState extends State<_ResultView> {
                           return Column(
                             children: [
                               _buildAgendaButton(),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.xl),
                             ],
                           );
                         },
                       ),
                     _buildProductsSection(context),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppSpacing.xgiant),
                   ],
                 ),
               ),
@@ -336,11 +328,11 @@ class _ResultViewState extends State<_ResultView> {
       expandedHeight: 290,
       pinned: true,
       stretch: true,
-      backgroundColor: const Color(0xFF0B1F18),
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.diagnosisCameraGradientStart,
+      foregroundColor: AppColors.onPrimary,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: const Icon(Icons.arrow_back, color: AppColors.onPrimary),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -348,7 +340,7 @@ class _ResultViewState extends State<_ResultView> {
         style: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: Colors.white,
+          color: AppColors.onPrimary,
         ),
         overflow: TextOverflow.ellipsis,
       ),
@@ -365,7 +357,7 @@ class _ResultViewState extends State<_ResultView> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF0B1F18), Color(0xFF1B3A2A)],
+                        colors: [AppColors.diagnosisCameraGradientStart, AppColors.diagnosisHeroGradientEnd],
                       ),
                     ),
                   ),
@@ -375,18 +367,18 @@ class _ResultViewState extends State<_ResultView> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0x77000000), Color(0xCC000000)],
+                  colors: [AppColors.diagnosisHeroOverlayStart, AppColors.diagnosisHeroOverlayEnd],
                   stops: [0.0, 1.0],
                 ),
               ),
             ),
             // Contenido sobre la imagen
             Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
+              bottom: AppSpacing.none,
+              left: AppSpacing.none,
+              right: AppSpacing.none,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 22),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.none, AppSpacing.xxlPlus, AppSpacing.hugePlus),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -394,12 +386,12 @@ class _ResultViewState extends State<_ResultView> {
                     // Badge "Diagnóstico completado"
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B7A3C).withValues(alpha: 0.88),
-                        borderRadius: BorderRadius.circular(20),
+                        color: AppColors.diagnosisCompletedBadge.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -407,37 +399,37 @@ class _ResultViewState extends State<_ResultView> {
                           Icon(
                             Icons.check_circle_outline,
                             size: 12,
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                           ),
-                          SizedBox(width: 5),
+                          SizedBox(width: AppSpacing.xsPlus),
                           Text(
                             'Diagnóstico completado',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white,
+                              color: AppColors.onPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.lg),
                     // Nombre de la enfermedad
                     Text(
                       widget.diagnosis.diseaseName,
                       style: GoogleFonts.inter(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.lg),
                     // Chips de cultivo + confianza
                     Row(
                       children: [
                         _heroChip('🌱 ${widget.diagnosis.cropName}'),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.md),
                         _heroChip(
                           'Alta confianza '
                           '${(widget.diagnosis.confidence * 100).toInt()}%',
@@ -455,18 +447,18 @@ class _ResultViewState extends State<_ResultView> {
   }
 
   Widget _heroChip(String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(20),
+      color: AppColors.onPrimary.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.28),
+        color: AppColors.onPrimary.withValues(alpha: 0.28),
         width: 0.5,
       ),
     ),
     child: Text(
       label,
-      style: GoogleFonts.inter(fontSize: 11, color: Colors.white),
+      style: GoogleFonts.inter(fontSize: 11, color: AppColors.onPrimary),
     ),
   );
 
@@ -479,14 +471,14 @@ class _ResultViewState extends State<_ResultView> {
     final isHealthy = widget.diagnosis.statusLabel == 'Saludable';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _track, width: 0.5),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
+        border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: AppColors.black.withValues(alpha: 0.07),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -497,7 +489,7 @@ class _ResultViewState extends State<_ResultView> {
         children: [
           // ── Encabezado con gradiente verde ──────────────────────────────
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxl, AppSpacing.xxlPlus, AppSpacing.xxl),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -508,7 +500,7 @@ class _ResultViewState extends State<_ResultView> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+                top: Radius.circular(AppRadius.xxlPlus),
               ),
             ),
             child: Row(
@@ -526,7 +518,7 @@ class _ResultViewState extends State<_ResultView> {
                     color: AppColors.forestGreen,
                   ),
                 ),
-                const SizedBox(width: 11),
+                const SizedBox(width: AppSpacing.lgXl),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -535,14 +527,14 @@ class _ResultViewState extends State<_ResultView> {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: _textPrimary,
+                        color: AppColors.parcelsTextPrimary,
                       ),
                     ),
                     Text(
                       'Análisis generado por IA agrícola',
                       style: GoogleFonts.inter(
                         fontSize: 10,
-                        color: _textSecondary,
+                        color: AppColors.parcelsTextSecondary,
                       ),
                     ),
                   ],
@@ -550,28 +542,28 @@ class _ResultViewState extends State<_ResultView> {
               ],
             ),
           ),
-          Container(height: 0.5, color: _track),
+          Container(height: 0.5, color: AppColors.parcelsTrackGrey),
           // ── Cuerpo: offline u online ─────────────────────────────────────
           BlocBuilder<OfflineKnowledgeCubit, OfflineKnowledgeState>(
             builder: (context, offlineState) {
               if (offlineState is OfflineKnowledgeLoaded) {
                 return Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.xxlPlus),
                   child: DiagnosisDetailView(detail: offlineState.detail),
                 );
               }
               return _buildLlmBody(context);
             },
           ),
-          Container(height: 0.5, color: _track),
+          Container(height: 0.5, color: AppColors.parcelsTrackGrey),
           // ── Métricas ─────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpacing.xxl),
             child: _buildMetricTiles(conf, isHealthy),
           ),
           // ── Top-K colapsable ─────────────────────────────────────────────
           if (widget.diagnosis.topK.length > 1) ...[
-            Container(height: 0.5, color: _track),
+            Container(height: 0.5, color: AppColors.parcelsTrackGrey),
             _buildTopKCollapsed(),
           ],
         ],
@@ -584,7 +576,7 @@ class _ResultViewState extends State<_ResultView> {
       builder: (context, state) {
         if (state is LlmDiagnosisIdle || state is LlmDiagnosisLoading) {
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.xxlPlus),
             child: Row(
               children: [
                 const SizedBox(
@@ -595,10 +587,10 @@ class _ResultViewState extends State<_ResultView> {
                     strokeWidth: 2,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.lg),
                 Text(
                   'Generando análisis IA...',
-                  style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
                 ),
               ],
             ),
@@ -606,21 +598,21 @@ class _ResultViewState extends State<_ResultView> {
         }
         if (state is LlmDiagnosisError) {
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.xxlPlus),
             child: Row(
               children: [
                 const Icon(
                   Icons.wifi_off_outlined,
                   size: 16,
-                  color: _textSecondary,
+                  color: AppColors.parcelsTextSecondary,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     state.message,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: _textSecondary,
+                      color: AppColors.parcelsTextSecondary,
                     ),
                   ),
                 ),
@@ -632,7 +624,7 @@ class _ResultViewState extends State<_ResultView> {
                   ),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.forestGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   ),
                   child: Text(
                     'Reintentar',
@@ -653,19 +645,19 @@ class _ResultViewState extends State<_ResultView> {
 
   Widget _buildSummaryBody(LlmResponseEntity r) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.xxl, AppSpacing.xxl, AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Avisos (ámbar) ────────────────────────────────────────────
           if (r.avisos.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color: _chipAmberBg,
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.parcelsChipFollowBg,
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 border: Border.all(
-                  color: const Color(0xFFFFCC80),
+                  color: AppColors.diagnosisAmberBorder,
                   width: 0.8,
                 ),
               ),
@@ -675,15 +667,15 @@ class _ResultViewState extends State<_ResultView> {
                   const Icon(
                     Icons.warning_amber_rounded,
                     size: 14,
-                    color: Color(0xFF7B4A10),
+                    color: AppColors.parcelsChipFollowText,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       r.avisos.join('\n'),
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: _chipAmberTxt,
+                        color: AppColors.parcelsChipFollowText,
                         height: 1.4,
                       ),
                     ),
@@ -691,7 +683,7 @@ class _ResultViewState extends State<_ResultView> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
           ],
           // ── Texto diagnóstico IA ───────────────────────────────────────
           // Border con colores no uniformes + borderRadius no es válido en
@@ -702,8 +694,8 @@ class _ResultViewState extends State<_ResultView> {
             Container(
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F8F4),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.diagnosisAnalysisCardBg,
+                borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 border: Border.all(
                   color: AppColors.forestGreen.withValues(alpha: 0.18),
                   width: 0.8,
@@ -713,13 +705,13 @@ class _ResultViewState extends State<_ResultView> {
                 children: [
                   // Acento izquierdo (reemplaza el left border de color sólido)
                   Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: Container(width: 3, color: AppColors.forestGreen),
+                    left: AppSpacing.none,
+                    top: AppSpacing.none,
+                    bottom: AppSpacing.none,
+                    child: Container(width: AppSpacing.xxsPlus, color: AppColors.forestGreen),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(15, 12, 12, 12),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.xxlMid, AppSpacing.xl, AppSpacing.xl, AppSpacing.xl),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -731,7 +723,7 @@ class _ResultViewState extends State<_ResultView> {
                               size: 13,
                               color: AppColors.forestGreen,
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: AppSpacing.xsPlus),
                             Text(
                               'Análisis IA',
                               style: GoogleFonts.inter(
@@ -743,7 +735,7 @@ class _ResultViewState extends State<_ResultView> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         // Texto expandible
                         Text(
                           r.diagnostico,
@@ -755,25 +747,25 @@ class _ResultViewState extends State<_ResultView> {
                               : TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
-                            color: _textPrimary,
+                            color: AppColors.parcelsTextPrimary,
                             height: 1.6,
                           ),
                         ),
                         // Botón "Ver más / Ver menos"
                         if (r.diagnostico.length > _diagnosticoCollapseThreshold) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: AppSpacing.lg),
                           GestureDetector(
                             onTap: () => setState(
                               () => _diagnosticoExpanded = !_diagnosticoExpanded,
                             ),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 11,
-                                vertical: 5,
+                                horizontal: AppSpacing.lgXl,
+                                vertical: AppSpacing.xsPlus,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.forestGreen.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -786,7 +778,7 @@ class _ResultViewState extends State<_ResultView> {
                                       color: AppColors.forestGreen,
                                     ),
                                   ),
-                                  const SizedBox(width: 3),
+                                  const SizedBox(width: AppSpacing.xxsPlus),
                                   Icon(
                                     _diagnosticoExpanded
                                         ? Icons.keyboard_arrow_up_rounded
@@ -822,24 +814,24 @@ class _ResultViewState extends State<_ResultView> {
 
     if (isHealthy) {
       riskLabel = 'Bajo';
-      riskColor = _riskLow;
+      riskColor = AppColors.diagnosisRiskLow;
       gravLabel = 'Leve';
-      gravColor = _riskLow;
+      gravColor = AppColors.diagnosisRiskLow;
     } else if (conf >= 0.85) {
       riskLabel = 'Alto';
-      riskColor = _riskHigh;
+      riskColor = AppColors.diagnosisRiskHigh;
       gravLabel = 'Severa';
-      gravColor = _riskHigh;
+      gravColor = AppColors.diagnosisRiskHigh;
     } else if (conf >= 0.65) {
       riskLabel = 'Moderado';
-      riskColor = _riskMed;
+      riskColor = AppColors.diagnosisRiskMed;
       gravLabel = 'Moderada';
       gravColor = AppColors.forestGreen;
     } else {
       riskLabel = 'Bajo';
-      riskColor = _riskLow;
+      riskColor = AppColors.diagnosisRiskLow;
       gravLabel = 'Leve';
-      gravColor = _riskLow;
+      gravColor = AppColors.diagnosisRiskLow;
     }
 
     // Row simple (sin IntrinsicHeight/stretch): cada tarjeta crece segun su
@@ -861,7 +853,7 @@ class _ResultViewState extends State<_ResultView> {
             sub: isHealthy ? 'Sin enfermedad' : 'Condiciones favorables',
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _metricTile(
             icon: Icons.waves_outlined,
@@ -872,13 +864,13 @@ class _ResultViewState extends State<_ResultView> {
             sub: 'Manchas visibles\nen hojas',
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _metricTile(
             icon: Icons.diamond_outlined,
-            iconColor: _metricBlue,
+            iconColor: AppColors.diagnosisMetricBlue,
             value: '${(conf * 100).toInt()}%',
-            valueColor: _metricBlue,
+            valueColor: AppColors.diagnosisMetricBlue,
             label: 'Confianza IA',
             sub: 'Análisis basado\nen modelo',
           ),
@@ -896,14 +888,14 @@ class _ResultViewState extends State<_ResultView> {
     required String sub,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _track, width: 0.8),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.onPrimary,
+        border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.8),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -913,7 +905,7 @@ class _ResultViewState extends State<_ResultView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: iconColor),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             value,
             maxLines: 2,
@@ -924,7 +916,7 @@ class _ResultViewState extends State<_ResultView> {
               color: valueColor,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             label,
             maxLines: 1,
@@ -932,15 +924,15 @@ class _ResultViewState extends State<_ResultView> {
             style: GoogleFonts.inter(
               fontSize: 9,
               fontWeight: FontWeight.w600,
-              color: _textSecondary,
+              color: AppColors.parcelsTextSecondary,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             sub,
             style: GoogleFonts.inter(
               fontSize: 8,
-              color: _textSecondary.withValues(alpha: 0.75),
+              color: AppColors.parcelsTextSecondary.withValues(alpha: 0.75),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -958,20 +950,20 @@ class _ResultViewState extends State<_ResultView> {
     final others = widget.diagnosis.topK.skip(1).toList();
     if (others.isEmpty) return const SizedBox.shrink();
     return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.none),
+        childrenPadding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.none, AppSpacing.xxlPlus, AppSpacing.xl),
         title: Text(
           'Otras predicciones del modelo (${others.length})',
           style: GoogleFonts.inter(
             fontSize: 11,
-            color: _textSecondary,
+            color: AppColors.parcelsTextSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
-        iconColor: _textSecondary,
-        collapsedIconColor: _textSecondary,
+        iconColor: AppColors.parcelsTextSecondary,
+        collapsedIconColor: AppColors.parcelsTextSecondary,
         children: others.map(_buildTopKRow).toList(),
       ),
     );
@@ -980,7 +972,7 @@ class _ResultViewState extends State<_ResultView> {
   Widget _buildTopKRow(TopKPrediction p) {
     final pct = (p.confidence * 100).toStringAsFixed(1);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -990,7 +982,7 @@ class _ResultViewState extends State<_ResultView> {
               Expanded(
                 child: Text(
                   '${p.cropName} · ${p.diseaseName}',
-                  style: GoogleFonts.inter(fontSize: 11, color: _textPrimary),
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.parcelsTextPrimary),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -998,22 +990,22 @@ class _ResultViewState extends State<_ResultView> {
                 '$pct%',
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: _textSecondary,
+                  color: AppColors.parcelsTextSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: AppSpacing.xxsPlus),
           ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: SizedBox(
               height: 4,
               child: LinearProgressIndicator(
                 value: p.confidence.clamp(0.0, 1.0),
-                backgroundColor: _track,
+                backgroundColor: AppColors.parcelsTrackGrey,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  _textSecondary.withValues(alpha: 0.45),
+                  AppColors.parcelsTextSecondary.withValues(alpha: 0.45),
                 ),
               ),
             ),
@@ -1043,12 +1035,12 @@ class _ResultViewState extends State<_ResultView> {
         : 3;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _track, width: 0.5),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
+        border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1058,10 +1050,10 @@ class _ResultViewState extends State<_ResultView> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: _textPrimary,
+              color: AppColors.parcelsTextPrimary,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -1073,13 +1065,13 @@ class _ResultViewState extends State<_ResultView> {
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       gradient: const LinearGradient(
                         colors: [
-                          Color(0xFF4CAF50),
-                          Color(0xFFFFC107),
-                          Color(0xFFFF5722),
-                          Color(0xFFD32F2F),
+                          AppColors.diagnosisInfectionGreen,
+                          AppColors.diagnosisInfectionYellow,
+                          AppColors.diagnosisInfectionOrange,
+                          AppColors.diagnosisRiskHigh,
                         ],
                       ),
                     ),
@@ -1093,14 +1085,14 @@ class _ResultViewState extends State<_ResultView> {
                       height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                         border: Border.all(
-                          color: const Color(0xFFF57C00),
+                          color: AppColors.diagnosisRiskMed,
                           width: 2.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
+                            color: AppColors.black.withValues(alpha: 0.12),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
                           ),
@@ -1112,7 +1104,7 @@ class _ResultViewState extends State<_ResultView> {
               );
             },
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           // Etiquetas
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1124,8 +1116,8 @@ class _ResultViewState extends State<_ResultView> {
                   fontSize: 9,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                   color: isActive
-                      ? _riskHigh
-                      : _textSecondary.withValues(alpha: 0.65),
+                      ? AppColors.diagnosisRiskHigh
+                      : AppColors.parcelsTextSecondary.withValues(alpha: 0.65),
                 ),
               );
             }),
@@ -1152,12 +1144,12 @@ class _ResultViewState extends State<_ResultView> {
         final items = _parseLines(state.response.prevencion);
         if (items.isEmpty) return const SizedBox.shrink();
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+          padding: const EdgeInsets.all(AppSpacing.xxlPlus),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _track, width: 0.5),
+            color: AppColors.onPrimary,
+            borderRadius: BorderRadius.circular(AppRadius.xlPlus),
+            border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1169,39 +1161,39 @@ class _ResultViewState extends State<_ResultView> {
                     size: 16,
                     color: AppColors.forestGreen,
                   ),
-                  SizedBox(width: 8),
+                  SizedBox(width: AppSpacing.md),
                   Text(
                     'Recomendaciones generales',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: _textPrimary,
+                      color: AppColors.parcelsTextPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.xxl),
               ...items.map(
                 (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Padding(
-                        padding: EdgeInsets.only(top: 1),
+                        padding: EdgeInsets.only(top: AppSpacing.hairline),
                         child: Icon(
                           Icons.check_rounded,
                           size: 15,
                           color: AppColors.forestGreen,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Text(
                           item,
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: _textPrimary,
+                            color: AppColors.parcelsTextPrimary,
                             height: 1.45,
                           ),
                         ),
@@ -1223,7 +1215,7 @@ class _ResultViewState extends State<_ResultView> {
 
   Widget _buildAgendaButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       child: SizedBox(
         width: double.infinity,
         child: _isAddedToAgenda
@@ -1241,9 +1233,9 @@ class _ResultViewState extends State<_ResultView> {
                     color: AppColors.forestGreen,
                     width: 0.8,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xlPlus),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.mdLg),
                   ),
                 ),
               )
@@ -1259,10 +1251,10 @@ class _ResultViewState extends State<_ResultView> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.forestGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  foregroundColor: AppColors.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xlPlus),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.mdLg),
                   ),
                   elevation: 0,
                 ),
@@ -1287,14 +1279,14 @@ class _ResultViewState extends State<_ResultView> {
         if (state is ProductRecommendationError) {
           return _buildProductsStatusCard(
             icon: Icons.warning_amber_rounded,
-            iconColor: const Color(0xFFC45E0A),
+            iconColor: AppColors.diagnosisInsecticida,
             text: 'No fue posible cargar recomendaciones.',
           );
         }
         if (state is ProductRecommendationLoaded && state.products.isEmpty) {
           return _buildProductsStatusCard(
             icon: Icons.search_off_rounded,
-            iconColor: _textSecondary,
+            iconColor: AppColors.parcelsTextSecondary,
             text: 'No se encontraron productos para esta enfermedad.',
           );
         }
@@ -1312,22 +1304,22 @@ class _ResultViewState extends State<_ResultView> {
     required String text,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xxl),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _track, width: 0.5),
+          color: AppColors.onPrimary,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
         ),
         child: Row(
           children: [
             Icon(icon, size: 18, color: iconColor),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Text(
                 text,
-                style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
               ),
             ),
           ],
@@ -1342,7 +1334,7 @@ class _ResultViewState extends State<_ResultView> {
       children: [
         // Encabezado de sección
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.none, AppSpacing.xxl, AppSpacing.xxl),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1354,15 +1346,15 @@ class _ResultViewState extends State<_ResultView> {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: _textPrimary,
+                      color: AppColors.parcelsTextPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     'Ordenados por costo-beneficio',
                     style: GoogleFonts.inter(
                       fontSize: 10,
-                      color: _textSecondary,
+                      color: AppColors.parcelsTextSecondary,
                     ),
                   ),
                 ],
@@ -1427,9 +1419,9 @@ class _ProductsSkeletonLoaderState extends State<_ProductsSkeletonLoader>
         final t = _ctrl.value;
         final grad = LinearGradient(
           colors: const [
-            Color(0xFFF2F2F2),
-            Color(0xFFE4E4E4),
-            Color(0xFFF2F2F2),
+            AppColors.diagnosisSkeletonLight,
+            AppColors.diagnosisSkeletonDark,
+            AppColors.diagnosisSkeletonLight,
           ],
           stops: [
             (t - 0.3).clamp(0.0, 1.0),
@@ -1441,18 +1433,18 @@ class _ProductsSkeletonLoaderState extends State<_ProductsSkeletonLoader>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.none, AppSpacing.xxl, AppSpacing.xxl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _sBox(160, 15, grad),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: AppSpacing.xsPlus),
                   _sBox(120, 10, grad),
                 ],
               ),
             ),
             _skeletonCard(grad),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.lg),
             _skeletonCard(grad),
           ],
         );
@@ -1462,18 +1454,18 @@ class _ProductsSkeletonLoaderState extends State<_ProductsSkeletonLoader>
 
   Widget _skeletonCard(LinearGradient grad) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _track, width: 0.5),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sBox(64, 64, grad, radius: 10),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1481,15 +1473,15 @@ class _ProductsSkeletonLoaderState extends State<_ProductsSkeletonLoader>
                 Row(
                   children: [
                     Expanded(child: _sBox(null, 13, grad)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.md),
                     _sBox(70, 13, grad),
                   ],
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: AppSpacing.xsPlus),
                 _sBox(90, 10, grad),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
                 _sBox(null, 6, grad, radius: 3),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 _sBox(100, 20, grad, radius: 4),
               ],
             ),
@@ -1521,12 +1513,12 @@ class _ProductCard extends StatelessWidget {
   final ProductEntity product;
   final int index;
 
-  static const _kFungicida = Color(0xFF1B7A3C);
-  static const _kInsecticida = Color(0xFFC45E0A);
-  static const _kHerbicida = Color(0xFF0A7A6B);
-  static const _kFertilizante = Color(0xFF1A4DB5);
-  static const _kBiologico = Color(0xFF6B1AA8);
-  static const _kOther = Color(0xFF5C5C5C);
+  static const _kFungicida = AppColors.diagnosisCompletedBadge;
+  static const _kInsecticida = AppColors.diagnosisInsecticida;
+  static const _kHerbicida = AppColors.diagnosisHerbicida;
+  static const _kFertilizante = AppColors.diagnosisFertilizante;
+  static const _kBiologico = AppColors.diagnosisBiologico;
+  static const _kOther = AppColors.diagnosisOtherProduct;
 
   Color get _typeColor => switch (product.productType?.toLowerCase()) {
     'fungicida' => _kFungicida,
@@ -1551,7 +1543,7 @@ class _ProductCard extends StatelessWidget {
     if (type == 'biológico' || type == 'biologico') {
       return (
         label: 'ECOLÓGICO',
-        color: const Color(0xFF2E7D32),
+        color: AppColors.diagnosisEcoBadge,
         desc: 'Mejora la salud del suelo y la planta.',
       );
     }
@@ -1564,7 +1556,7 @@ class _ProductCard extends StatelessWidget {
     }
     return (
       label: 'MÁS ECONÓMICO',
-      color: const Color(0xFF455A64),
+      color: AppColors.diagnosisEconomicBadge,
       desc: 'Alternativa preventiva de amplio espectro.',
     );
   }
@@ -1588,20 +1580,20 @@ class _ProductCard extends StatelessWidget {
         : null;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.none, AppSpacing.xxl, AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _track, width: 0.5),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.parcelsTrackGrey, width: 0.5),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagen del producto
             _buildImage(),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             // Contenido
             Expanded(
               child: Column(
@@ -1617,12 +1609,12 @@ class _ProductCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: _textPrimary,
+                            color: AppColors.parcelsTextPrimary,
                             height: 1.3,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         product.price,
                         style: GoogleFonts.inter(
@@ -1635,13 +1627,13 @@ class _ProductCard extends StatelessWidget {
                   ),
                   // Tipo + marca
                   if (typeStr != null) ...[
-                    const SizedBox(height: 3),
+                    const SizedBox(height: AppSpacing.xxsPlus),
                     Row(
                       children: [
                         Container(
                           width: 6,
                           height: 6,
-                          margin: const EdgeInsets.only(right: 5, top: 1),
+                          margin: const EdgeInsets.only(right: AppSpacing.xsPlus, top: AppSpacing.hairline),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: _typeColor,
@@ -1655,7 +1647,7 @@ class _ProductCard extends StatelessWidget {
                                     : ''),
                             style: GoogleFonts.inter(
                               fontSize: 10,
-                              color: _textSecondary,
+                              color: AppColors.parcelsTextSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1664,7 +1656,7 @@ class _ProductCard extends StatelessWidget {
                       ],
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.lg),
                   // Barra de eficacia
                   Row(
                     children: [
@@ -1672,7 +1664,7 @@ class _ProductCard extends StatelessWidget {
                         'Eficacia estimada',
                         style: GoogleFonts.inter(
                           fontSize: 9,
-                          color: _textSecondary,
+                          color: AppColors.parcelsTextSecondary,
                         ),
                       ),
                       const Spacer(),
@@ -1686,14 +1678,14 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(AppRadius.xsPlus),
                     child: SizedBox(
                       height: 6,
                       child: LinearProgressIndicator(
                         value: eff,
-                        backgroundColor: _track,
+                        backgroundColor: AppColors.parcelsTrackGrey,
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppColors.forestGreen,
                         ),
@@ -1702,17 +1694,17 @@ class _ProductCard extends StatelessWidget {
                   ),
                   // Badge
                   if (badge != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.md),
                     Row(
                       children: [
                         _BadgeChip(label: badge.label, color: badge.color),
-                        const SizedBox(width: 7),
+                        const SizedBox(width: AppSpacing.smMd),
                         Expanded(
                           child: Text(
                             badge.desc,
                             style: GoogleFonts.inter(
                               fontSize: 9,
-                              color: _textSecondary,
+                              color: AppColors.parcelsTextSecondary,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
@@ -1723,7 +1715,7 @@ class _ProductCard extends StatelessWidget {
                   ],
                   // Enlace
                   if (product.purchaseUrl != null) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.lg),
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
@@ -1754,8 +1746,8 @@ class _ProductCard extends StatelessWidget {
       width: sz,
       height: sz,
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F0),
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.diagnosisProductImageBg,
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
       ),
       child: const Icon(
         Icons.eco_outlined,
@@ -1767,7 +1759,7 @@ class _ProductCard extends StatelessWidget {
     if (product.imageUrl == null) return placeholder;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.mdLg),
       child: Image.network(
         product.imageUrl!,
         width: sz,
@@ -1792,10 +1784,10 @@ class _BadgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.10),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       border: Border.all(color: color.withValues(alpha: 0.30), width: 0.5),
     ),
     child: Text(

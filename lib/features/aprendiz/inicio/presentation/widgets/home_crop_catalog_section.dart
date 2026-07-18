@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/crop_catalog_item_entity.dart';
 
@@ -48,13 +50,13 @@ class HomeCropCatalogSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.xl),
         SizedBox(
           height: 104,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: catalog.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.lg),
             itemBuilder: (context, i) {
               final item = catalog[i];
               return _CropChip(item: item, onTap: () => onSelectCrop(item));
@@ -78,10 +80,10 @@ class _CropChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 84,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.xs),
         decoration: BoxDecoration(
           color: AppColors.aSurfaceContainerLowest,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: item.isActive ? AppColors.aSecondary : AppColors.aOutlineVariant,
             width: item.isActive ? 1.5 : 1,
@@ -92,7 +94,7 @@ class _CropChip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(item.emoji, style: const TextStyle(fontSize: 24, height: 1.1)),
-            const SizedBox(height: 5),
+            const SizedBox(height: AppSpacing.xsPlus),
             Text(
               item.name,
               maxLines: 1,
@@ -104,7 +106,7 @@ class _CropChip extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.xxs),
             Text(
               item.isActive ? 'En curso' : 'Disponible',
               maxLines: 1,

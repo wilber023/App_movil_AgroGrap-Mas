@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../notifications/presentation/pages/notifications_page.dart';
 
@@ -17,7 +18,7 @@ class CultivoAppBar extends StatelessWidget {
     return Container(
       color: AppColors.aPrimaryContainer,
       height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
           IconButton(
@@ -29,7 +30,7 @@ class CultivoAppBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.eco, color: AppColors.aOnPrimary, size: 20),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.md),
                 Text(
                   'AgroGraph IA',
                   style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnPrimary),

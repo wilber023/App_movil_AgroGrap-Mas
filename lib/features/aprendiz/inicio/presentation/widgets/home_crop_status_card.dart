@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/crop_status_summary_entity.dart';
 
@@ -21,10 +23,10 @@ class HomeCropStatusCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,12 +35,12 @@ class HomeCropStatusCard extends StatelessWidget {
             'Estado del cultivo',
             style: AppTypography.agendaSectionTitle.copyWith(fontSize: 15, color: AppColors.aPrimary),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Aún no tienes un cultivo registrado.',
             style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -46,8 +48,8 @@ class HomeCropStatusCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.aSecondary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
               ),
               child: Text(
                 'Registrar cultivo',

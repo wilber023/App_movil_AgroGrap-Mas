@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Area de captura de foto de la pantalla de Diagnostico. Sin foto: borde
@@ -34,14 +36,14 @@ class DiagnosisCaptureArea extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 190),
         decoration: BoxDecoration(
           color: _hasPhoto ? AppColors.aSurfaceContainerLowest : AppColors.aMint,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         ),
         child: _hasPhoto
             ? Stack(
                 alignment: Alignment.topRight,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     child: Image.file(
                       File(imagePath!),
                       height: 210,
@@ -50,7 +52,7 @@ class DiagnosisCaptureArea extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     child: GestureDetector(
                       onTap: isEnabled ? onRemove : null,
                       child: Container(
@@ -58,7 +60,7 @@ class DiagnosisCaptureArea extends StatelessWidget {
                           color: AppColors.aOnSurface.withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(AppSpacing.xsPlus),
                         child: const Icon(Icons.close, color: AppColors.aOnPrimary, size: 16),
                       ),
                     ),
@@ -68,7 +70,7 @@ class DiagnosisCaptureArea extends StatelessWidget {
             : CustomPaint(
                 painter: _DashedBorderPainter(color: AppColors.aSecondaryContainer),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.xhuge),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -81,12 +83,12 @@ class DiagnosisCaptureArea extends StatelessWidget {
                         ),
                         child: const Icon(Icons.add_a_photo_outlined, color: AppColors.aSecondary, size: 30),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppSpacing.xxl),
                       Text(
                         'Toca para tomar una foto',
                         style: AppTypography.agendaTitle.copyWith(fontSize: 18, color: AppColors.aOnSurface),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Hoja, fruto o tallo afectado',
                         style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),

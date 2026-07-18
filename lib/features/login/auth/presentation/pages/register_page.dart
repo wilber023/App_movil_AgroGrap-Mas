@@ -11,6 +11,8 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../core/security/screen_security.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/profile_type.dart';
 import '../../domain/usecases/validate_register_form_usecase.dart';
@@ -68,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: AppColors.surfaceDs2,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
@@ -82,15 +84,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.md),
                   _buildHeader(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: AppSpacing.xxhuge),
                   _buildProfileBanner(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: AppSpacing.xxhuge),
                   
                   // -- Formulario --
                   _buildTextField(
@@ -101,7 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     errorText: _validationErrors['firstName'],
                     textInputAction: TextInputAction.next,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   _buildTextField(
                     controller: _lastNameController,
@@ -111,7 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     errorText: _validationErrors['lastName'],
                     textInputAction: TextInputAction.next,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   _buildTextField(
                     controller: _usernameController,
@@ -121,7 +123,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     errorText: _validationErrors['username'],
                     textInputAction: TextInputAction.next,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   _buildPasswordField(
                     controller: _passwordController,
@@ -132,7 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
                     textInputAction: TextInputAction.next,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   _buildPasswordField(
                     controller: _confirmPasswordController,
@@ -143,7 +145,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     onToggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     textInputAction: TextInputAction.done,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.giant),
 
                   AuthPrimaryButton(
                     text: 'Crear cuenta',
@@ -151,16 +153,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     isLoading: isLoading,
                     onPressed: isLoading ? null : _onRegisterPressed,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xhuge),
 
                   _buildCrossProfileLink(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xhuge),
                   
                   _buildDivider(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xhuge),
                   
                   _buildLoginLink(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.giant),
                 ],
               ),
             ),
@@ -207,16 +209,16 @@ class _RegisterPageState extends State<RegisterPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: AppColors.onPrimary.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.check_rounded,
-                  color: Colors.white,
+                  color: AppColors.onPrimary,
                   size: 22,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.xxl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,15 +227,15 @@ class _RegisterPageState extends State<RegisterPage> {
                     Text(
                       '¡Bienvenido, $firstName!',
                       style: AppTypography.labelMd.copyWith(
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       'Cuenta creada exitosamente.',
                       style: AppTypography.etiquetaSm.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: AppColors.onPrimary.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -244,9 +246,12 @@ class _RegisterPageState extends State<RegisterPage> {
           backgroundColor: AppColors.forestGreen,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xxlPlus,
+            vertical: AppSpacing.xl,
+          ),
           duration: const Duration(seconds: 3),
           elevation: 6,
         ),
@@ -260,12 +265,12 @@ class _RegisterPageState extends State<RegisterPage> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline_rounded, color: Colors.white, size: 22),
-              const SizedBox(width: 10),
+              const Icon(Icons.error_outline_rounded, color: AppColors.onPrimary, size: 22),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Text(
                   message,
-                  style: AppTypography.labelMd.copyWith(color: Colors.white),
+                  style: AppTypography.labelMd.copyWith(color: AppColors.onPrimary),
                 ),
               ),
             ],
@@ -273,9 +278,12 @@ class _RegisterPageState extends State<RegisterPage> {
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xxlPlus,
+            vertical: AppSpacing.xl,
+          ),
           duration: const Duration(seconds: 4),
           elevation: 6,
         ),
@@ -286,12 +294,12 @@ class _RegisterPageState extends State<RegisterPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: AppColors.onPrimary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xlPlus)),
         title: Row(
           children: [
             const Icon(Icons.info_outline_rounded, color: AppColors.warmAmber),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.md),
             Text(
               'Próximamente',
               style: AppTypography.headlineMd.copyWith(fontSize: 18),
@@ -334,20 +342,20 @@ class _RegisterPageState extends State<RegisterPage> {
             size: 28,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.huge),
         Text(
           'Crea tu cuenta',
           style: AppTypography.headlineMd.copyWith(
-            color: const Color(0xFF1B2D27),
+            color: AppColors.authHeaderTitle,
             fontSize: 24,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         Text(
           'Tus datos se guardan de forma segura localmente.',
           style: AppTypography.etiquetaSm.copyWith(
-            color: const Color(0xFF6B8F71),
+            color: AppColors.authMutedSage,
           ),
         ),
       ],
@@ -356,20 +364,23 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildProfileBanner() {
     final isAgricultor = _currentProfileType == ProfileType.agricultor;
-    final color = isAgricultor ? const Color(0xFF2E7D32) : const Color(0xFFF4A261);
+    final color = isAgricultor ? AppColors.authAgricultorAccent : AppColors.warmAmber;
     final icon = isAgricultor ? Icons.agriculture_outlined : Icons.spa_outlined;
-    
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xxlPlus,
+        vertical: AppSpacing.xl,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Row(
         children: [
           Icon(icon, color: color, size: 24),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Text(
               'Registrando como: ${_currentProfileType.displayName}',
@@ -405,7 +416,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         if (errorText != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 16),
+            padding: const EdgeInsets.only(top: AppSpacing.sm, left: AppSpacing.xxlPlus),
             child: Text(
               errorText,
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.error),
@@ -437,7 +448,7 @@ class _RegisterPageState extends State<RegisterPage> {
           suffixIcon: IconButton(
             icon: Icon(
               obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-              color: const Color(0xFF6B8F71),
+              color: AppColors.authMutedSage,
               size: 22,
             ),
             onPressed: onToggleObscure,
@@ -446,7 +457,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         if (errorText != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 16),
+            padding: const EdgeInsets.only(top: AppSpacing.sm, left: AppSpacing.xxlPlus),
             child: Text(
               errorText,
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.error),
@@ -473,7 +484,7 @@ class _RegisterPageState extends State<RegisterPage> {
         child: RichText(
           text: TextSpan(
             style: AppTypography.etiquetaSm.copyWith(
-              color: const Color(0xFF6B8F71),
+              color: AppColors.authMutedSage,
               fontSize: 13,
             ),
             children: [
@@ -499,10 +510,10 @@ class _RegisterPageState extends State<RegisterPage> {
       children: [
         Expanded(child: Container(height: 0.5, color: AppColors.cardBorder)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
           child: Text(
             'o',
-            style: AppTypography.etiquetaSm.copyWith(color: const Color(0xFF6B8F71)),
+            style: AppTypography.etiquetaSm.copyWith(color: AppColors.authMutedSage),
           ),
         ),
         Expanded(child: Container(height: 0.5, color: AppColors.cardBorder)),
@@ -526,7 +537,7 @@ class _RegisterPageState extends State<RegisterPage> {
         child: RichText(
           text: TextSpan(
             style: AppTypography.etiquetaSm.copyWith(
-              color: const Color(0xFF6B8F71),
+              color: AppColors.authMutedSage,
               fontSize: 13,
             ),
             children: [

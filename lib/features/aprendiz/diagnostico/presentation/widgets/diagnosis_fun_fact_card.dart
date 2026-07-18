@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -26,7 +27,7 @@ class DiagnosisFunFactCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.school_outlined, size: 16, color: AppColors.aOnTertiaryFixedVariant),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'Aprende algo nuevo',
@@ -35,12 +36,12 @@ class DiagnosisFunFactCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '¿Sabías que...?',
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnTertiaryFixedVariant, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             fact,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnTertiaryFixedVariant, height: 1.3),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../agenda/domain/entities/agenda_activity_entity.dart';
 
@@ -51,14 +53,14 @@ class HomeTodayTasksSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.lg),
         if (tasks.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.xxlPlus),
             decoration: BoxDecoration(
               color: AppColors.aSurfaceContainerLowest,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(color: AppColors.aOutlineVariant),
             ),
             child: Text(
@@ -68,7 +70,7 @@ class HomeTodayTasksSection extends StatelessWidget {
           )
         else
           ...tasks.map((task) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: _TaskRow(
                   task: task,
                   dayLabel: _relativeDay(task.scheduledDate),
@@ -97,16 +99,19 @@ class _TaskRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xxl,
+        vertical: AppSpacing.xl,
+      ),
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
       child: Row(
         children: [
           Icon(_icon, size: 18, color: AppColors.aSecondary),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Row(
               children: [
@@ -122,12 +127,15 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
                 if (_isImportant) ...[
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.sm),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xxs,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.aWarningBg,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       'Importante',
@@ -138,12 +146,12 @@ class _TaskRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
           Text(
             dayLabel,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           const Icon(Icons.chevron_right, size: 16, color: AppColors.aOutline),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../bloc/cultivo_bloc.dart';
 
@@ -29,7 +30,7 @@ class CultivoRegisterSubmitButton extends StatelessWidget {
             backgroundColor: AppColors.aSecondary,
             disabledBackgroundColor: AppColors.aSurfaceVariant,
             minimumSize: const Size(double.infinity, 52),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
             elevation: 0,
           ),
           child: isRegistering

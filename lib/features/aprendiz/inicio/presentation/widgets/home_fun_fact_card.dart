@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta "Aprende hoy": muestra la explicacion educativa
@@ -21,10 +23,10 @@ class HomeFunFactCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aTertiaryFixed,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOnTertiaryFixedVariant.withValues(alpha: 0.3)),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,7 +34,7 @@ class HomeFunFactCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.school_outlined, size: 18, color: AppColors.aOnTertiaryFixedVariant),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'Aprende hoy',
@@ -41,14 +43,14 @@ class HomeFunFactCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             fact,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnTertiaryFixedVariant, height: 1.3),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           GestureDetector(
             onTap: onViewMore,
             child: Row(

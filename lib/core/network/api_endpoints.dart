@@ -15,7 +15,7 @@ abstract final class ApiEndpoints {
   static const String cultivosBaseUrl = 'http://3.217.217.227/api/v1';
 
   // Base URL del microservicio LLM/RAG (diagnóstico enriquecido).
-  static const String llmBaseUrl = 'http://52.1.110.21:8000';
+  static const String llmBaseUrl = 'http://18.190.223.177:8000';
 
   // Base URL del microservicio de pagos/suscripciones (PayPal Sandbox).
   // Acepta el mismo JWT emitido por el microservicio de Usuarios.

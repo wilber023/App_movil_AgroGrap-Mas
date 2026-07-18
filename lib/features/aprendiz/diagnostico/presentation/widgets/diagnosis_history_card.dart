@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 
 const String _kFont = 'Inter';
@@ -37,19 +39,19 @@ class DiagnosisHistoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: AppSpacing.xl),
         decoration: BoxDecoration(
           color: AppColors.aSurfaceContainerLowest,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: AppColors.aOutlineVariant),
           boxShadow: kAprendizCardShadow,
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdLg),
               child: d.imagePath != null && File(d.imagePath!).existsSync()
                   ? Image.file(File(d.imagePath!), width: 60, height: 60, fit: BoxFit.cover)
                   : Container(
@@ -58,7 +60,7 @@ class DiagnosisHistoryCard extends StatelessWidget {
                       child: const Icon(Icons.eco_outlined, color: AppColors.aOnSurfaceVariant),
                     ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,19 +69,22 @@ class DiagnosisHistoryCard extends StatelessWidget {
                     d.diseaseName,
                     style: const TextStyle(fontFamily: _kFont, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     d.cropName,
                     style: const TextStyle(fontFamily: _kFont, fontSize: 12, color: AppColors.aOnSurfaceVariant),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: AppSpacing.smMd),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.xxsPlus,
+                        ),
                         decoration: BoxDecoration(
                           color: isHealthy ? AppColors.aSecondaryContainer : AppColors.aDiseaseCardBg,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
                           d.statusLabel,
@@ -101,7 +106,7 @@ class DiagnosisHistoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             const Icon(Icons.chevron_right_rounded, color: AppColors.aOnSurfaceVariant, size: 20),
           ],
         ),

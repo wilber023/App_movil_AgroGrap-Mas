@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../agenda/agenda.dart';
 import '../../domain/entities/crop_activity_entity.dart';
@@ -131,7 +132,7 @@ class _CultivoContent extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AprendizCropRegisterPage()),
             ),
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: AppSpacing.colossal),
         ],
       ),
     );
@@ -147,18 +148,18 @@ class _ErrorContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xhuge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, color: AppColors.error, size: 32),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
           ],
         ),

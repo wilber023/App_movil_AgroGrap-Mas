@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../notifications/presentation/pages/notifications_page.dart';
 
@@ -44,10 +46,15 @@ class HomeHeader extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.aPrimaryContainer,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppRadius.xxlPlus)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xxlPlus,
+          AppSpacing.xxs,
+          AppSpacing.xxlPlus,
+          AppSpacing.xxl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -62,7 +69,7 @@ class HomeHeader extends StatelessWidget {
                   ),
                   child: const Icon(Icons.eco, color: AppColors.aOnPrimary, size: 19),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -112,7 +119,7 @@ class HomeHeader extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
                 Expanded(
@@ -123,11 +130,11 @@ class HomeHeader extends StatelessWidget {
                     style: AppTypography.tituloMd.copyWith(fontSize: 18, color: AppColors.aOnPrimary),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.sm),
                 Icon(greetingIcon, size: 17, color: AppColors.aOnPrimary.withValues(alpha: 0.85)),
               ],
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: AppSpacing.xxsPlus),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(

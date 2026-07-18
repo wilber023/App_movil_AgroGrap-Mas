@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/aprendiz_activity_summary_entity.dart';
 
@@ -22,16 +24,16 @@ class ProfileActivitySummaryCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 8,
+        mainAxisSpacing: AppSpacing.xxl,
+        crossAxisSpacing: AppSpacing.md,
         childAspectRatio: 2.6,
         children: stats.map((s) {
           final (icon, value, label) = s;
@@ -42,11 +44,11 @@ class ProfileActivitySummaryCard extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.aSecondaryContainer,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 ),
                 child: Icon(icon, color: AppColors.aSecondary, size: 18),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

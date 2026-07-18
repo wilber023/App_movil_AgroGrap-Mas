@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../utils/card_detector.dart';
 
@@ -64,32 +66,32 @@ class _CardNumberFieldState extends State<CardNumberField> {
                   ? const SizedBox.shrink(key: ValueKey('empty'))
                   : Padding(
                       key: ValueKey(_type),
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
                       child: _CardBrandBadge(type: _type),
                     ),
             ),
             filled: true,
             fillColor: AppColors.cardSurface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.outlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.lock_outline_rounded, size: 14, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 'Este dato no se guarda ni se envía. Completarás tu pago de forma segura en PayPal.',
@@ -119,17 +121,20 @@ class _CardBrandBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _brandColor;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: color, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.credit_card_rounded, size: 14, color: color),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             CardDetector.label(type),
             style: AppTypography.etiquetaSm.copyWith(color: color, fontWeight: FontWeight.w700),

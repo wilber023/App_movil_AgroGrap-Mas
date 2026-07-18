@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/crop_status_summary_entity.dart';
 
@@ -44,7 +46,7 @@ class HomeDailySummarySection extends StatelessWidget {
           'Resumen del día',
           style: AppTypography.agendaSectionTitle.copyWith(color: AppColors.aPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.xl),
         Row(
           children: [
             Expanded(
@@ -55,7 +57,7 @@ class HomeDailySummarySection extends StatelessWidget {
                 label: pendingTasksCount == 1 ? 'Tarea pendiente' : 'Tareas pendientes',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _StatTile(
                 icon: Icons.calendar_today_rounded,
@@ -64,7 +66,7 @@ class HomeDailySummarySection extends StatelessWidget {
                 label: 'Semana actual',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _StatTile(
                 icon: Icons.trending_up_rounded,
@@ -73,7 +75,7 @@ class HomeDailySummarySection extends StatelessWidget {
                 label: 'Progreso del ciclo',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: _StatTile(
                 icon: Icons.eco_rounded,
@@ -86,20 +88,23 @@ class HomeDailySummarySection extends StatelessWidget {
           ],
         ),
         if (message != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xxl,
+              vertical: AppSpacing.xl,
+            ),
             decoration: BoxDecoration(
               color: AppColors.aWarningBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               border: Border.all(color: AppColors.aWarningBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.emoji_events_outlined, size: 18, color: AppColors.aWarningText),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     message,
@@ -133,10 +138,10 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl, horizontal: AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
       child: Column(
@@ -148,7 +153,7 @@ class _StatTile extends StatelessWidget {
             decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.12), shape: BoxShape.circle),
             child: Icon(icon, size: 15, color: iconColor),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             value,
             maxLines: 1,
@@ -158,7 +163,7 @@ class _StatTile extends StatelessWidget {
               color: AppColors.aOnSurface,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             label,
             textAlign: TextAlign.center,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/agenda_activity_entity.dart';
 
@@ -44,13 +46,13 @@ class AgendaUpcomingTaskTile extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
         decoration: BoxDecoration(
           color: AppColors.aSurfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lgXl),
           border: Border.all(color: AppColors.aOutlineVariant),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xl),
         child: Row(
           children: [
             Container(
@@ -58,17 +60,17 @@ class AgendaUpcomingTaskTile extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
                 color: AppColors.aSurfaceContainerHigh,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
               ),
               child: Icon(_categoryIcon, size: 18, color: AppColors.aOnSurfaceVariant),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: Text(
                 '$dateStr · ${activity.title}',

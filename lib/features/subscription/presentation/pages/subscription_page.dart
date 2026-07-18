@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/shared_components.dart';
 import '../../domain/entities/subscription_entity.dart';
@@ -88,7 +90,7 @@ class _LoadingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const CircularProgressIndicator(color: AppColors.primary),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           Text(
             'Cargando tus planes...',
             style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
@@ -112,7 +114,7 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -125,28 +127,31 @@ class _ErrorView extends StatelessWidget {
               ),
               child: const Icon(Icons.cloud_off_rounded, color: AppColors.error, size: 32),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
             Text(
               'No pudimos cargar tus planes',
               style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               message,
               style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xhuge),
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Reintentar'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                foregroundColor: AppColors.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xhuge,
+                  vertical: AppSpacing.xxl,
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
               ),
             ),
           ],
@@ -181,24 +186,24 @@ class _SubscriptionContent extends StatelessWidget {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(AppSpacing.huge),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeroBanner(),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xhuge),
           if (isActive) ...[
             _buildActiveSummary(context, subscription!),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
           ],
           for (var i = 0; i < plans.length; i++) ...[
             StaggeredReveal(
               index: i,
               child: _buildPlanCard(context, plans[i], isActive: activePlanId == plans[i].id),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           if (isActive)
             Center(
               child: TextButton.icon(
@@ -222,7 +227,7 @@ class _SubscriptionContent extends StatelessWidget {
               style: AppTypography.etiquetaSm,
               textAlign: TextAlign.center,
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xhuge),
         ],
       ),
     );
@@ -230,14 +235,17 @@ class _SubscriptionContent extends StatelessWidget {
 
   Widget _buildHeroBanner() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.xxhuge,
+        horizontal: AppSpacing.huge,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primary, AppColors.forestGreen],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.25),
@@ -252,21 +260,21 @@ class _SubscriptionContent extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppColors.onPrimary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 26),
+            child: const Icon(Icons.auto_awesome_rounded, color: AppColors.onPrimary, size: 26),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           Text(
             'Potencia tu Cultivo con AgroGraph Premium',
-            style: AppTypography.tituloLg.copyWith(color: Colors.white, fontSize: 24),
+            style: AppTypography.tituloLg.copyWith(color: AppColors.onPrimary, fontSize: 24),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'Desbloquea diagnósticos ilimitados, predicciones climáticas avanzadas y gestión de hasta 50 parcelas simultáneas.',
-            style: AppTypography.bodyMd.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+            style: AppTypography.bodyMd.copyWith(color: AppColors.onPrimary.withValues(alpha: 0.9)),
             textAlign: TextAlign.center,
           ),
         ],
@@ -280,16 +288,16 @@ class _SubscriptionContent extends StatelessWidget {
         ? '${nextBilling.day.toString().padLeft(2, '0')}/${nextBilling.month.toString().padLeft(2, '0')}/${nextBilling.year}'
         : '—';
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
         color: AppColors.statusHealthyBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.statusHealthyText.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           const Icon(Icons.workspace_premium_rounded, color: AppColors.statusHealthyText),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +309,7 @@ class _SubscriptionContent extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   'Próximo cobro: $nextBillingLabel',
                   style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),
@@ -331,7 +339,7 @@ class _SubscriptionContent extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: borderColor, width: highlight ? 2.5 : (isPremium ? 2 : 1)),
         boxShadow: [
           BoxShadow(
@@ -346,42 +354,42 @@ class _SubscriptionContent extends StatelessWidget {
         children: [
           if (highlight)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               decoration: const BoxDecoration(
                 color: AppColors.warmAmber,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+                  topLeft: Radius.circular(AppRadius.xlPlus),
+                  topRight: Radius.circular(AppRadius.xlPlus),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.star_rounded, size: 14, color: Colors.white),
-                  const SizedBox(width: 4),
+                  const Icon(Icons.star_rounded, size: 14, color: AppColors.onPrimary),
+                  const SizedBox(width: AppSpacing.xs),
                   Text(
                     'MÁS POPULAR',
-                    style: AppTypography.statusPill.copyWith(color: Colors.white),
+                    style: AppTypography.statusPill.copyWith(color: AppColors.onPrimary),
                   ),
                 ],
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.xhuge),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: (isPremium ? AppColors.primary : AppColors.forestGreen)
                             .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.mdLg),
                       ),
                       child: Icon(
                         plan.icon,
@@ -410,15 +418,15 @@ class _SubscriptionContent extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   plan.priceLabel,
                   style: AppTypography.tituloLg.copyWith(color: AppColors.onSurface),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xhuge),
                 ...plan.features.map(
                   (feature) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -427,7 +435,7 @@ class _SubscriptionContent extends StatelessWidget {
                           size: 20,
                           color: isPremium ? AppColors.primary : AppColors.forestGreen,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.xl),
                         Expanded(
                           child: Text(
                             feature,
@@ -438,7 +446,7 @@ class _SubscriptionContent extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 if (!isActive && isPremium)
                   SizedBox(
                     width: double.infinity,
@@ -447,9 +455,9 @@ class _SubscriptionContent extends StatelessWidget {
                       onPressed: () => CheckoutPage.push(context, plan: plan.id),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: highlight ? AppColors.warmAmber : AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimary,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                       ),
                       child: Text(
                         highlight ? 'Elegir el más popular' : 'Mejorar ahora',
@@ -470,7 +478,7 @@ class _SubscriptionContent extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xlPlus)),
         title: const Text('Cancelar suscripción'),
         content: const Text(
           '¿Seguro que deseas cancelar tu suscripción Premium? Perderás el acceso a los beneficios al finalizar el periodo actual.',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/weekly_goal_entity.dart';
 
@@ -15,26 +17,26 @@ class ProfileWeeklyGoalCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(Icons.flag_outlined, size: 18, color: AppColors.aSecondary),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 'Objetivo semanal',
                 style: AppTypography.agendaSectionTitle.copyWith(fontSize: 16, color: AppColors.aOnSurface),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           ...goals.map((goal) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -45,7 +47,7 @@ class ProfileWeeklyGoalCard extends StatelessWidget {
                           size: 16,
                           color: goal.isCompleted ? AppColors.aSecondary : AppColors.aOnSurfaceVariant,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             goal.label,
@@ -58,9 +60,9 @@ class ProfileWeeklyGoalCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.sm),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: LinearProgressIndicator(
                         value: goal.progress,
                         minHeight: 6,

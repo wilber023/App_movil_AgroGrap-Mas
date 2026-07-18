@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta seleccionable generica usada por las grillas del formulario de
@@ -27,7 +29,7 @@ class CultivoSelectableGridCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isSelected ? AppColors.aSecondaryContainer : AppColors.aSurfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lgXl),
           border: Border.all(
             color: isSelected ? AppColors.aSecondary : AppColors.aOutlineVariant,
             width: isSelected ? 2 : 1,
@@ -37,7 +39,7 @@ class CultivoSelectableGridCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             icon,
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
               textAlign: TextAlign.center,

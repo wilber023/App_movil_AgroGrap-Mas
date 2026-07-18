@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/agenda_crop_context_entity.dart';
 
@@ -13,11 +15,16 @@ class AgendaCropSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       child: Row(
         children: [
           const Icon(Icons.eco_outlined, size: 18, color: AppColors.aSecondary),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: RichText(
               text: TextSpan(
@@ -36,10 +43,13 @@ class AgendaCropSummaryRow extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: AppColors.aSecondaryContainer,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               'Semana ${cropContext.currentWeek}',

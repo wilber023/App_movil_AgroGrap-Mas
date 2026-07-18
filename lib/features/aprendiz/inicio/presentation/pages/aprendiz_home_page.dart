@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../cultivo/cultivo.dart';
 import '../../../cultivo/domain/entities/crop_activity_entity.dart';
 import '../../../diagnostico/diagnostico.dart';
@@ -98,7 +100,7 @@ class _AprendizHomeView extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isDismissible: false,
       enableDrag: false,
       builder: (_) => _InspectionBottomSheet(
@@ -115,22 +117,27 @@ class _HomeLoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 80),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xhuge,
+        AppSpacing.xxlPlus,
+        AppSpacing.colossal,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           HomeSectionSkeleton(height: 92),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 140),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 96),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 200),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 100),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 140),
-          SizedBox(height: 16),
+          SizedBox(height: AppSpacing.xxlPlus),
           HomeSectionSkeleton(height: 160),
         ],
       ),
@@ -148,18 +155,18 @@ class _HomeErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xhuge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.cloud_off_outlined, size: 40, color: AppColors.aOutline),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.aOnSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
           ],
         ),
@@ -179,12 +186,17 @@ class _HomeContent extends StatelessWidget {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.colossal,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           HomeNoticesCard(notices: overview.notices),
-          if (overview.notices.isNotEmpty) const SizedBox(height: 16),
+          if (overview.notices.isNotEmpty) const SizedBox(height: AppSpacing.xxlPlus),
 
           HomeCropCatalogSection(
             catalog: overview.cropCatalog,
@@ -194,7 +206,7 @@ class _HomeContent extends StatelessWidget {
             ),
             onSelectCrop: (crop) => _onSelectCrop(context, crop),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
 
           HomeScanCtaCard(
             onScan: () => Navigator.push(
@@ -202,13 +214,13 @@ class _HomeContent extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const DiagnosisEntryAprendizPage()),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
 
           HomeDailySummarySection(
             pendingTasksCount: overview.pendingTasksCount,
             cropStatus: overview.cropStatus,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
 
           HomeCropStatusCard(
             status: overview.cropStatus,
@@ -224,14 +236,14 @@ class _HomeContent extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AprendizCropRoutePage()),
             ),
           ),
-          if (overview.cropStatus.hasCropPlan) const SizedBox(height: 16),
+          if (overview.cropStatus.hasCropPlan) const SizedBox(height: AppSpacing.xxlPlus),
           HomeRecommendationCard(
             recommendation: overview.recommendation,
             onAction: overview.recommendation.action == HomeRecommendationAction.none
                 ? null
                 : () => _onRecommendationAction(context, overview.recommendation.action),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
 
           Builder(builder: (context) {
             final hasAlert = overview.phytosanitaryAlert.level != PhytosanitaryAlertLevel.none;
@@ -244,7 +256,7 @@ class _HomeContent extends StatelessWidget {
                   children: [
                     if (hasAlert) ...[
                       Expanded(child: HomePhytosanitaryAlertCard(alert: overview.phytosanitaryAlert)),
-                      if (hasFunFact) const SizedBox(width: 10),
+                      if (hasFunFact) const SizedBox(width: AppSpacing.lg),
                     ],
                     if (hasFunFact)
                       Expanded(
@@ -258,7 +270,7 @@ class _HomeContent extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSpacing.xxxl),
               ],
             );
           }),
@@ -270,7 +282,7 @@ class _HomeContent extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AprendizAgendaPage()),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xhuge),
 
           HomeRecentActivityList(items: overview.recentActivity),
         ],
@@ -312,24 +324,29 @@ class _InspectionBottomSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xhuge)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Center(
             child: Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.aOutlineVariant.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xxlPlus,
+              AppSpacing.xhuge,
+              AppSpacing.xxlPlus,
+              AppSpacing.giant,
+            ),
             child: Column(
               children: [
                 Stack(
@@ -355,18 +372,21 @@ class _InspectionBottomSheet extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.sm,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.aSecondaryContainer,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.calendar_today, size: 14, color: AppColors.aOnSecondaryContainer),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         'Semana ${activity.weekNumber} · Inspección programada',
                         style: const TextStyle(
@@ -379,19 +399,19 @@ class _InspectionBottomSheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 const Text(
                   'Es momento de inspeccionar',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 const Text(
                   'Toma una foto de tus plantas para que el modelo de IA analice su estado actual.',
                   style: TextStyle(fontSize: 15, color: AppColors.aOnSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xhuge),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -420,12 +440,12 @@ class _InspectionBottomSheet extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.aOrangeAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
                       elevation: 0,
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -436,7 +456,7 @@ class _InspectionBottomSheet extends StatelessWidget {
                     },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.aSecondary, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
                     ),
                     child: const Text(
                       'POSPONER PARA MAÑANA',

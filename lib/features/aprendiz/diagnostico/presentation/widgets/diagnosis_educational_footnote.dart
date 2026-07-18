@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Nota discreta al final de la pantalla de Diagnostico, recordando el
@@ -14,7 +15,7 @@ class DiagnosisEducationalFootnote extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.info_outline, size: 14, color: AppColors.aOnSurfaceVariant),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             'Los resultados tienen fines educativos y no sustituyen la evaluación de un especialista.',

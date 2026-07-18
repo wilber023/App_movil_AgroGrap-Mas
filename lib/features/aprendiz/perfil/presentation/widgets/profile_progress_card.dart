@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/aprendiz_progress_entity.dart';
 
@@ -15,9 +17,9 @@ class ProfileProgressCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aPrimaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,7 +33,7 @@ class ProfileProgressCard extends StatelessWidget {
                       'Nivel ${progress.level}',
                       style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnPrimary),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       '${progress.xp} XP acumulada',
                       style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnPrimaryContainer),
@@ -42,9 +44,9 @@ class ProfileProgressCard extends StatelessWidget {
               _StreakBadge(days: progress.streakDays),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               value: progress.progressToNextLevel,
               minHeight: 8,
@@ -52,7 +54,7 @@ class ProfileProgressCard extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.aOrangeAccent),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Progreso al nivel ${progress.level + 1}',
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnPrimaryContainer),
@@ -70,16 +72,16 @@ class _StreakBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.aOnPrimaryContainer.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.local_fire_department, color: AppColors.aOrangeAccent, size: 16),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             '$days ${days == 1 ? 'día' : 'días'}',
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnPrimary, fontWeight: FontWeight.w700),

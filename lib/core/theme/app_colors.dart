@@ -230,6 +230,9 @@ abstract final class AppColors {
   static const Color aOnTertiaryFixed = Color(0xFF390B00);
   static const Color aOnTertiaryFixedVariant = Color(0xFF7E2B0D);
 
+  /// Fondo del banner de alerta epidemiologica (rosa/coral suave).
+  static const Color alertBannerBg = Color(0xFFFFF1EE);
+
   /// Fondo de tarjeta de advertencia (amarillo).
   static const Color aWarningBg = Color(0xFFFFF3CD);
   static const Color aWarningBorder = Color(0xFFFFE5A3);
@@ -239,4 +242,217 @@ abstract final class AppColors {
   static const Color aDiseaseCardBg = Color(0xFFFFE5E5);
   static const Color aDiseaseCardBorder = Color(0xFFFFB4B4);
   static const Color aDiseaseCardText = Color(0xFF93000A);
+
+  /// Fondo del icono de evento "Fertilización" en el historial de cultivo.
+  static const Color aFertilizerBg = Color(0xFFBBDEFB);
+
+  /// Color del icono de evento "Fertilización" en el historial de cultivo.
+  static const Color aFertilizerIcon = Color(0xFF1565C0);
+
+  // ---------------------------------------------------------------------------
+  // AUTH -- Campo de texto y botones premium (login/register)
+  // ---------------------------------------------------------------------------
+
+  /// Fondo del campo de texto -- verde salvia extremadamente apagado.
+  static const Color authFieldBg = Color(0xFFF4F8F6);
+
+  /// Gris piedra atenuado para iconos outline del campo de texto.
+  static const Color authFieldIcon = Color(0xFF9BA89E);
+
+  /// Placeholder muy suave del campo de texto.
+  static const Color authFieldHint = Color(0xFFAAB9B3);
+
+  /// Texto del usuario en el campo -- verde bosque profundo (no negro puro).
+  static const Color authFieldText = Color(0xFF2A3D35);
+
+  /// Etiqueta del campo -- verde musgo medio.
+  static const Color authFieldLabel = Color(0xFF56706A);
+
+  /// Verde foco del campo de texto -- indica actividad sin agresividad.
+  static const Color authFieldFocusGreen = Color(0xFF4A7C59);
+
+  /// Terracota quemada / arcilla -- boton CTA primario de Auth.
+  static const Color authTerracota = Color(0xFFCB6E44);
+
+  /// Fondo superior del degradado de Login/Register -- eucalipto desaturado.
+  static const Color authBgTop = Color(0xFFE6EFEB);
+
+  /// Fondo intermedio del degradado -- salvia blanco medio.
+  static const Color authBgMid = Color(0xFFF2F7F4);
+
+  /// Fondo inferior del degradado -- hueso almendra.
+  static const Color authBgBottom = Color(0xFFF9FBFA);
+
+  /// Texto secundario de Auth -- musgo medio.
+  static const Color authInkMuted = Color(0xFF7A8E84);
+
+  /// Fondo del selector de rol (tab switch) -- se funde con el degradado.
+  static const Color authRoleSwitchBg = Color(0xFFD9E6DF);
+
+  /// Color de los divisores decorativos en Auth.
+  static const Color authDivider = Color(0xFFCBD9D3);
+
+  /// Extremo del degradado del ícono de marca en Login/Register.
+  static const Color authBrandGradientEnd = Color(0xFF1B4332);
+
+  /// Titulo de la pantalla de Registro -- verde bosque casi negro.
+  static const Color authHeaderTitle = Color(0xFF1B2D27);
+
+  /// Texto/iconos secundarios de Registro -- verde salvia medio.
+  static const Color authMutedSage = Color(0xFF6B8F71);
+
+  /// Acento del banner "Registrando como: Agricultor".
+  static const Color authAgricultorAccent = Color(0xFF2E7D32);
+
+  /// Fondo full-screen del Splash -- verde oscuro solido.
+  static const Color authSplashBg = Color(0xFF1B5E20);
+
+  /// Subtitulo del Splash -- verde claro.
+  static const Color authSplashSubtitle = Color(0xFF81C784);
+
+  /// Alias semantico de [Colors.white70] -- track de progreso en Splash.
+  static const Color white70 = Colors.white70;
+
+  /// Alias semantico de [Colors.transparent] para cumplir la regla de no
+  /// usar `Colors.*` directamente en la capa `presentation`.
+  static const Color transparent = Colors.transparent;
+
+  /// Alias semantico de [Colors.black] -- usado en sombras difuminadas.
+  static const Color black = Colors.black;
+
+  /// Alias semantico de [Colors.grey] (Material grey 500).
+  static const Color grey = Colors.grey;
+
+  /// Alias semantico de [Colors.white] para cumplir la regla de no usar
+  /// `Colors.*` directamente en la capa `presentation`.
+  static const Color white = Colors.white;
+
+  // ---------------------------------------------------------------------------
+  // HOME AGRICULTOR -- Tokens puntuales de home_page.dart
+  // ---------------------------------------------------------------------------
+
+  /// Fondo de la pantalla de Inicio (Agricultor).
+  static const Color homeBg = Color(0xFFF2F8F4);
+
+  /// Fondo del icono en el estado vacio de "Cultivos activos".
+  static const Color homeEmptyIconBg = Color(0xFFEAF3DE);
+
+  /// Color del icono en el estado vacio de "Cultivos activos".
+  static const Color homeEmptyIconFg = Color(0xFF52B788);
+
+  /// Acento verde de la ilustracion decorativa de la tarjeta de escaneo.
+  static const Color homeScanAccent = Color(0xFF6FE3A5);
+
+  // ---------------------------------------------------------------------------
+  // PARCELS -- Tokens puntuales de parcels_page.dart / add_parcel_page.dart /
+  // parcel_detail_page.dart
+  // ---------------------------------------------------------------------------
+
+  static const Color parcelsBg = Color(0xFFF8FAF5);
+  static const Color parcelsTextPrimary = Color(0xFF1B2D27);
+  static const Color parcelsTextSecondary = Color(0xFF6B8F71);
+  static const Color parcelsBorderLight = Color(0xFFADB5BD);
+  static const Color parcelsChipGreenBg = Color(0xFFEAF3DE);
+  static const Color parcelsChipGreenText = Color(0xFF27500A);
+  static const Color parcelsChipAlertBg = Color(0xFFFDECEA);
+  static const Color parcelsChipAlertText = Color(0xFFA32D2D);
+  static const Color parcelsChipFollowBg = Color(0xFFFFF3E0);
+  static const Color parcelsChipFollowText = Color(0xFF7B4A10);
+  static const Color parcelsTrackGrey = Color(0xFFE2EBE6);
+  static const Color parcelsChipBlueBg = Color(0xFFE6F1FB);
+  static const Color parcelsChipBlueText = Color(0xFF0C447C);
+  static const Color parcelsAddGreen = Color(0xFF52B788);
+  static const Color parcelsAddBorder = Color(0xFFA8C5B0);
+
+  /// Fondo del chip "Sin diagnostico" (gris neutro).
+  static const Color parcelsNeutralChipBg = Color(0xFFF0F2F5);
+
+  /// Texto sobre boton ambar (contraste alto, marron oscuro).
+  static const Color onWarmAmber = Color(0xFF4A2800);
+
+  /// Fondo gris apagado -- banner offline / chip no seleccionado (Parcels).
+  static const Color parcelsMutedBg = Color(0xFFF1F1F1);
+
+  /// Fondo gris claro -- catalogo vacio / tarjeta no seleccionada (Parcels).
+  static const Color parcelsSubtleBg = Color(0xFFF5F5F5);
+
+  /// Texto gris de opcion no seleccionada (Parcels).
+  static const Color parcelsUnselectedText = Color(0xFF888888);
+
+  /// Subtitulo verde claro en el AppBar de Detalle de Parcela.
+  static const Color parcelsAppBarSubtitle = Color(0xFFADD5B8);
+
+  /// Color de divisores sutiles en Detalle de Parcela.
+  static const Color parcelsDividerLight = Color(0xFFE8EEE7);
+
+  /// Borde sutil de tarjetas en Modo sin Conexion (paquetes no descargados).
+  static const Color offlineCardBorder = Color(0xFFE5EAF0);
+
+  /// Rojo oscuro alternativo -- SnackBar de error en Diagnostico.
+  static const Color errorDark = Color(0xFFA32D2D);
+
+  /// Fondo de miniatura placeholder en tarjetas de historial de diagnostico.
+  static const Color diagnosisThumbBg = Color(0xFFD8EAD0);
+
+  /// Inicio del degradado oscuro de fondo en la pantalla de camara.
+  static const Color diagnosisCameraGradientStart = Color(0xFF0B1F18);
+
+  /// Rojo brillante -- errores de validacion sobre fondo oscuro (camara).
+  static const Color errorBright = Color(0xFFFF6B6B);
+
+  // ---------------------------------------------------------------------------
+  // DIAGNOSIS RESULT -- Tokens puntuales de diagnosis_result_page.dart
+  // ---------------------------------------------------------------------------
+
+  static const Color diagnosisBg = Color(0xFFF5F7F2);
+  static const Color diagnosisRiskHigh = Color(0xFFD32F2F);
+  static const Color diagnosisRiskMed = Color(0xFFF57C00);
+  static const Color diagnosisRiskLow = Color(0xFF388E3C);
+  static const Color diagnosisMetricBlue = Color(0xFF1565C0);
+
+  /// Fin del degradado del hero cuando no hay foto (fallback visual).
+  static const Color diagnosisHeroGradientEnd = Color(0xFF1B3A2A);
+
+  /// Overlay superior del degradado oscuro sobre el hero (47% opacidad negra).
+  static const Color diagnosisHeroOverlayStart = Color(0x77000000);
+
+  /// Overlay inferior del degradado oscuro sobre el hero (80% opacidad negra).
+  static const Color diagnosisHeroOverlayEnd = Color(0xCC000000);
+
+  /// Verde del badge "Diagnostico completado" sobre el hero.
+  static const Color diagnosisCompletedBadge = Color(0xFF1B7A3C);
+
+  /// Borde ambar suave de la tarjeta de avisos.
+  static const Color diagnosisAmberBorder = Color(0xFFFFCC80);
+
+  /// Fondo de la tarjeta "Analisis IA" (verde muy palido).
+  static const Color diagnosisAnalysisCardBg = Color(0xFFF2F8F4);
+
+  /// Naranja del icono de estado de error en Productos / tipo Insecticida.
+  static const Color diagnosisInsecticida = Color(0xFFC45E0A);
+
+  /// Colores de la barra gradiente de nivel de infeccion.
+  static const Color diagnosisInfectionGreen = Color(0xFF4CAF50);
+  static const Color diagnosisInfectionYellow = Color(0xFFFFC107);
+  static const Color diagnosisInfectionOrange = Color(0xFFFF5722);
+
+  /// Badge "ECOLOGICO" de productos biologicos.
+  static const Color diagnosisEcoBadge = Color(0xFF2E7D32);
+
+  /// Badge "MAS ECONOMICO" de productos.
+  static const Color diagnosisEconomicBadge = Color(0xFF455A64);
+
+  /// Colores por tipo de producto agroquimico.
+  static const Color diagnosisFungicida = Color(0xFF1B7A3C);
+  static const Color diagnosisHerbicida = Color(0xFF0A7A6B);
+  static const Color diagnosisFertilizante = Color(0xFF1A4DB5);
+  static const Color diagnosisBiologico = Color(0xFF6B1AA8);
+  static const Color diagnosisOtherProduct = Color(0xFF5C5C5C);
+
+  /// Fondo del placeholder de imagen de producto.
+  static const Color diagnosisProductImageBg = Color(0xFFF0F4F0);
+
+  /// Colores del skeleton loader animado (shimmer).
+  static const Color diagnosisSkeletonLight = Color(0xFFF2F2F2);
+  static const Color diagnosisSkeletonDark = Color(0xFFE4E4E4);
 }

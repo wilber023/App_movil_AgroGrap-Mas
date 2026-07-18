@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -17,7 +18,7 @@ class DiagnosisImportantNoteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.info_outline, size: 18, color: AppColors.aWarningText),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: RichText(
               text: TextSpan(

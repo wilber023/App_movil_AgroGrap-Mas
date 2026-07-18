@@ -14,6 +14,8 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../core/security/screen_security.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/profile_type.dart';
 import '../bloc/auth_bloc.dart';
@@ -24,20 +26,6 @@ import '../widgets/auth_text_field.dart';
 import 'register_page.dart';
 import '../../../../../main.dart';
 import '../../../../aprendiz/shell/aprendiz_main_shell.dart';
-
-// ── Tokens de color locales de esta pantalla ──────────────────────────────────
-// Fondo superior: verde eucalipto muy desaturado
-const Color _bgTop    = Color(0xFFE6EFEB);
-// Transición: salvia blanco medio
-const Color _bgMid    = Color(0xFFF2F7F4);
-// Fondo inferior: hueso almendra
-const Color _bgBottom = Color(0xFFF9FBFA);
-// Texto principal: verde bosque profundo (≠ negro puro)
-const Color _inkDark  = Color(0xFF2A3D35);
-// Texto secundario: musgo medio
-const Color _inkMuted = Color(0xFF7A8E84);
-// Botón: terracota quemada
-const Color _terracota = Color(0xFFCB6E44);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -83,13 +71,13 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 10, top: 6),
+          padding: const EdgeInsets.only(left: AppSpacing.lg, top: AppSpacing.sm),
           child: _BackButton(),
         ),
       ),
@@ -101,7 +89,12 @@ class _LoginPageState extends State<LoginPage>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_bgTop, _bgMid, _bgBottom, Colors.white],
+            colors: [
+              AppColors.authBgTop,
+              AppColors.authBgMid,
+              AppColors.authBgBottom,
+              AppColors.onPrimary,
+            ],
             stops: [0.0, 0.25, 0.60, 1.0],
           ),
         ),
@@ -111,17 +104,17 @@ class _LoginPageState extends State<LoginPage>
             final isLoading = state is AuthLoading;
             return SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 26),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhugePlus),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.xxlPlus),
                       _buildBrandMark(),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: AppSpacing.xxhugePlus),
                       _buildRoleSwitch(),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: AppSpacing.xxhugePlus),
                       AuthTextField(
                         controller: _usernameController,
                         label: 'USUARIO',
@@ -139,7 +132,7 @@ class _LoginPageState extends State<LoginPage>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.huge),
                       AuthTextField(
                         controller: _passwordController,
                         label: 'CONTRASEÑA',
@@ -160,15 +153,15 @@ class _LoginPageState extends State<LoginPage>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppSpacing.lg),
                       _buildForgotPassword(),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: AppSpacing.giant),
                       _buildLoginButton(isLoading),
-                      const SizedBox(height: 36),
+                      const SizedBox(height: AppSpacing.giantPlus),
                       _buildDivider(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.xxhuge),
                       _buildRegisterLink(),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: AppSpacing.xgiantPlus),
                     ],
                   ),
                 ),
@@ -201,19 +194,20 @@ class _LoginPageState extends State<LoginPage>
           SnackBar(
             content: Row(children: [
               const Icon(Icons.error_outline_rounded,
-                  color: Colors.white, size: 20),
-              const SizedBox(width: 10),
+                  color: AppColors.onPrimary, size: 20),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Text(state.message,
                     style: AppTypography.labelMd.copyWith(
-                        color: Colors.white, fontSize: 13)),
+                        color: AppColors.onPrimary, fontSize: 13)),
               ),
             ]),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
+            margin: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.xl),
             duration: const Duration(seconds: 4),
             elevation: 0,
           ),
@@ -225,18 +219,18 @@ class _LoginPageState extends State<LoginPage>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _bgBottom,
+        backgroundColor: AppColors.authBgBottom,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+            borderRadius: BorderRadius.circular(AppRadius.xxlPlus)),
         title: Row(children: [
           const Icon(Icons.info_outline_rounded, color: AppColors.warmAmber),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
           Text('Próximamente',
               style: AppTypography.headlineMd.copyWith(fontSize: 18)),
         ]),
         content: Text(
           'El perfil ${profileType.displayName} estará disponible muy pronto.',
-          style: AppTypography.bodyMd.copyWith(color: _inkMuted),
+          style: AppTypography.bodyMd.copyWith(color: AppColors.authInkMuted),
         ),
         actions: [
           TextButton(
@@ -264,38 +258,38 @@ class _LoginPageState extends State<LoginPage>
           height: 58,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF2D6A4F), Color(0xFF1B4332)],
+              colors: [AppColors.forestGreen, AppColors.authBrandGradientEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.xlPlus),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2D6A4F).withValues(alpha: 0.30),
+                color: AppColors.forestGreen.withValues(alpha: 0.30),
                 blurRadius: 20,
                 spreadRadius: 0,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 26),
+          child: const Icon(Icons.eco_rounded, color: AppColors.onPrimary, size: 26),
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: AppSpacing.xhugePlus),
         Text(
           'Inicia sesión',
           style: AppTypography.headlineMd.copyWith(
-            color: _inkDark,
+            color: AppColors.authFieldText,
             fontSize: 27,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.6,
             height: 1.1,
           ),
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: AppSpacing.smMd),
         Text(
           'Accede a tus parcelas, diagnósticos y agenda.',
           style: AppTypography.bodyMd.copyWith(
-            color: _inkMuted,
+            color: AppColors.authInkMuted,
             fontSize: 14,
             height: 1.5,
           ),
@@ -311,16 +305,16 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildRoleSwitch() {
     final selected = _tabController.index;
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
         // Color que se funde con el degradado eucalipto del fondo
-        color: const Color(0xFFD9E6DF),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.authRoleSwitchBg,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
         children: [
           _buildRoleTab('Agricultor', 0, selected),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           _buildRoleTab('Aprendiz', 1, selected),
         ],
       ),
@@ -338,15 +332,15 @@ class _LoginPageState extends State<LoginPage>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(vertical: 11),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lgXl),
           decoration: BoxDecoration(
             // Seleccionado: hueso almendra = mismo tono del fondo inferior
-            color: isSelected ? _bgBottom : Colors.transparent,
-            borderRadius: BorderRadius.circular(11),
+            color: isSelected ? AppColors.authBgBottom : AppColors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF2A3D35).withValues(alpha: 0.08),
+                      color: AppColors.authFieldText.withValues(alpha: 0.08),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -357,7 +351,7 @@ class _LoginPageState extends State<LoginPage>
             label,
             textAlign: TextAlign.center,
             style: AppTypography.labelMd.copyWith(
-              color: isSelected ? _inkDark : _inkMuted,
+              color: isSelected ? AppColors.authFieldText : AppColors.authInkMuted,
               fontWeight:
                   isSelected ? FontWeight.w600 : FontWeight.w400,
               fontSize: 13,
@@ -375,11 +369,11 @@ class _LoginPageState extends State<LoginPage>
       child: GestureDetector(
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Text(
             '¿Olvidaste tu contraseña?',
             style: AppTypography.etiquetaSm.copyWith(
-              color: _inkMuted,
+              color: AppColors.authInkMuted,
               fontWeight: FontWeight.w500,
               fontSize: 13,
             ),
@@ -394,12 +388,12 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildLoginButton(bool isLoading) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         boxShadow: isLoading
             ? []
             : [
                 BoxShadow(
-                  color: _terracota.withValues(alpha: 0.30),
+                  color: AppColors.authTerracota.withValues(alpha: 0.30),
                   blurRadius: 24,
                   spreadRadius: 0,
                   offset: const Offset(0, 10),
@@ -421,23 +415,23 @@ class _LoginPageState extends State<LoginPage>
       children: [
         Expanded(
           child: Divider(
-            color: const Color(0xFFCBD9D3),
+            color: AppColors.authDivider,
             thickness: 0.7,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
           child: Text(
             'o',
             style: AppTypography.etiquetaSm.copyWith(
-              color: _inkMuted,
+              color: AppColors.authInkMuted,
               fontSize: 13,
             ),
           ),
         ),
         Expanded(
           child: Divider(
-            color: const Color(0xFFCBD9D3),
+            color: AppColors.authDivider,
             thickness: 0.7,
           ),
         ),
@@ -458,11 +452,11 @@ class _LoginPageState extends State<LoginPage>
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
           child: RichText(
             text: TextSpan(
               style: AppTypography.etiquetaSm.copyWith(
-                color: _inkMuted,
+                color: AppColors.authInkMuted,
                 fontSize: 13,
               ),
               children: [
@@ -503,11 +497,11 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.75),
+        color: AppColors.onPrimary.withValues(alpha: 0.75),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -534,7 +528,7 @@ class _ToggleEyeButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-        color: const Color(0xFF9BA89E),
+        color: AppColors.authFieldIcon,
         size: 20,
       ),
       onPressed: onTap,

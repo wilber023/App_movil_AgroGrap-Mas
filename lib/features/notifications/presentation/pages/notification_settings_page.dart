@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/notification_preferences_entity.dart';
 import '../bloc/notification_subscription_bloc.dart';
 
@@ -35,7 +37,7 @@ class NotificationSettingsPage extends StatelessWidget {
       backgroundColor: AppColors.surfaceDs2,
       appBar: AppBar(
         backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         elevation: 0,
         title: Text(
           'Notificaciones',
@@ -141,13 +143,13 @@ class _SettingsFormState extends State<_SettingsForm> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.xxlPlus),
           decoration: BoxDecoration(
             color: AppColors.cardSurface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.lgXl),
             border: Border.all(color: AppColors.outlineVariant, width: 0.5),
           ),
           child: Column(
@@ -168,17 +170,17 @@ class _SettingsFormState extends State<_SettingsForm> {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 'Te avisamos cuando cambie la campaña fitosanitaria activa en tu estado.',
                 style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
               ),
               if (widget.preferences.enabled && widget.preferences.pushSyncPending && !widget.saving) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     Icon(Icons.sync_rounded, size: 13, color: AppColors.onSurfaceVariant),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
                         'Guardado en el dispositivo. Sincronizando la suscripción push con el servidor…',
@@ -189,26 +191,26 @@ class _SettingsFormState extends State<_SettingsForm> {
                 ),
               ],
               if (_enabled) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 Text('Estado', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: _estadoController,
                   enabled: !widget.saving,
                   decoration: InputDecoration(
                     hintText: 'Ej. Sinaloa',
                     isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 Text('Cultivos (opcional)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Si no agregas ninguno, recibirás todas las alertas de tu estado.',
                   style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     Expanded(
@@ -218,12 +220,12 @@ class _SettingsFormState extends State<_SettingsForm> {
                         decoration: InputDecoration(
                           hintText: 'Ej. Maíz',
                           isDense: true,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
                         ),
                         onSubmitted: (_) => _addCultivo(),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.md),
                     IconButton(
                       onPressed: widget.saving ? null : _addCultivo,
                       icon: const Icon(Icons.add_circle, color: AppColors.forestGreen),
@@ -231,10 +233,10 @@ class _SettingsFormState extends State<_SettingsForm> {
                   ],
                 ),
                 if (_cultivos.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.md),
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: _cultivos
                         .map((c) => Chip(
                               label: Text(c, style: GoogleFonts.inter(fontSize: 11)),
@@ -248,7 +250,7 @@ class _SettingsFormState extends State<_SettingsForm> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.huge),
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -256,15 +258,15 @@ class _SettingsFormState extends State<_SettingsForm> {
             onPressed: widget.saving ? null : _save,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.forestGreen,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
             ),
             child: widget.saving
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: AppColors.onPrimary, strokeWidth: 2),
                   )
-                : Text('Guardar', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                : Text('Guardar', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onPrimary)),
           ),
         ),
       ],

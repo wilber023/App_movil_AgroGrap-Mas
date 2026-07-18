@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../models/diagnosis_result_view_data.dart';
 import 'diagnosis_confidence_ring.dart';
@@ -35,7 +36,7 @@ class DiagnosisResultPlantCard extends StatelessWidget {
                 decoration: const BoxDecoration(color: AppColors.aMint, shape: BoxShape.circle),
                 child: const Icon(Icons.eco_outlined, color: AppColors.aSecondary, size: 24),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +45,7 @@ class DiagnosisResultPlantCard extends StatelessWidget {
                       'PLANTA IDENTIFICADA',
                       style: AppTypography.statusPill.copyWith(color: AppColors.aOnSurfaceVariant, fontWeight: FontWeight.w600),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       data.cropName,
                       style: AppTypography.agendaTitle.copyWith(fontSize: 17, color: AppColors.aOnSurface),
@@ -64,13 +65,13 @@ class DiagnosisResultPlantCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.sm),
                   DiagnosisConfidenceRing(confidence: data.confidence, level: data.confidenceLevel),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             _confidenceDescription,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),

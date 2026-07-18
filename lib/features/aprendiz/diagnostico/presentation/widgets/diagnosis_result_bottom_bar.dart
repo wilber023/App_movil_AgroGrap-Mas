@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Barra inferior de la pantalla de Resultado: guardar diagnostico
@@ -32,12 +34,12 @@ class DiagnosisResultBottomBar extends StatelessWidget {
             ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.aSecondary, width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.xl),
         Expanded(
           child: ElevatedButton.icon(
             onPressed: isSchedulingFollowUp ? null : onScheduleFollowUp,
@@ -54,8 +56,8 @@ class DiagnosisResultBottomBar extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.aSecondary,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
               elevation: 0,
             ),
           ),

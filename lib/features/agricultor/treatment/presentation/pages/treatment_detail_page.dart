@@ -18,6 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/treatment_entity.dart';
 import '../bloc/treatment_bloc.dart';
@@ -117,7 +119,7 @@ class TreatmentDetailPage extends StatelessWidget {
         ),
         actions: const [
           Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: AppSpacing.xxlPlus),
             child: Icon(Icons.eco_rounded, color: AppColors.forestGreen),
           ),
         ],
@@ -148,12 +150,12 @@ class TreatmentDetailPage extends StatelessWidget {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xhuge),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _DetailHeaderCard(treatment: current),
-                const SizedBox(height: 22),
+                const SizedBox(height: AppSpacing.hugePlus),
                 Text(
                   'Plan de tratamiento',
                   style: AppTypography.tituloMd.copyWith(
@@ -162,17 +164,17 @@ class TreatmentDetailPage extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 for (int i = 0; i < current.steps.length; i++)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
                     child: _DetailStepCard(
                       step: current.steps[i],
                       isLast: i == current.steps.length - 1,
                       isImmediateNext: _isImmediateNext(current, i),
                     ),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 _DetailActionBar(treatment: current),
               ],
             ),
@@ -205,14 +207,14 @@ class _DetailHeaderCard extends StatelessWidget {
     final accent = _accentColor(treatment);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: AppColors.cardBorder, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -229,7 +231,7 @@ class _DetailHeaderCard extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Icon(
                   _cardIcon(treatment),
@@ -237,7 +239,7 @@ class _DetailHeaderCard extends StatelessWidget {
                   size: 26,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.xxl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,12 +252,12 @@ class _DetailHeaderCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
                         const Icon(Icons.eco_outlined,
                             size: 14, color: AppColors.forestGreen),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: Text(
                             treatment.cropName,
@@ -272,12 +274,12 @@ class _DetailHeaderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 ),
                 child: Text(
                   _headerStatusLabel(treatment),
@@ -290,11 +292,11 @@ class _DetailHeaderCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           const Divider(height: 1, thickness: 0.5, color: AppColors.outlineVariant),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _InfoRow(label: 'Iniciado', value: _fmtLong(treatment.createdAt)),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           _InfoRow(label: 'Total de pasos', value: '${treatment.totalSteps}'),
         ],
       ),
@@ -350,7 +352,7 @@ class _DetailStepCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildIndicatorColumn(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(child: _buildCard()),
         ],
       ),
@@ -410,7 +412,7 @@ class _DetailStepCard extends StatelessWidget {
           child: Text(
             '${step.stepNumber}',
             style: AppTypography.etiquetaSm.copyWith(
-              color: Colors.white,
+              color: AppColors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -439,10 +441,10 @@ class _DetailStepCard extends StatelessWidget {
 
   Widget _buildCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(
           color: AppColors.outlineVariant.withValues(alpha: 0.6),
           width: 0.5,
@@ -466,7 +468,7 @@ class _DetailStepCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 step.isCompleted && step.completedDate != null
                     ? _fmtShort(step.completedDate!)
@@ -478,7 +480,7 @@ class _DetailStepCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             _fmtShort(step.scheduledDate),
             style: AppTypography.etiquetaSm.copyWith(
@@ -486,13 +488,13 @@ class _DetailStepCard extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: _boxColor().withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +507,7 @@ class _DetailStepCard extends StatelessWidget {
                     height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Align(
                   alignment: Alignment.centerRight,
                   child: _buildStatusChip(),
@@ -552,7 +554,7 @@ class _DetailStepCard extends StatelessWidget {
           size: 10,
           color: color,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           label,
           style: AppTypography.etiquetaSm.copyWith(
@@ -580,16 +582,16 @@ class _DetailActionBar extends StatelessWidget {
 
     if (activeStep == null) {
       return Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         decoration: BoxDecoration(
           color: AppColors.statusHealthyBg,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.check_circle_rounded, color: AppColors.forestGreen, size: 18),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.md),
             Text(
               'Tratamiento completado',
               style: AppTypography.labelMd.copyWith(
@@ -619,13 +621,13 @@ class _DetailActionBar extends StatelessWidget {
                   fontSize: 12.5,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.xl),
         Expanded(
           child: SizedBox(
             height: 46,
@@ -635,13 +637,13 @@ class _DetailActionBar extends StatelessWidget {
               label: const Text('Marcar completo'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.forestGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
                 textStyle: AppTypography.etiquetaSm.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 12.5,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 ),
                 elevation: 0,
               ),

@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 
 /// Banner amber para `DiagnosisSource.semanticFallback`: resultado
 /// aproximado por similitud, con CTA para actualizar el paquete del cultivo.
@@ -32,10 +34,10 @@ class ApproximateMatchBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
         color: AppColors.warmAmber.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.warmAmber.withValues(alpha: 0.5)),
       ),
       child: Column(
@@ -49,7 +51,7 @@ class ApproximateMatchBanner extends StatelessWidget {
                 size: 18,
                 color: AppColors.warmAmber,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'Resultado aproximado — actualiza el paquete de '
@@ -63,7 +65,7 @@ class ApproximateMatchBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

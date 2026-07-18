@@ -8,6 +8,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 class AuthTextField extends StatefulWidget {
@@ -48,20 +50,6 @@ class _AuthTextFieldState extends State<AuthTextField> {
   late final FocusNode _focus;
   bool _isFocused = false;
 
-  // ── Paleta de tokens del campo ─────────────────────────────────────────────
-  // Fondo del contenedor: verde salvia extremadamente apagado
-  static const Color _fieldBg   = Color(0xFFF4F8F6);
-  // Gris piedra atenuado para iconos outline
-  static const Color _iconColor = Color(0xFF9BA89E);
-  // Placeholder muy suave
-  static const Color _hintColor = Color(0xFFAAB9B3);
-  // Texto del usuario: verde bosque profundo (no negro puro)
-  static const Color _textColor = Color(0xFF2A3D35);
-  // Etiqueta: verde musgo medio — jerárquicamente menor que el texto principal
-  static const Color _labelColor = Color(0xFF56706A);
-  // Verde foco — indica actividad sin agresividad
-  static const Color _focusGreen = Color(0xFF4A7C59);
-
   @override
   void initState() {
     super.initState();
@@ -86,11 +74,14 @@ class _AuthTextFieldState extends State<AuthTextField> {
         // Etiqueta exterior — fuera del contenedor, texto limpio
         if (widget.label.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 10),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xs,
+              bottom: AppSpacing.lg,
+            ),
             child: Text(
               widget.label,
               style: AppTypography.etiquetaBold.copyWith(
-                color: _labelColor,
+                color: AppColors.authFieldLabel,
                 fontSize: 11,
                 letterSpacing: 0.6,
                 fontWeight: FontWeight.w600,
@@ -103,20 +94,20 @@ class _AuthTextFieldState extends State<AuthTextField> {
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: _fieldBg,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.authFieldBg,
+            borderRadius: BorderRadius.circular(AppRadius.xlPlus),
             boxShadow: _isFocused
                 ? [
                     // Sombra expandida verde cuando está en foco
                     BoxShadow(
-                      color: _focusGreen.withValues(alpha: 0.14),
+                      color: AppColors.authFieldFocusGreen.withValues(alpha: 0.14),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 6),
                     ),
                     // Capa inferior difuminada más sutil
                     BoxShadow(
-                      color: _focusGreen.withValues(alpha: 0.06),
+                      color: AppColors.authFieldFocusGreen.withValues(alpha: 0.06),
                       blurRadius: 8,
                       spreadRadius: 2,
                       offset: const Offset(0, 2),
@@ -125,7 +116,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
                 : [
                     // Sombra neutra en reposo — muy suave, flotación mínima
                     BoxShadow(
-                      color: const Color(0xFF2A3D35).withValues(alpha: 0.06),
+                      color: AppColors.authFieldText.withValues(alpha: 0.06),
                       blurRadius: 14,
                       spreadRadius: 0,
                       offset: const Offset(0, 4),
@@ -149,49 +140,49 @@ class _AuthTextFieldState extends State<AuthTextField> {
             enabled: widget.enabled,
             maxLines: widget.maxLines,
             style: AppTypography.bodyMd.copyWith(
-              color: _textColor,
+              color: AppColors.authFieldText,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               hintText: widget.hintText,
               hintStyle: AppTypography.bodyMd.copyWith(
-                color: _hintColor,
+                color: AppColors.authFieldHint,
                 fontWeight: FontWeight.w400,
               ),
               prefixIcon: widget.prefixIcon != null
-                  ? Icon(widget.prefixIcon, color: _iconColor, size: 20)
+                  ? Icon(widget.prefixIcon, color: AppColors.authFieldIcon, size: 20)
                   : null,
               suffixIcon: widget.suffixIcon,
               // El Container ya provee el fondo: fill transparente
               filled: true,
-              fillColor: Colors.transparent,
+              fillColor: AppColors.transparent,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+                horizontal: AppSpacing.xxlPlus,
+                vertical: AppSpacing.xxlPlus,
               ),
               // Sin líneas visibles — el volumen lo dan las sombras
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 borderSide: BorderSide.none,
               ),
               // Error: borde terracota sutil — única situación con línea
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 borderSide: BorderSide(
                   color: AppColors.error.withValues(alpha: 0.75),
                   width: 1.5,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 borderSide: const BorderSide(
                   color: AppColors.error,
                   width: 1.5,

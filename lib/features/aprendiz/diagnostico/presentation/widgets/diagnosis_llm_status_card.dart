@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -19,7 +20,7 @@ class DiagnosisLlmLoadingCard extends StatelessWidget {
             height: 18,
             child: CircularProgressIndicator(color: AppColors.aSecondary, strokeWidth: 2),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Text(
               'Preparando una explicación fácil de entender para ti...',
@@ -42,7 +43,7 @@ class DiagnosisLlmErrorCard extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.wifi_off_outlined, size: 18, color: AppColors.aOnSurfaceVariant),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Text(
               'No pudimos preparar la explicación ahora mismo.',

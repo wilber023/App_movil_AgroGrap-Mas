@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Campo opcional para describir lo que el aprendiz observa en la planta.
@@ -24,7 +26,7 @@ class DiagnosisDescriptionField extends StatelessWidget {
           'Describe lo que observas (opcional)',
           style: AppTypography.etiquetaBold.copyWith(color: AppColors.aOnSurface),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         TextField(
           controller: controller,
           maxLines: 3,
@@ -37,26 +39,26 @@ class DiagnosisDescriptionField extends StatelessWidget {
             filled: true,
             fillColor: AppColors.aSurfaceContainerLowest,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.aOutlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.aOutlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
               borderSide: const BorderSide(color: AppColors.aSecondary, width: 2),
             ),
             counterStyle: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.info_outline, size: 14, color: AppColors.aOnSurfaceVariant),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 'Entre más detalles proporciones, más preciso podrá ser el diagnóstico.',

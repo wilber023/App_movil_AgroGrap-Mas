@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/crop_status_summary_entity.dart';
 
@@ -25,10 +27,10 @@ class HomeCropStageCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +54,7 @@ class HomeCropStageCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -61,11 +63,11 @@ class HomeCropStageCard extends StatelessWidget {
                 height: 56,
                 decoration: BoxDecoration(
                   color: AppColors.aMint,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 ),
                 child: const Icon(Icons.eco, color: AppColors.aSecondary, size: 28),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -75,7 +77,7 @@ class HomeCropStageCard extends StatelessWidget {
                       status.cropName ?? '',
                       style: AppTypography.agendaTitle.copyWith(fontSize: 17, color: AppColors.aPrimary),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       'Etapa actual',
                       style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
@@ -89,11 +91,11 @@ class HomeCropStageCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           _StageStepper(currentIndex: stageIndex, labels: _stageLabels),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           _InfoRow(label: 'Diagnóstico más reciente', value: status.lastDiagnosisLabel ?? 'Sin novedades'),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           _InfoRow(
             label: 'Última actualización',
             value: status.lastUpdate != null ? _relativeDate(status.lastUpdate!) : 'Sin diagnósticos aún',
@@ -164,7 +166,7 @@ class _StageStepper extends StatelessWidget {
                   color: i <= currentIndex ? AppColors.aSecondary : AppColors.aSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 labels[i],
                 style: AppTypography.etiquetaSm.copyWith(

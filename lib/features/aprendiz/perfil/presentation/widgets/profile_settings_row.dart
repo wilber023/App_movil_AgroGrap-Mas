@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Fila de opcion dentro de una [ProfileSettingsCard]: icono, etiqueta y
@@ -32,15 +34,18 @@ class ProfileSettingsRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.vertical(
-        top: isFirst ? const Radius.circular(12) : Radius.zero,
-        bottom: isLast ? const Radius.circular(12) : Radius.zero,
+        top: isFirst ? const Radius.circular(AppRadius.lgXl) : Radius.zero,
+        bottom: isLast ? const Radius.circular(AppRadius.lgXl) : Radius.zero,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxlPlus,
+          vertical: AppSpacing.xxl,
+        ),
         child: Row(
           children: [
             Icon(icon, color: iconColor ?? AppColors.aOnSurfaceVariant, size: 22),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.xxl),
             Expanded(
               child: Text(
                 label,
@@ -49,7 +54,7 @@ class ProfileSettingsRow extends StatelessWidget {
             ),
             if (trailing != null) ...[
               Text(trailing!, style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant)),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
             ],
             Icon(trailingIcon ?? Icons.chevron_right, color: AppColors.aOnSurfaceVariant, size: 18),
           ],
@@ -78,11 +83,14 @@ class ProfileSettingsSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xxlPlus,
+        vertical: AppSpacing.lg,
+      ),
       child: Row(
         children: [
           Icon(icon, color: AppColors.aOnSurfaceVariant, size: 22),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.xxl),
           Expanded(
             child: Text(
               label,
@@ -107,6 +115,6 @@ class ProfileRowDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, thickness: 1, indent: 52, color: AppColors.aOutlineVariant);
+    return const Divider(height: 1, thickness: 1, indent: AppSpacing.xxgiant, color: AppColors.aOutlineVariant);
   }
 }

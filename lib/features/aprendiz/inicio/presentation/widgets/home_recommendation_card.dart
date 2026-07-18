@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/home_recommendation_entity.dart';
 
@@ -28,8 +30,8 @@ class HomeRecommendationCard extends StatelessWidget {
     final showAction = recommendation.action != HomeRecommendationAction.none && onAction != null;
 
     return Container(
-      decoration: BoxDecoration(color: AppColors.aLightGreen, borderRadius: BorderRadius.circular(16)),
-      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppColors.aLightGreen, borderRadius: BorderRadius.circular(AppRadius.xlPlus)),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,28 +39,28 @@ class HomeRecommendationCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.auto_awesome, size: 18, color: AppColors.aSecondary),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 'Recomendación del día',
                 style: AppTypography.agendaSectionTitle.copyWith(fontSize: 15, color: AppColors.aPrimary),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             recommendation.message,
             style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
           ),
           if (showAction) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.aSecondary),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
                 ),
                 child: Text(
                   _actionLabel,

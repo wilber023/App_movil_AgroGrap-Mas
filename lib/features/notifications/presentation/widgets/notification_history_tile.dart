@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/push_notification_entry_entity.dart';
 
 class NotificationHistoryTile extends StatelessWidget {
@@ -20,11 +22,16 @@ class NotificationHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+        AppSpacing.xxlPlus,
+        AppSpacing.lg,
+      ),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -46,7 +53,7 @@ class NotificationHistoryTile extends StatelessWidget {
                   size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +66,7 @@ class NotificationHistoryTile extends StatelessWidget {
                         color: AppColors.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: AppSpacing.xxsPlus),
                     Text(
                       entry.body,
                       style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
@@ -69,7 +76,7 @@ class NotificationHistoryTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Text(
@@ -79,7 +86,7 @@ class NotificationHistoryTile extends StatelessWidget {
               const Spacer(),
               if (entry.estado != null && entry.estado!.isNotEmpty) ...[
                 _pill(entry.estado!),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.sm),
               ],
               if (entry.campania != null && entry.campania!.isNotEmpty) _pill(entry.campania!),
             ],
@@ -91,10 +98,13 @@ class NotificationHistoryTile extends StatelessWidget {
 
   Widget _pill(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xxsPlus,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdLg),
       ),
       child: Text(
         label,

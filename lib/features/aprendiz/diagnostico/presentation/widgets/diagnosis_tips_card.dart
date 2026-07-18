@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta compacta con consejos para tomar una buena foto, mostrada antes
@@ -21,32 +23,32 @@ class DiagnosisTipsCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(Icons.tips_and_updates_outlined, color: AppColors.aSecondary, size: 18),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 'Consejos para una mejor foto',
                 style: AppTypography.etiquetaBold.copyWith(color: AppColors.aOnSurface),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           ..._tips.map(
             (tip) => Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.check, size: 14, color: AppColors.aSecondary),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
                       tip,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../models/diagnosis_result_view_data.dart';
 
@@ -21,13 +23,13 @@ class DiagnosisSeverityBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, icon, label) = _style;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xsPlus),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.pill)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(label, style: AppTypography.etiquetaSm.copyWith(color: fg, fontWeight: FontWeight.w700)),
         ],
       ),

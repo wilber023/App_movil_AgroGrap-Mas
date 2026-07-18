@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/crop_practice_location.dart';
 import '../bloc/cultivo_bloc.dart';
 import '../widgets/cultivo_date_field.dart';
@@ -97,7 +99,7 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
               content: Text('¡Cultivo registrado! Generando plan para ${state.plan.cropName}...'),
               backgroundColor: AppColors.aSecondary,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
             ),
           );
           Navigator.of(context).pushReplacement(
@@ -109,7 +111,7 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
               content: Text(state.message),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
             ),
           );
         }
@@ -123,19 +125,24 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
               const CultivoRegisterHeader(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xxlPlus,
+                    AppSpacing.xxlPlus,
+                    AppSpacing.xxlPlus,
+                    AppSpacing.titan,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const CultivoFormSectionLabel(label: '¿Qué vas a sembrar?'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.xl),
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
+                          mainAxisSpacing: AppSpacing.lg,
+                          crossAxisSpacing: AppSpacing.lg,
                           childAspectRatio: 1.0,
                         ),
                         itemCount: _crops.length,
@@ -149,32 +156,32 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
                           );
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xhuge),
 
                       const CultivoFormSectionLabel(label: 'Fecha de siembra'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.xl),
                       CultivoDateField(
                         selectedDate: _sowingDate,
                         formatDate: _formatDate,
                         onTap: _pickDate,
                       ),
                       if (_estimatedHarvest != null) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         CultivoHarvestEstimateChip(
                           formattedDate: _formatDate(_estimatedHarvest!),
                         ),
                       ],
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xhuge),
 
                       const CultivoFormSectionLabel(label: '¿Dónde vas a practicar?'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.xl),
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
+                          mainAxisSpacing: AppSpacing.lg,
+                          crossAxisSpacing: AppSpacing.lg,
                           childAspectRatio: 1.3,
                         ),
                         itemCount: _practiceLocations.length,
@@ -201,7 +208,12 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
           ),
         ),
         bottomNavigationBar: Container(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewPadding.bottom + 16),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.xxlPlus,
+            AppSpacing.xl,
+            AppSpacing.xxlPlus,
+            MediaQuery.of(context).viewPadding.bottom + AppSpacing.xxlPlus,
+          ),
           color: AppColors.aMint,
           child: CultivoRegisterSubmitButton(canSubmit: _canSubmit, onPressed: _submit),
         ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/diagnosis_entity.dart';
 import '../bloc/diagnosis_bloc.dart';
@@ -12,16 +14,6 @@ import 'diagnosis_result_page.dart';
 // AgroGraph-MAS -- Historial de Diagnosticos
 // =============================================================================
 
-const Color _bg = Color(0xFFF8FAF5);
-const Color _textPrimary = Color(0xFF1B2D27);
-const Color _textSecondary = Color(0xFF6B8F71);
-const Color _hintColor = Color(0xFFADB5BD);
-const Color _chipGreenBg = Color(0xFFEAF3DE);
-const Color _chipGreenText = Color(0xFF27500A);
-const Color _chipWarnBg = Color(0xFFFFF3E0);
-const Color _chipWarnText = Color(0xFF7B4A10);
-const Color _trackGrey = Color(0xFFE2EBE6);
-const Color _addGreen = Color(0xFF52B788);
 
 // =============================================================================
 // Bottom sheet version (invoked from camera history button)
@@ -46,33 +38,33 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxlPlus)),
       ),
       child: Column(
         children: [
           // Handle bar
           Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.xs),
             child: Container(
               width: 32,
               height: 4,
               decoration: BoxDecoration(
-                color: _trackGrey,
-                borderRadius: BorderRadius.circular(2),
+                color: AppColors.parcelsTrackGrey,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             ),
           ),
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Historial de diagnósticos',
                   style: AppTypography.labelMd.copyWith(
-                    color: _textPrimary,
+                    color: AppColors.parcelsTextPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -98,7 +90,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
               ],
             ),
           ),
-          Container(height: 0.5, color: _hintColor.withValues(alpha: 0.2)),
+          Container(height: 0.5, color: AppColors.parcelsBorderLight.withValues(alpha: 0.2)),
           // List
           Expanded(
             child: BlocBuilder<DiagnosisBloc, DiagnosisState>(
@@ -110,7 +102,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
                   }
                   return ListView.builder(
                     controller: widget.scrollController,
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: AppSpacing.md),
                     itemCount: items.length,
                     itemBuilder: (context, i) => _buildCard(context, items[i]),
                   );
@@ -131,7 +123,7 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -139,27 +131,27 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
               width: 90,
               height: 90,
               decoration: const BoxDecoration(
-                color: _chipGreenBg,
+                color: AppColors.parcelsChipGreenBg,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.camera_alt_outlined,
-                color: _addGreen,
+                color: AppColors.parcelsAddGreen,
                 size: 32,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             Text(
               'Aún no hay diagnósticos',
               style: AppTypography.labelMd.copyWith(
-                color: _textPrimary,
+                color: AppColors.parcelsTextPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -197,10 +189,10 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.parcelsBg,
       appBar: AppBar(
         backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_outlined, size: 20),
@@ -219,14 +211,14 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                 // Filter bar
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     border: Border(
                       bottom: BorderSide(
-                        color: _hintColor.withValues(alpha: 0.2),
+                        color: AppColors.parcelsBorderLight.withValues(alpha: 0.2),
                         width: 0.5,
                       ),
                     ),
@@ -246,18 +238,18 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                             );
                           },
                           child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            margin: const EdgeInsets.only(right: AppSpacing.md),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.forestGreen
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
+                                  : AppColors.transparent,
+                              borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
                               border: isSelected
                                   ? null
                                   : Border.all(
-                                      color: _hintColor.withValues(alpha: 0.3),
+                                      color: AppColors.parcelsBorderLight.withValues(alpha: 0.3),
                                       width: 0.5,
                                     ),
                             ),
@@ -267,8 +259,8 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 color: isSelected
-                                    ? Colors.white
-                                    : _textSecondary,
+                                    ? AppColors.onPrimary
+                                    : AppColors.parcelsTextSecondary,
                               ),
                             ),
                           ),
@@ -318,20 +310,20 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
       children: [
         for (final month in grouped.keys) ...[
           // Encabezado de mes en español
           Container(
             width: double.infinity,
-            color: _bg,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            color: AppColors.parcelsBg,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.md),
             child: Text(
               _formatMes(month),
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: _textSecondary,
+                color: AppColors.parcelsTextSecondary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -355,7 +347,7 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
   Widget _buildEmptyStateFull() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -363,30 +355,30 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
               width: 90,
               height: 90,
               decoration: const BoxDecoration(
-                color: _chipGreenBg,
+                color: AppColors.parcelsChipGreenBg,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.camera_alt_outlined,
-                color: _addGreen,
+                color: AppColors.parcelsAddGreen,
                 size: 32,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             Text(
               'Aún no hay diagnósticos',
               style: AppTypography.labelMd.copyWith(
-                color: _textPrimary,
+                color: AppColors.parcelsTextPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -394,9 +386,9 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.warmAmber,
-                  foregroundColor: const Color(0xFF4A2800),
+                  foregroundColor: AppColors.onWarmAmber,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.lgXl),
                   ),
                   elevation: 0,
                 ),
@@ -420,11 +412,11 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
 // Shared: Diagnosis card (used by both sheet and full screen)
 // =============================================================================
 Widget _buildCard(BuildContext context, DiagnosisEntity e) {
-  Color statusBg = _chipGreenBg;
-  Color statusText = _chipGreenText;
+  Color statusBg = AppColors.parcelsChipGreenBg;
+  Color statusText = AppColors.parcelsChipGreenText;
   if (e.statusLabel == 'En tratamiento' || e.statusLabel == 'Seguimiento') {
-    statusBg = _chipWarnBg;
-    statusText = _chipWarnText;
+    statusBg = AppColors.parcelsChipFollowBg;
+    statusText = AppColors.parcelsChipFollowText;
   }
 
   return GestureDetector(
@@ -435,13 +427,13 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
       );
     },
     child: Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.none, AppSpacing.xl, AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.onPrimary,
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(
-          color: _hintColor.withValues(alpha: 0.3),
+          color: AppColors.parcelsBorderLight.withValues(alpha: 0.3),
           width: 0.5,
         ),
       ),
@@ -453,18 +445,18 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFFD8EAD0),
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.diagnosisThumbBg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: e.imagePath != null
-                ? const Icon(Icons.image, size: 24, color: _textSecondary)
+                ? const Icon(Icons.image, size: 24, color: AppColors.parcelsTextSecondary)
                 : const Icon(
                     Icons.eco_outlined,
                     size: 24,
-                    color: _textSecondary,
+                    color: AppColors.parcelsTextSecondary,
                   ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           // Content
           Expanded(
             child: Column(
@@ -477,7 +469,7 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                     Text(
                       e.diseaseName,
                       style: AppTypography.labelMd.copyWith(
-                        color: _textPrimary,
+                        color: AppColors.parcelsTextPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -492,38 +484,38 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpacing.xxsPlus),
                 // Row 2: crop chip
                 Row(
                   children: [
-                    _buildPill(e.cropName, _chipGreenBg, _chipGreenText),
+                    _buildPill(e.cropName, AppColors.parcelsChipGreenBg, AppColors.parcelsChipGreenText),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 // Row 3: date + status chip
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '${e.diagnosedAt.day}/${e.diagnosedAt.month}/${e.diagnosedAt.year}',
-                      style: GoogleFonts.inter(fontSize: 10, color: _hintColor),
+                      style: GoogleFonts.inter(fontSize: 10, color: AppColors.parcelsBorderLight),
                     ),
                     _buildPill(e.statusLabel, statusBg, statusText),
                   ],
                 ),
                 // Row 4: treatment bar
                 if (e.treatmentProgress != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                           child: SizedBox(
                             height: 4,
                             child: LinearProgressIndicator(
                               value: e.treatmentProgress!,
-                              backgroundColor: _trackGrey,
+                              backgroundColor: AppColors.parcelsTrackGrey,
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppColors.forestGreen,
                               ),
@@ -532,12 +524,12 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
                         ),
                       ),
                       if (e.treatmentStep != null) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.md),
                         Text(
                           e.treatmentStep!,
                           style: GoogleFonts.inter(
                             fontSize: 9,
-                            color: _textSecondary,
+                            color: AppColors.parcelsTextSecondary,
                           ),
                         ),
                       ],
@@ -555,10 +547,10 @@ Widget _buildCard(BuildContext context, DiagnosisEntity e) {
 
 Widget _buildPill(String label, Color bg, Color text) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
     decoration: BoxDecoration(
       color: bg,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.mdLg),
     ),
     child: Text(
       label,

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../cubit/notification_history_cubit.dart';
 import '../widgets/notification_history_tile.dart';
 
@@ -30,7 +31,7 @@ class NotificationsPage extends StatelessWidget {
       backgroundColor: AppColors.surfaceDs2,
       appBar: AppBar(
         backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         elevation: 0,
         title: Text(
           'Notificaciones',
@@ -53,7 +54,10 @@ class NotificationsPage extends StatelessWidget {
                     color: AppColors.forestGreen,
                     onRefresh: () => context.read<NotificationHistoryCubit>().load(),
                     child: ListView.builder(
-                      padding: const EdgeInsets.only(top: 12, bottom: 24),
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.xl,
+                        bottom: AppSpacing.xhuge,
+                      ),
                       itemCount: items.length,
                       itemBuilder: (_, i) => NotificationHistoryTile(entry: items[i]),
                     ),
@@ -72,7 +76,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -89,12 +93,12 @@ class _EmptyState extends StatelessWidget {
                 size: 32,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             Text(
               'Aún no tienes notificaciones',
               style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.onSurface),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'Aquí aparecerán las alertas fitosanitarias que recibas en este dispositivo. '
               'Actívalas desde "Notificaciones" en tu perfil.',
@@ -118,22 +122,22 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 32),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               style: GoogleFonts.inter(fontSize: 13, color: AppColors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.forestGreen),
-              child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+              child: const Text('Reintentar', style: TextStyle(color: AppColors.onPrimary)),
             ),
           ],
         ),

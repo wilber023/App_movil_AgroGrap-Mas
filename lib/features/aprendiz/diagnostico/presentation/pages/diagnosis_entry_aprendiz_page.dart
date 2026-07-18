@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
@@ -194,7 +196,7 @@ class _TopBar extends StatelessWidget {
     return Container(
       color: AppColors.aPrimaryContainer,
       height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
           IconButton(icon: const Icon(Icons.menu, color: AppColors.aOnPrimary), onPressed: () {}),
@@ -233,12 +235,12 @@ class _TabItem extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? AppColors.aOrange : Colors.transparent,
+                color: isSelected ? AppColors.aOrange : AppColors.transparent,
                 width: 3,
               ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -247,7 +249,7 @@ class _TabItem extends StatelessWidget {
                 size: 18,
                 color: isSelected ? AppColors.aOrange : AppColors.aOnSurfaceVariant,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 label,
                 textAlign: TextAlign.center,
@@ -341,7 +343,12 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
         return Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 80),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xxlPlus,
+                AppSpacing.xxxl,
+                AppSpacing.xxlPlus,
+                AppSpacing.colossal,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -350,28 +357,28 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                     '¿Qué quieres analizar hoy?',
                     style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnSurface),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Toma una foto clara de la planta y te ayudamos a entender qué está pasando.',
                     style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, fontSize: 13, height: 1.4),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   // Context banner (pending inspection info)
                   if (widget.hasPendingInspection) ...[
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.aWarningBg,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         border: Border.all(color: AppColors.aWarningBorder),
                         boxShadow: _kCardShadow,
                       ),
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.event_note_rounded, color: AppColors.aOrange, size: 20),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: AppSpacing.lg),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +391,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                                     letterSpacing: 0.3,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   'Tu plan indica que es momento de revisar tu cultivo.',
                                   style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, fontSize: 13),
@@ -395,12 +402,12 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.huge),
                     Row(
                       children: [
                         const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                           child: Text(
                             'O REALIZA UN DIAGNÓSTICO LIBRE',
                             style: AppTypography.etiquetaSm.copyWith(
@@ -414,12 +421,12 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                         const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.huge),
                   ],
 
                   // Mejora 1: consejos para una mejor foto
                   const DiagnosisTipsCard(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xxlPlus),
 
                   // Área de captura
                   DiagnosisCaptureArea(
@@ -429,7 +436,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                     onRemove: () => setState(() => _imagePath = null),
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.xxl),
 
                   // Camera / Gallery buttons
                   Row(
@@ -444,13 +451,13 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.aSecondary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                             elevation: 0,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.xl),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: isAnalyzing ? null : _pickFromGallery,
@@ -461,15 +468,15 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                           ),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: AppColors.aSecondary, width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: AppSpacing.hugePlus),
 
                   // Mejora 3: campo de descripción con propósito educativo
                   DiagnosisDescriptionField(
@@ -477,7 +484,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                     isEnabled: !isAnalyzing,
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
 
                   // Submit button
                   SizedBox(
@@ -488,7 +495,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.aOrange,
                         disabledBackgroundColor: AppColors.aSurfaceVariant,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                         elevation: 0,
                       ),
                       child: isAnalyzing
@@ -500,7 +507,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                                   height: 18,
                                   child: CircularProgressIndicator(color: AppColors.aOnPrimary, strokeWidth: 2),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.xl),
                                 Text(
                                   'Analizando tu foto...',
                                   style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontSize: 15),
@@ -521,12 +528,12 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
 
                   // Mejora 4 y 5: secciones preparadas para un resultado real.
                   // Sin datos, ambas permanecen ocultas (ver sus widgets).
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xxlPlus),
                   const DiagnosisLearningSection(),
                   const DiagnosisConfidenceIndicator(),
 
                   // Mejora 7: nota educativa final
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.huge),
                   const DiagnosisEducationalFootnote(),
                 ],
               ),
@@ -536,15 +543,15 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
             // está trabajando (además del estado del botón).
             if (isAnalyzing)
               Positioned(
-                top: 12,
-                left: 16,
-                right: 16,
+                top: AppSpacing.xl,
+                left: AppSpacing.xxlPlus,
+                right: AppSpacing.xxlPlus,
                 child: IgnorePointer(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.lg),
                     decoration: BoxDecoration(
                       color: AppColors.aPrimaryContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.lgXl),
                       boxShadow: _kCardShadow,
                     ),
                     child: Row(
@@ -554,7 +561,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                           height: 16,
                           child: CircularProgressIndicator(color: AppColors.aOnPrimary, strokeWidth: 2),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpacing.lg),
                         Expanded(
                           child: Text(
                             'Estamos revisando tu foto con inteligencia artificial...',

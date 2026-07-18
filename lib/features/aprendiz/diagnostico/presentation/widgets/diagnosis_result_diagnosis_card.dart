@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../models/diagnosis_result_view_data.dart';
 import 'diagnosis_result_card.dart';
@@ -44,7 +45,7 @@ class DiagnosisResultDiagnosisCard extends StatelessWidget {
                 decoration: const BoxDecoration(color: AppColors.aOnPrimary, shape: BoxShape.circle),
                 child: const Icon(Icons.search_rounded, color: AppColors.error, size: 22),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +54,7 @@ class DiagnosisResultDiagnosisCard extends StatelessWidget {
                       'DIAGNÓSTICO',
                       style: AppTypography.statusPill.copyWith(color: AppColors.error, fontWeight: FontWeight.w700),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       data.diseaseName,
                       style: AppTypography.agendaTitle.copyWith(fontSize: 17, color: AppColors.aDiseaseCardText),
@@ -72,13 +73,13 @@ class DiagnosisResultDiagnosisCard extends StatelessWidget {
                     'Severidad',
                     style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.sm),
                   DiagnosisSeverityBadge(severity: data.severity),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             _severityDescription,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),

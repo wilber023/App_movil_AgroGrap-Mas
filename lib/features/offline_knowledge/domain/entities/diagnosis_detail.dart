@@ -89,7 +89,7 @@ final class DiagnosisDetailApproximate extends DiagnosisDetail {
 final class DiagnosisDetailNotFound extends DiagnosisDetail {
   final String enfermedadId;
 
-  DiagnosisDetailNotFound({required this.enfermedadId})
+  const DiagnosisDetailNotFound({required this.enfermedadId})
     : super(
         enfermedad: enfermedadId,
         sintomas: '',
@@ -103,7 +103,7 @@ final class DiagnosisDetailNotFound extends DiagnosisDetail {
 final class DiagnosisDetailPackageMissing extends DiagnosisDetail {
   final String cultivo;
 
-  DiagnosisDetailPackageMissing({required this.cultivo})
+  const DiagnosisDetailPackageMissing({required this.cultivo})
     : super(
         enfermedad: '',
         sintomas: '',

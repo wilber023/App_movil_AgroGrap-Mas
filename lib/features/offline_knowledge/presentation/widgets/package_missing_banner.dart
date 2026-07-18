@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 
 /// Banner gris para `DiagnosisSource.packageMissing`: no hay paquete offline
 /// descargado para el cultivo detectado.
@@ -31,10 +33,10 @@ class PackageMissingBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
         color: AppColors.statusOfflineBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.offlineGrey.withValues(alpha: 0.5)),
       ),
       child: Column(
@@ -48,7 +50,7 @@ class PackageMissingBanner extends StatelessWidget {
                 size: 18,
                 color: AppColors.offlineGreyDark,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'Descarga el paquete de $cultivo para ver el '
@@ -62,7 +64,7 @@ class PackageMissingBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

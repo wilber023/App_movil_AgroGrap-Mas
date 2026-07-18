@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/agenda_activity_entity.dart';
 
@@ -46,13 +48,18 @@ class AgendaTodayStageCard extends StatelessWidget {
     final current = activity;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: current == null
           ? _EmptyState(dayLabel: _dayLabel)
           : Column(
@@ -61,32 +68,32 @@ class AgendaTodayStageCard extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.wb_sunny_outlined, size: 18, color: AppColors.aOrange),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.md),
                     Text(
                       _dayLabel,
                       style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   current.title,
                   style: AppTypography.agendaTitle.copyWith(color: AppColors.aPrimary),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   current.description,
                   style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
                 ),
                 if (current.checklist.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.xl),
                   ...current.checklist.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Icon(Icons.check, size: 18, color: AppColors.aSecondary),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Text(
                                 item,
@@ -97,13 +104,13 @@ class AgendaTodayStageCard extends StatelessWidget {
                         ),
                       )),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 if (current.status == AgendaActivityStatus.completed)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.check_circle, color: AppColors.aSecondary, size: 20),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.md),
                       Text(
                         'Completada',
                         style: AppTypography.agendaBody.copyWith(
@@ -136,7 +143,7 @@ class AgendaTodayStageCard extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.aSecondary,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                       ),
                     ),
                   ),
@@ -158,18 +165,18 @@ class _EmptyState extends StatelessWidget {
         Row(
           children: [
             const Icon(Icons.wb_sunny_outlined, size: 18, color: AppColors.aOrange),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.md),
             Text(
               dayLabel,
               style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.xl),
         Row(
           children: [
             const Icon(Icons.check_circle_outline, color: AppColors.aSecondary, size: 20),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: Text(
                 'Sin actividades programadas para este día.',

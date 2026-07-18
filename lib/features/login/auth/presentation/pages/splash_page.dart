@@ -13,6 +13,9 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../core/security/force_update_gate.dart';
 import '../../../../../core/security/root_detection.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../bloc/splash_cubit.dart';
 import 'select_profile_page.dart';
 import '../../../../../main.dart';
@@ -134,51 +137,51 @@ class _SplashPageState extends State<SplashPage> {
           body: Container(
             width: double.infinity,
             height: double.infinity,
-            color: const Color(0xFF1B5E20),
+            color: AppColors.authSplashBg,
             child: SafeArea(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Spacer(flex: 3),
                   // Icono central (hoja)
-                  const Icon(Icons.eco_rounded, size: 80, color: Colors.white),
-                  const SizedBox(height: 24),
+                  const Icon(Icons.eco_rounded, size: 80, color: AppColors.onPrimary),
+                  const SizedBox(height: AppSpacing.xhuge),
                   // Titulo
                   Text(
                     'AgroGraph-MAS',
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.lg),
                   // Subtitulo
                   Text(
                     'Tu agrónomo en el bolsillo',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF81C784), // Light green to match image
+                      color: AppColors.authSplashSubtitle,
                     ),
                   ),
                   const Spacer(flex: 3),
                   // Barra de progreso indeterminada en la parte inferior
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 80),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.colossal),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: const LinearProgressIndicator(
                         minHeight: 3,
-                        backgroundColor: Color(0xFF2E7D32),
+                        backgroundColor: AppColors.authAgricultorAccent,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white70,
+                          AppColors.white70,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: AppSpacing.xgiantPlus),
                 ],
               ),
             ),

@@ -9,6 +9,8 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../bloc/diagnosis_bloc.dart';
 import 'diagnosis_processing_page.dart';
 import 'diagnosis_history_page.dart';
@@ -17,7 +19,6 @@ import 'diagnosis_history_page.dart';
 // AgroGraph-MAS -- Diagnóstico con cámara nativa
 // =============================================================================
 
-const Color _bracketGreen = Color(0xFF52B788);
 
 // Top-level: corre en isolate separado para no bloquear la UI
 Future<String> _compressToJpeg(String sourcePath) async {
@@ -246,7 +247,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             : null;
 
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.black,
           body: Stack(
             children: [
               // ── Fondo ──────────────────────────────────────────────────
@@ -260,7 +261,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               // Overlay oscuro sobre imagen capturada
               if (isCaptured)
                 Positioned.fill(
-                  child: Container(color: Colors.black.withValues(alpha: 0.38)),
+                  child: Container(color: AppColors.black.withValues(alpha: 0.38)),
                 ),
 
               if (!isCaptured) _buildVignette(),
@@ -272,9 +273,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               if (_isCapturing)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.45),
+                    color: AppColors.black.withValues(alpha: 0.45),
                     child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                      child: CircularProgressIndicator(color: AppColors.onPrimary),
                     ),
                   ),
                 ),
@@ -292,7 +293,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0B1F18), Color(0xFF000000)],
+          colors: [AppColors.diagnosisCameraGradientStart, AppColors.black],
         ),
       ),
       child: Center(
@@ -302,15 +303,15 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             Icon(
               Icons.camera_alt_outlined,
               size: 52,
-              color: Colors.white.withValues(alpha: 0.18),
+              color: AppColors.onPrimary.withValues(alpha: 0.18),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.xxl),
             Text(
               'Toca el botón para fotografiar\ntu cultivo',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white.withValues(alpha: 0.28),
+                color: AppColors.onPrimary.withValues(alpha: 0.28),
                 height: 1.5,
               ),
             ),
@@ -324,12 +325,12 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   Widget _buildTopBar(bool isCaptured) {
     return Positioned(
       top: MediaQuery.of(context).padding.top,
-      left: 0,
-      right: 0,
+      left: AppSpacing.none,
+      right: AppSpacing.none,
       child: Container(
         height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        color: Colors.black.withValues(alpha: 0.55),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
+        color: AppColors.black.withValues(alpha: 0.55),
         child: Row(
           children: [
             // Botón "Repetir" solo cuando hay foto capturada
@@ -340,18 +341,18 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: AppColors.black.withValues(alpha: 0.4),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.refresh_rounded,
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     size: 18,
                   ),
                 ),
               )
             else
-              const SizedBox(width: 36),
+              const SizedBox(width: AppSpacing.giantPlus),
             Expanded(
               child: Center(
                 child: Text(
@@ -359,13 +360,13 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                   ),
                 ),
               ),
             ),
             // Espacio de balance
-            const SizedBox(width: 36),
+            const SizedBox(width: AppSpacing.giantPlus),
           ],
         ),
       ),
@@ -381,8 +382,8 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               center: Alignment.center,
               radius: 0.85,
               colors: [
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.45),
+                AppColors.transparent,
+                AppColors.black.withValues(alpha: 0.45),
               ],
             ),
           ),
@@ -405,7 +406,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             final scale = isCaptured ? 1.0 : _pulseAnimation.value;
             final bracketColor = isCaptured
                 ? AppColors.warmAmber
-                : _bracketGreen;
+                : AppColors.parcelsAddGreen;
             return Transform.scale(
               scale: scale,
               child: SizedBox(
@@ -429,7 +430,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 12,
-                                color: Colors.white.withValues(alpha: 0.75),
+                                color: AppColors.onPrimary.withValues(alpha: 0.75),
                               ),
                             ),
                           ),
@@ -446,9 +447,9 @@ class _DiagnosisPageState extends State<DiagnosisPage>
 
   Widget _buildBottomBar(bool isCaptured) {
     return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
+      bottom: AppSpacing.none,
+      left: AppSpacing.none,
+      right: AppSpacing.none,
       child: isCaptured ? _buildCapturedPanel() : _buildShootingBar(),
     );
   }
@@ -457,12 +458,12 @@ class _DiagnosisPageState extends State<DiagnosisPage>
   Widget _buildCapturedPanel() {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 14, 16, bottomPad + 10),
+      padding: EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxl, AppSpacing.xxlPlus, bottomPad + AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.82),
+        color: AppColors.black.withValues(alpha: 0.82),
         border: Border(
           top: BorderSide(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: AppColors.onPrimary.withValues(alpha: 0.08),
             width: 0.5,
           ),
         ),
@@ -477,28 +478,28 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               Icon(
                 Icons.chat_bubble_outline_rounded,
                 size: 11,
-                color: Colors.white.withValues(alpha: 0.65),
+                color: AppColors.onPrimary.withValues(alpha: 0.65),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: AppSpacing.xsPlus),
               Text(
                 'SÍNTOMAS OBSERVADOS  ·  OPCIONAL',
                 style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.6,
-                  color: Colors.white.withValues(alpha: 0.65),
+                  color: AppColors.onPrimary.withValues(alpha: 0.65),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           // ── Campo de texto ──────────────────────────────────────────────
           TextField(
             controller: _symptomsController,
             maxLines: 2,
             maxLength: 400,
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: AppColors.onPrimary,
               fontSize: 12.5,
               height: 1.4,
             ),
@@ -506,57 +507,57 @@ class _DiagnosisPageState extends State<DiagnosisPage>
               hintText:
                   'Ej: manchas amarillas en hojas, tallos negros, frutos caídos...',
               hintStyle: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.50),
+                color: AppColors.onPrimary.withValues(alpha: 0.50),
                 fontSize: 11.5,
               ),
               errorText: _symptomsError,
               errorStyle: GoogleFonts.inter(
-                color: Color(0xFFFF6B6B),
+                color: AppColors.errorBright,
                 fontSize: 10.5,
                 height: 1.4,
               ),
               errorMaxLines: 3,
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.13),
+              fillColor: AppColors.onPrimary.withValues(alpha: 0.13),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.28),
+                  color: AppColors.onPrimary.withValues(alpha: 0.28),
                   width: 0.8,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.28),
+                  color: AppColors.onPrimary.withValues(alpha: 0.28),
                   width: 0.8,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: _bracketGreen, width: 1.5),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
+                borderSide: const BorderSide(color: AppColors.parcelsAddGreen, width: 1.5),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 borderSide: const BorderSide(
-                  color: Color(0xFFFF6B6B),
+                  color: AppColors.errorBright,
                   width: 1.0,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
                 borderSide: const BorderSide(
-                  color: Color(0xFFFF6B6B),
+                  color: AppColors.errorBright,
                   width: 1.5,
                 ),
               ),
               counterStyle: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.30),
+                color: AppColors.onPrimary.withValues(alpha: 0.30),
                 fontSize: 9,
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
+                horizontal: AppSpacing.xl,
+                vertical: AppSpacing.lg,
               ),
             ),
           ),
@@ -590,7 +591,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     return Container(
       height: 100,
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-      color: Colors.black.withValues(alpha: 0.6),
+      color: AppColors.black.withValues(alpha: 0.6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -626,15 +627,15 @@ class _DiagnosisPageState extends State<DiagnosisPage>
           children: [
             Icon(
               icon,
-              color: Colors.white.withValues(alpha: isDisabled ? 0.3 : 0.7),
+              color: AppColors.onPrimary.withValues(alpha: isDisabled ? 0.3 : 0.7),
               size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 10,
-                color: Colors.white.withValues(alpha: isDisabled ? 0.25 : 0.6),
+                color: AppColors.onPrimary.withValues(alpha: isDisabled ? 0.25 : 0.6),
               ),
             ),
           ],
@@ -655,15 +656,15 @@ class _DiagnosisPageState extends State<DiagnosisPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.35),
+              color: AppColors.onPrimary.withValues(alpha: 0.35),
               width: 3,
             ),
           ),
           child: Container(
-            margin: const EdgeInsets.all(4),
+            margin: const EdgeInsets.all(AppSpacing.xs),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: AppColors.onPrimary,
             ),
           ),
         ),
@@ -686,14 +687,14 @@ class _DiagnosisPageState extends State<DiagnosisPage>
             ),
             child: const Icon(
               Icons.search_outlined,
-              color: Colors.white,
+              color: AppColors.onPrimary,
               size: 24,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             'Analizar',
-            style: GoogleFonts.inter(fontSize: 10, color: Colors.white),
+            style: GoogleFonts.inter(fontSize: 10, color: AppColors.onPrimary),
           ),
         ],
       ),
@@ -704,7 +705,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         maxChildSize: 0.95,

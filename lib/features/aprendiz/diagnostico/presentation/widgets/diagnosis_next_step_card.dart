@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -29,27 +31,27 @@ class DiagnosisNextStepCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.arrow_circle_right_outlined, size: 16, color: AppColors.infoBlue),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text('Próximo paso', style: AppTypography.etiquetaBold.copyWith(color: AppColors.infoBlue)),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             description,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.3),
           ),
           const Spacer(),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               onPressed: onAction,
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.infoBlue),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
               ),
               child: Text(
                 actionLabel,

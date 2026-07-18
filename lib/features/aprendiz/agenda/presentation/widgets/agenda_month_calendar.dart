@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/agenda_activity_entity.dart';
 
@@ -55,7 +56,7 @@ class AgendaMonthCalendar extends StatelessWidget {
 
     return Container(
       color: AppColors.aSurfaceContainerLowest,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxlPlus),
       child: Column(
         children: [
           Row(
@@ -77,9 +78,9 @@ class AgendaMonthCalendar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(7, (i) {
@@ -101,13 +102,13 @@ class AgendaMonthCalendar extends StatelessWidget {
                             color: AppColors.aOnSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpacing.sm),
                         Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isSelected ? AppColors.aPrimaryContainer : Colors.transparent,
+                            color: isSelected ? AppColors.aPrimaryContainer : AppColors.transparent,
                             border: isToday && !isSelected
                                 ? Border.all(color: AppColors.aSecondary, width: 1.5)
                                 : null,
@@ -126,14 +127,14 @@ class AgendaMonthCalendar extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpacing.sm),
                         Container(
                           width: 6,
                           height: 6,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: activity == null
-                                ? Colors.transparent
+                                ? AppColors.transparent
                                 : activity.status == AgendaActivityStatus.completed
                                     ? AppColors.aSecondary
                                     : AppColors.aOrange,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 import '../bloc/aprendiz_diagnosis_history_cubit.dart';
@@ -36,7 +37,12 @@ class DiagnosisHistoryList extends StatelessWidget {
           color: AppColors.aSecondary,
           onRefresh: () => context.read<AprendizDiagnosisHistoryCubit>().loadHistory(),
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 80),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xxlPlus,
+              AppSpacing.xxxl,
+              AppSpacing.xxlPlus,
+              AppSpacing.colossal,
+            ),
             itemCount: diagnoses.length,
             itemBuilder: (context, index) {
               final d = diagnoses[index];
@@ -75,15 +81,15 @@ class _EmptyState extends StatelessWidget {
             ),
             child: const Icon(Icons.eco_outlined, size: 38, color: AppColors.aSecondary),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
           Text(
             'Aún no has realizado ningún diagnóstico.',
             style: AppTypography.agendaTitle.copyWith(fontSize: 18, color: AppColors.aOnSurface),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
             child: Text(
               'Analiza tu primera planta para comenzar tu historial de aprendizaje.',
               style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.4),
@@ -104,18 +110,18 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xhuge),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 40, color: AppColors.error),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             TextButton(
               onPressed: () => context.read<AprendizDiagnosisHistoryCubit>().loadHistory(),
               child: Text(

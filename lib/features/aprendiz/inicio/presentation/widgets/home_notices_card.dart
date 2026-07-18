@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/home_notice_entity.dart';
 
@@ -20,10 +22,13 @@ class HomeNoticesCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aWarningBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aWarningBorder),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xxl,
+        vertical: AppSpacing.xl,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,17 +36,17 @@ class HomeNoticesCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.aWarningText),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 'Avisos importantes',
                 style: AppTypography.etiquetaBold.copyWith(fontSize: 13, color: AppColors.aPrimary),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           ...notices.map(
             (notice) => Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: AppSpacing.xxs),
               child: Text(
                 '• ${notice.message}',
                 style: AppTypography.etiquetaSm.copyWith(color: AppColors.aWarningText),

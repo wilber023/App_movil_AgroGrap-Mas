@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/agenda_activity_entity.dart';
 import 'agenda_upcoming_task_tile.dart';
@@ -24,7 +25,12 @@ class AgendaUpcomingSection extends StatelessWidget {
     if (upcomingActivities.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.huge,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,7 +38,7 @@ class AgendaUpcomingSection extends StatelessWidget {
             'Próximas tareas',
             style: AppTypography.agendaSectionTitle.copyWith(color: AppColors.aPrimary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           ...upcomingActivities.asMap().entries.map((entry) {
             final i = entry.key;
             final activity = entry.value;

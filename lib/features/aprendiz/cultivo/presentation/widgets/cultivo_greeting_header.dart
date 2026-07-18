@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Encabezado de saludo de Mi Cultivo: "Hola, aprendiz" + subtitulo, con una
@@ -12,7 +14,12 @@ class CultivoGreetingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.huge,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -26,11 +33,11 @@ class CultivoGreetingHeader extends StatelessWidget {
                       '¡Hola, aprendiz!',
                       style: AppTypography.agendaTitle.copyWith(color: AppColors.aPrimary),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.sm),
                     const Icon(Icons.eco, color: AppColors.aSecondary, size: 20),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Tu guía inteligente para aprender a cultivar.',
                   style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
@@ -38,7 +45,7 @@ class CultivoGreetingHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           const _SunSproutIllustration(),
         ],
       ),
@@ -68,7 +75,7 @@ class _SunSproutIllustration extends StatelessWidget {
             height: 26,
             decoration: BoxDecoration(
               color: AppColors.aOnPrimaryFixedVariant,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
           ),
           const Positioned(

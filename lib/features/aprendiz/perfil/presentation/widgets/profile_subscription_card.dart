@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../subscription/presentation/pages/subscription_page.dart';
 
@@ -20,20 +22,23 @@ class ProfileSubscriptionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xs,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.aSecondaryContainer,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   'PLAN FREE',
@@ -50,14 +55,14 @@ class ProfileSubscriptionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           ..._benefits.map(
             (b) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
               child: Row(
                 children: [
                   const Icon(Icons.check, size: 14, color: AppColors.aSecondary),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.md),
                   Text(b, style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant)),
                 ],
               ),

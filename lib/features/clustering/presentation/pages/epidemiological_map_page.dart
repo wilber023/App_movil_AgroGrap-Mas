@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/error_state_widget.dart';
 import '../cubit/epidemiological_map_cubit.dart';
 import '../widgets/estado_resumen_tile.dart';
@@ -34,7 +35,7 @@ class EpidemiologicalMapPage extends StatelessWidget {
           style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         elevation: 0,
       ),
       body: BlocBuilder<EpidemiologicalMapCubit, EpidemiologicalMapState>(
@@ -58,16 +59,16 @@ class EpidemiologicalMapPage extends StatelessWidget {
             );
           }
           return ListView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxlPlus),
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
                 child: Text(
                   '${mapa.totalCampanias} campañas activas en ${mapa.estados.length} estados',
                   style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.xl),
               ...mapa.estados.map((e) => EstadoResumenTile(estado: e)),
             ],
           );

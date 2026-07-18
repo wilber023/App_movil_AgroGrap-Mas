@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Barra superior de Agenda: menu, titulo centrado y filtro.
@@ -16,7 +17,7 @@ class AgendaAppBar extends StatelessWidget {
     return Container(
       color: AppColors.aMint,
       height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
           IconButton(

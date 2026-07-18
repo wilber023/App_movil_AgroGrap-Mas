@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Encabezado del Perfil: avatar con iniciales, nombre y correo reales del
@@ -36,13 +37,13 @@ class ProfileAvatarHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             name,
             style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnSurface),
           ),
           if (email != null && email!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               email!,
               style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, fontSize: 14),

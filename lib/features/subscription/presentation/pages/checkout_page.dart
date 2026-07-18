@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/security/screen_security.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../bloc/subscription_bloc.dart';
 import '../utils/subscription_plans.dart';
@@ -134,37 +136,40 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
     return SafeArea(
       key: const ValueKey('form'),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.huge,
+          vertical: AppSpacing.xhuge,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildPlanTicket(),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
             Row(
               children: [
                 const Icon(Icons.credit_card_rounded, size: 20, color: AppColors.onSurface),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.md),
                 Text(
                   'Método de pago',
                   style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             CardNumberField(onCardTypeChanged: (_) {}),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xhuge),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppSpacing.xxl),
               decoration: BoxDecoration(
                 color: AppColors.infoBlue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.lgXl),
                 border: Border.all(color: AppColors.infoBlue.withValues(alpha: 0.25)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.infoBlue),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Text(
                       'Serás redirigido a PayPal para confirmar el pago de forma segura.',
@@ -174,22 +179,22 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: AppSpacing.xgiant),
             SizedBox(
               height: 54,
               child: ElevatedButton.icon(
                 onPressed: () => context
                     .read<SubscriptionBloc>()
                     .add(SubscriptionSubscribeRequested(plan: widget.plan)),
-                icon: const Icon(Icons.lock_outline_rounded, color: Colors.white),
+                icon: const Icon(Icons.lock_outline_rounded, color: AppColors.onPrimary),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
                 ),
                 label: const Text(
                   'Pagar con PayPal',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.onPrimary),
                 ),
               ),
             ),
@@ -207,7 +212,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         boxShadow: [
           BoxShadow(
@@ -221,37 +226,40 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.huge,
+              vertical: AppSpacing.xxxl,
+            ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.primary, AppColors.forestGreen],
               ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18),
+                topLeft: Radius.circular(AppRadius.xxl),
+                topRight: Radius.circular(AppRadius.xxl),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.onPrimary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.lgXl),
                   ),
-                  child: Icon(plan.icon, color: Colors.white, size: 22),
+                  child: Icon(plan.icon, color: AppColors.onPrimary, size: 22),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppSpacing.xxl),
                 Expanded(
                   child: Text(
                     plan.title,
-                    style: AppTypography.tituloMd.copyWith(color: Colors.white),
+                    style: AppTypography.tituloMd.copyWith(color: AppColors.onPrimary),
                   ),
                 ),
                 Text(
                   plan.priceLabel,
                   style: AppTypography.labelMd.copyWith(
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -259,7 +267,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.huge),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -267,10 +275,10 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
                   'Incluye',
                   style: AppTypography.labelMd.copyWith(color: AppColors.onSurfaceVariant),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.lg),
                 ...plan.features.take(3).map(
                       (feature) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -279,7 +287,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
                               size: 18,
                               color: AppColors.primary,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: AppSpacing.lg),
                             Expanded(
                               child: Text(
                                 feature,
@@ -310,7 +318,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
     return Center(
       key: const ValueKey('processing'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -323,19 +331,19 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
               ),
               child: Icon(icon, color: AppColors.primary, size: 34),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
             const SizedBox(
               width: 28,
               height: 28,
               child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
             Text(
               title,
               style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               subtitle,
               style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
@@ -355,11 +363,14 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
     return SafeArea(
       key: const ValueKey('success'),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.huge,
+          vertical: AppSpacing.xhuge,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 40),
+            const SizedBox(height: AppSpacing.xgiant),
             Center(
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
@@ -373,7 +384,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xhuge),
             Text(
               '¡Pago Procesado\ncon Éxito!',
               style: AppTypography.tituloLg.copyWith(
@@ -382,38 +393,38 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppSpacing.huge),
               decoration: BoxDecoration(
                 color: AppColors.cardSurface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.xlPlus),
                 border: Border.all(color: AppColors.outlineVariant, width: 0.5),
               ),
               child: Column(
                 children: [
                   _buildReceiptRow('Plan adquirido', _planInfo.title, isHighlighted: true),
-                  const Divider(height: 24),
+                  const Divider(height: AppSpacing.xhuge),
                   _buildReceiptRow('Monto pagado', _planInfo.priceLabel),
                 ],
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: AppSpacing.xgiantPlus),
             SizedBox(
               height: 52,
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                 ),
                 child: const Text(
                   'Listo',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.onPrimary),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
           ],
         ),
       ),
@@ -427,7 +438,7 @@ class _CheckoutPageState extends State<CheckoutPage> with WidgetsBindingObserver
         Flexible(
           child: Text(label, style: AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant)),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.xl),
         Text(
           value,
           style: AppTypography.labelMd.copyWith(

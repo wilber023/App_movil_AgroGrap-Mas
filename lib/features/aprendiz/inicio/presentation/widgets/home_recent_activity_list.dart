@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/recent_activity_item_entity.dart';
 
@@ -22,7 +23,7 @@ class HomeRecentActivityList extends StatelessWidget {
           'Actividad reciente',
           style: AppTypography.agendaSectionTitle.copyWith(fontSize: 16, color: AppColors.aPrimary),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
         if (items.isEmpty)
           Text(
             'Aún no hay actividad reciente.',
@@ -65,7 +66,7 @@ class _RecentActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+      padding: EdgeInsets.only(bottom: isLast ? AppSpacing.none : AppSpacing.xxlPlus),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,11 +87,11 @@ class _RecentActivityTile extends StatelessWidget {
                   width: 2,
                   height: 32,
                   color: AppColors.aSurfaceVariant,
-                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  margin: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
                 ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -100,7 +101,7 @@ class _RecentActivityTile extends StatelessWidget {
                   _relative(item.date),
                   style: AppTypography.etiquetaBold.copyWith(fontSize: 11, color: _color, letterSpacing: 0.5),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   item.label,
                   style: AppTypography.agendaBody.copyWith(
@@ -110,7 +111,7 @@ class _RecentActivityTile extends StatelessWidget {
                   ),
                 ),
                 if (item.detail != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     item.detail!,
                     style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),

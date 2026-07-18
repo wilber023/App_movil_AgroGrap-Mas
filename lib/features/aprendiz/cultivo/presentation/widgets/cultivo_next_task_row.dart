@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Fila "Proxima tarea": titulo de la siguiente actividad pendiente y su
@@ -31,13 +33,21 @@ class CultivoNextTaskRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.xxlPlus,
+          AppSpacing.xxlPlus,
+          AppSpacing.xxlPlus,
+          AppSpacing.none,
+        ),
         decoration: BoxDecoration(
           color: AppColors.aSurfaceContainerLowest,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.xlPlus),
           border: Border.all(color: AppColors.aOutlineVariant),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxlPlus,
+          vertical: AppSpacing.xxl,
+        ),
         child: Row(
           children: [
             Container(
@@ -45,11 +55,11 @@ class CultivoNextTaskRow extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: AppColors.aSurfaceContainerHigh,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.mdLg),
               ),
               child: const Icon(Icons.event_note_outlined, color: AppColors.aSecondary, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.xl),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +68,7 @@ class CultivoNextTaskRow extends StatelessWidget {
                     'Próxima tarea',
                     style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     taskTitle,
                     style: AppTypography.agendaBody.copyWith(

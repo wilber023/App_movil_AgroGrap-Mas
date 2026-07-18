@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Pill "Cosecha estimada: fecha" mostrada bajo el campo de fecha de siembra
@@ -12,16 +14,16 @@ class CultivoHarvestEstimateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.aSecondaryContainer,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.event_available_outlined, size: 16, color: AppColors.aSecondary),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             'Cosecha estimada: $formattedDate',
             style: AppTypography.etiquetaSm.copyWith(

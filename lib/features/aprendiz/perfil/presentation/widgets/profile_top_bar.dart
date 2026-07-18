@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Barra superior de Perfil: menu, titulo y acceso a configuracion.
@@ -13,7 +14,7 @@ class ProfileTopBar extends StatelessWidget {
     return Container(
       color: AppColors.aPrimaryContainer,
       height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
           IconButton(icon: const Icon(Icons.menu, color: AppColors.aOnPrimary), onPressed: () {}),

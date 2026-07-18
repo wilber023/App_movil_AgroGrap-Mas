@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../bloc/diagnosis_camera_aprendiz_cubit.dart';
 import 'diagnosis_result_aprendiz_page.dart';
@@ -111,7 +113,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
         return Scaffold(
           backgroundColor: AppColors.aOnSurface,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             elevation: 0,
             foregroundColor: AppColors.aOnPrimary,
             title: Text('Inspección semanal', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary)),
@@ -138,9 +140,9 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
 
               // Overlay UI
               Positioned(
-                bottom: 40,
-                left: 0,
-                right: 0,
+                bottom: AppSpacing.xgiant,
+                left: AppSpacing.none,
+                right: AppSpacing.none,
                 child: _photoTaken ? _buildPreviewOverlay(isLoading) : _buildCameraOverlay(),
               ),
 
@@ -152,7 +154,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const CircularProgressIndicator(color: AppColors.aOrange),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpacing.xxl),
                         Text('Analizando tu foto...', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary)),
                       ],
                     ),
@@ -167,7 +169,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
 
   Widget _buildCameraOverlay() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge),
       child: Column(
         children: [
         Text(
@@ -175,7 +177,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
           textAlign: TextAlign.center,
           style: AppTypography.bodyLg.copyWith(color: AppColors.aOnPrimary),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xhuge),
         GestureDetector(
           onTap: _takePhoto,
           child: Container(
@@ -197,7 +199,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.xxlPlus),
         TextButton.icon(
           onPressed: _pickFromGallery,
           icon: Icon(Icons.photo_outlined, color: AppColors.aOnPrimary.withValues(alpha: 0.7), size: 18),
@@ -210,11 +212,11 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
 
   Widget _buildPreviewOverlay(bool isLoading) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xhuge),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
         color: AppColors.aOnPrimary,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -223,7 +225,7 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
             '¿Quieres agregar algún detalle? (opcional)',
             style: AppTypography.labelMd.copyWith(color: AppColors.aOnSurface.withValues(alpha: 0.87)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _descriptionController,
             maxLines: 3,
@@ -232,32 +234,32 @@ class _DiagnosisCameraAprendizViewState extends State<_DiagnosisCameraAprendizVi
               hintText: 'Ej. Las hojas se ven amarillas desde hace 3 días...',
               hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.aOnSurface.withValues(alpha: 0.38)),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: AppColors.aOnSurface.withValues(alpha: 0.12)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: AppColors.aOnSurface.withValues(alpha: 0.12)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(color: AppColors.aSecondary, width: 1.5),
               ),
               filled: true,
               fillColor: AppColors.aOnSurface.withValues(alpha: 0.05),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xxlPlus),
           ElevatedButton(
             onPressed: isLoading ? null : _analyzeCrop,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.aOrange,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxlPlus),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
             ),
             child: Text('Analizar foto', style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontWeight: FontWeight.w700)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           TextButton(
             onPressed: isLoading ? null : () {
               setState(() {

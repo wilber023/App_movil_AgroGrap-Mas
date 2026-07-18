@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/shared_components.dart';
 import '../../domain/entities/diagnosis_detail.dart';
 import 'approximate_match_banner.dart';
@@ -24,7 +26,7 @@ class DiagnosisDetailView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ApproximateMatchBanner(cultivo: d.ficha.cultivo, score: d.score),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           _FichaCard(detail: detail),
         ],
       ),
@@ -70,10 +72,10 @@ class _FichaCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
@@ -94,12 +96,12 @@ class _FichaCard extends StatelessWidget {
               if (detail.severidad.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xxsPlus,
                   ),
                   decoration: BoxDecoration(
                     color: severidadColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
                   ),
                   child: Text(
                     detail.severidad,
@@ -113,7 +115,7 @@ class _FichaCard extends StatelessWidget {
             ],
           ),
           if (detail.sintomas.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             const Text(
               'Síntomas',
               style: TextStyle(
@@ -122,7 +124,7 @@ class _FichaCard extends StatelessWidget {
                 color: AppColors.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               detail.sintomas,
               style: const TextStyle(
@@ -133,7 +135,7 @@ class _FichaCard extends StatelessWidget {
             ),
           ],
           if (detail.tratamiento.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             const Text(
               'Tratamiento',
               style: TextStyle(
@@ -142,7 +144,7 @@ class _FichaCard extends StatelessWidget {
                 color: AppColors.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               detail.tratamiento,
               style: const TextStyle(

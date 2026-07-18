@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../bloc/diagnosis_bloc.dart';
 import 'diagnosis_result_page.dart';
@@ -82,7 +83,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFA32D2D),
+              backgroundColor: AppColors.errorDark,
               duration: const Duration(seconds: 4),
             ),
           );
@@ -101,7 +102,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
               children: [
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -111,8 +112,8 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            color: Colors.white.withValues(alpha: 0.1),
+                            border: Border.all(color: AppColors.onPrimary, width: 3),
+                            color: AppColors.onPrimary.withValues(alpha: 0.1),
                           ),
                           child: ClipOval(
                             child:
@@ -126,25 +127,25 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                                   )
                                 : const Icon(
                                     Icons.eco_outlined,
-                                    color: Colors.white,
+                                    color: AppColors.onPrimary,
                                     size: 48,
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppSpacing.xhuge),
                         // Wave dots animation
                         _buildWaveDots(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.xxlPlus),
                         // Title
                         Text(
                           'Analizando imagen...',
                           style: AppTypography.labelMd.copyWith(
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         // Cycling subtitle
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
@@ -153,7 +154,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                             key: ValueKey(_subtitleIndex),
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: AppColors.onPrimary.withValues(alpha: 0.7),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -164,9 +165,9 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                 ),
                 // Cancel button at bottom
                 Positioned(
-                  bottom: 24,
-                  left: 0,
-                  right: 0,
+                  bottom: AppSpacing.xhuge,
+                  left: AppSpacing.none,
+                  right: AppSpacing.none,
                   child: GestureDetector(
                     onTap: () {
                       context.read<DiagnosisBloc>().add(
@@ -178,7 +179,7 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
                       'Cancelar análisis',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: AppColors.onPrimary.withValues(alpha: 0.5),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -203,11 +204,11 @@ class _DiagnosisProcessingPageState extends State<DiagnosisProcessingPage>
             final t = (_dotController.value + offset) % 1.0;
             final scale = 0.6 + 0.4 * (1.0 - (2 * t - 1.0).abs());
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               width: 10 * scale,
               height: 10 * scale,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.onPrimary,
                 shape: BoxShape.circle,
               ),
             );

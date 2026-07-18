@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 class EconomicsPage extends StatelessWidget {
@@ -45,12 +47,12 @@ class EconomicsPage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.xxlPlus),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildGeneralBalanceCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xhuge),
             Row(
               children: [
                 Expanded(
@@ -62,15 +64,15 @@ class EconomicsPage extends StatelessWidget {
                       label: const Text('Registrar'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.lgXl),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.xl),
                 Expanded(
                   child: SizedBox(
                     height: 52,
@@ -82,7 +84,7 @@ class EconomicsPage extends StatelessWidget {
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.primary),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.lgXl),
                         ),
                       ),
                     ),
@@ -90,12 +92,12 @@ class EconomicsPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.giant),
             Text(
               'Historial de Movimientos',
               style: AppTypography.tituloMd.copyWith(color: AppColors.onSurface),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             ...movements.map((movement) => _buildMovementItem(movement)),
           ],
         ),
@@ -105,10 +107,10 @@ class EconomicsPage extends StatelessWidget {
 
   Widget _buildGeneralBalanceCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xhuge),
       decoration: BoxDecoration(
         color: AppColors.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,17 +125,17 @@ class EconomicsPage extends StatelessWidget {
               const Icon(Icons.account_balance_wallet_rounded, color: AppColors.onPrimaryContainer),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           const Text(
             '\$2,679.50',
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: AppColors.onPrimary,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xhuge),
           Row(
             children: [
               Expanded(
@@ -144,13 +146,13 @@ class EconomicsPage extends StatelessWidget {
                       'Ingresos Mensuales',
                       style: AppTypography.etiquetaSm.copyWith(color: AppColors.onPrimaryContainer),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     const Text(
                       '\$3,250.00',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                       ),
                     ),
                   ],
@@ -164,13 +166,13 @@ class EconomicsPage extends StatelessWidget {
                       'Gastos Mensuales',
                       style: AppTypography.etiquetaSm.copyWith(color: AppColors.onPrimaryContainer),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     const Text(
                       '\$570.50',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                       ),
                     ),
                   ],
@@ -190,14 +192,14 @@ class EconomicsPage extends StatelessWidget {
     final amountColor = isIncome ? AppColors.forestGreen : AppColors.error;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.cardBorder, width: 0.5),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.md),
         leading: Container(
           width: 44,
           height: 44,
@@ -219,7 +221,7 @@ class EconomicsPage extends StatelessWidget {
           ),
         ),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
           child: Text(
             movement['date'] as String,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.onSurfaceVariant),

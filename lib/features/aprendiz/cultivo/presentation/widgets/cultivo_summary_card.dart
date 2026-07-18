@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta "Mi cultivo actual": nombre del cultivo y semana dentro del
@@ -20,13 +22,18 @@ class CultivoSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Row(
         children: [
           Container(
@@ -34,11 +41,11 @@ class CultivoSummaryCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.aSecondaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
             ),
             child: const Icon(Icons.eco, color: AppColors.aSecondary, size: 24),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.xxl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,17 +54,20 @@ class CultivoSummaryCard extends StatelessWidget {
                   'Mi cultivo actual',
                   style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   cropName,
                   style: AppTypography.agendaTitle.copyWith(color: AppColors.aPrimary),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.xs,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.aSecondaryContainer,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     'Semana $currentWeek de $totalWeeks',

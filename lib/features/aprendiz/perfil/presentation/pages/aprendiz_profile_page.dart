@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../login/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../login/auth/presentation/bloc/auth_event.dart';
@@ -123,7 +124,12 @@ class _AprendizProfileView extends StatelessWidget {
                   final overview = state.overview;
 
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.xxlPlus,
+                      AppSpacing.xhuge,
+                      AppSpacing.xxlPlus,
+                      AppSpacing.colossal,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -132,19 +138,19 @@ class _AprendizProfileView extends StatelessWidget {
                           name: overview.userName,
                           email: overview.email,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpacing.huge),
 
                         // ── Progreso ───────────────────────────────────
                         ProfileProgressCard(progress: overview.progress),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.xxlPlus),
 
                         // ── Resumen de actividad ──────────────────────
                         ProfileActivitySummaryCard(summary: overview.activitySummary),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.xxlPlus),
 
                         // ── Objetivo semanal ──────────────────────────
                         ProfileWeeklyGoalCard(goals: overview.weeklyGoals),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.xxlPlus),
 
                         // ── Recomendación personalizada ───────────────
                         ProfileRecommendationCard(
@@ -153,11 +159,11 @@ class _AprendizProfileView extends StatelessWidget {
                               ? null
                               : () => _handleRecommendationAction(context, overview.recommendation.action),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: AppSpacing.xxhuge),
 
                         // ── MI CUENTA ──────────────────────────────────
                         const ProfileSectionHeader(label: 'MI CUENTA'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         ProfileSettingsCard(
                           children: [
                             ProfileSettingsRow(
@@ -207,11 +213,11 @@ class _AprendizProfileView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpacing.huge),
 
                         // ── RECURSOS ───────────────────────────────────
                         const ProfileSectionHeader(label: 'RECURSOS'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         ProfileSettingsCard(
                           children: [
                             ProfileSettingsRow(
@@ -241,17 +247,17 @@ class _AprendizProfileView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpacing.huge),
 
                         // ── SUSCRIPCIÓN ────────────────────────────────
                         const ProfileSectionHeader(label: 'SUSCRIPCIÓN'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         const ProfileSubscriptionCard(),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpacing.huge),
 
                         // ── LEGAL Y PRIVACIDAD ─────────────────────────
                         const ProfileSectionHeader(label: 'LEGAL Y PRIVACIDAD'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.md),
                         ProfileSettingsCard(
                           children: [
                             ProfileSettingsRow(
@@ -278,7 +284,7 @@ class _AprendizProfileView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppSpacing.huge),
 
                         // ── ZONA DE PELIGRO ────────────────────────────
                         ProfileDangerZone(
@@ -307,18 +313,18 @@ class _ErrorContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xhuge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, color: AppColors.error, size: 32),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -35,21 +36,21 @@ class DiagnosisChecklistCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 16, color: iconColor),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(title, style: AppTypography.etiquetaBold.copyWith(color: AppColors.aOnSurface)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           ...items.map(
             (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.check, size: 14, color: iconColor),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       item,

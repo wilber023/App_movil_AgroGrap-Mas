@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -22,7 +23,7 @@ class DiagnosisExplanationCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.menu_book_outlined, size: 16, color: AppColors.aSecondary),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   '¿Qué está pasando?',
@@ -31,7 +32,7 @@ class DiagnosisExplanationCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             explanation,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.4),

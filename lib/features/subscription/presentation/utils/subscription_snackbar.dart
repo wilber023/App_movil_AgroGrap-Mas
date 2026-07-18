@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
 /// SnackBar consistente para toda la feature: flotante, con icono y
@@ -12,18 +14,18 @@ void showSubscriptionSnack(BuildContext context, String message, {bool isError =
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isError ? AppColors.error : AppColors.forestGreen,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
+        margin: const EdgeInsets.all(AppSpacing.xxlPlus),
         content: Row(
           children: [
             Icon(
               isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-              color: Colors.white,
+              color: AppColors.onPrimary,
               size: 20,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.lg),
             Expanded(
-              child: Text(message, style: AppTypography.labelMd.copyWith(color: Colors.white)),
+              child: Text(message, style: AppTypography.labelMd.copyWith(color: AppColors.onPrimary)),
             ),
           ],
         ),

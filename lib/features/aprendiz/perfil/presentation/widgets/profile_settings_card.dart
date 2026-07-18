@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
 
 /// Contenedor con borde/fondo estandar usado por todas las listas de
 /// opciones del Perfil (Mi cuenta, Recursos, Suscripcion, Legal).
@@ -13,7 +14,7 @@ class ProfileSettingsCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lgXl),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
       child: Column(children: children),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta de llamada a la accion "Escanear cultivo": lleva directo al
@@ -15,9 +17,9 @@ class HomeScanCtaCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.aPrimaryContainer,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Row(
         children: [
           Expanded(
@@ -36,7 +38,7 @@ class HomeScanCtaCard extends StatelessWidget {
                       ),
                       child: const Icon(Icons.camera_alt_outlined, color: AppColors.aOnPrimary, size: 18),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.lg),
                     Expanded(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -55,7 +57,7 @@ class HomeScanCtaCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xxlPlus),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -68,8 +70,8 @@ class HomeScanCtaCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.aOnPrimary,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
                     ),
                   ),
                 ),

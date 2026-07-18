@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import 'diagnosis_result_card.dart';
 
@@ -24,13 +25,13 @@ class DiagnosisRiskCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.error_outline, size: 16, color: AppColors.aOrange),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text('Riesgos', style: AppTypography.etiquetaBold.copyWith(color: AppColors.aWarningText)),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             risks.join(' '),
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aWarningText, height: 1.3),

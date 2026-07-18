@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/services/notification_service.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/treatment_entity.dart';
 import '../bloc/treatment_bloc.dart';
@@ -257,23 +259,23 @@ class _AgendaListViewState extends State<_AgendaListView> {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xhuge),
         children: [
           _AgendaSummaryHeader(treatments: widget.treatments),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
           _FilterChipsRow(
             selected: _filter,
             treatments: widget.treatments,
             onSelected: (f) => setState(() => _filter = f),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.xxxl),
           if (filtered.isEmpty)
             const _FilteredEmptyState()
           else if (_filter == _AgendaFilter.todos)
             ..._buildGroupedSections(filtered)
           else
             ...filtered.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xxlPlus),
                   child: _TreatmentCard(treatment: t),
                 )),
         ],
@@ -296,14 +298,14 @@ class _AgendaListViewState extends State<_AgendaListView> {
       if (items == null || items.isEmpty) continue;
 
       widgets.add(Padding(
-        padding: const EdgeInsets.only(bottom: 12, top: 4),
+        padding: const EdgeInsets.only(bottom: AppSpacing.xl, top: AppSpacing.xs),
         child: _AgendaSectionHeader(section: section, count: items.length),
       ));
       widgets.addAll(items.map((t) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xxlPlus),
             child: _TreatmentCard(treatment: t),
           )));
-      widgets.add(const SizedBox(height: 10));
+      widgets.add(const SizedBox(height: AppSpacing.lg));
     }
     return widgets;
   }
@@ -329,16 +331,16 @@ class _AgendaSummaryHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _AgendaHeroCard(allClear: allClear),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.xl),
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           decoration: BoxDecoration(
             color: AppColors.cardSurface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
             border: Border.all(color: AppColors.cardBorder, width: 0.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: AppColors.black.withValues(alpha: 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 5),
               ),
@@ -354,7 +356,7 @@ class _AgendaSummaryHeader extends StatelessWidget {
                   icon: Icons.error_outline_rounded,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: _SummaryStat(
                   count: today,
@@ -363,7 +365,7 @@ class _AgendaSummaryHeader extends StatelessWidget {
                   icon: Icons.today_rounded,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: _SummaryStat(
                   count: week,
@@ -372,7 +374,7 @@ class _AgendaSummaryHeader extends StatelessWidget {
                   icon: Icons.date_range_rounded,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: _SummaryStat(
                   count: completed,
@@ -396,14 +398,14 @@ class _AgendaHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.huge, AppSpacing.huge, AppSpacing.huge, AppSpacing.huge),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primary, AppColors.forestGreen],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadius.huge),
         boxShadow: [
           BoxShadow(
             color: AppColors.forestGreen.withValues(alpha: 0.25),
@@ -422,7 +424,7 @@ class _AgendaHeroCard extends StatelessWidget {
             child: Icon(
               Icons.eco_rounded,
               size: 120,
-              color: Colors.white.withValues(alpha: 0.10),
+              color: AppColors.white.withValues(alpha: 0.10),
             ),
           ),
           Positioned(
@@ -431,7 +433,7 @@ class _AgendaHeroCard extends StatelessWidget {
             child: Icon(
               Icons.eco_rounded,
               size: 46,
-              color: Colors.white.withValues(alpha: 0.16),
+              color: AppColors.white.withValues(alpha: 0.16),
             ),
           ),
           Column(
@@ -440,28 +442,28 @@ class _AgendaHeroCard extends StatelessWidget {
               Text(
                 _todayLabel(),
                 style: AppTypography.tituloMd.copyWith(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: AppSpacing.xxsPlus),
               Text(
                 allClear
                     ? 'Sin pendientes urgentes. Buen trabajo.'
                     : 'Así va tu trabajo',
                 style: AppTypography.etiquetaSm.copyWith(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: AppColors.white.withValues(alpha: 0.85),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.xxlPlus),
               GestureDetector(
                 onTap: () => _showComingSoon(context),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -469,16 +471,16 @@ class _AgendaHeroCard extends StatelessWidget {
                       Text(
                         'Resumen semanal',
                         style: AppTypography.etiquetaSm.copyWith(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 12.5,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       const Icon(
                         Icons.arrow_forward_rounded,
                         size: 14,
-                        color: Colors.white,
+                        color: AppColors.white,
                       ),
                     ],
                   ),
@@ -520,15 +522,15 @@ class _SummaryStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(height: 5),
+          const SizedBox(height: AppSpacing.xsPlus),
           Text(
             '$count',
             style: AppTypography.headlineMd.copyWith(
@@ -537,7 +539,7 @@ class _SummaryStat extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xxs),
           Text(
             label,
             textAlign: TextAlign.center,
@@ -601,14 +603,14 @@ class _FilterChipsRow extends StatelessWidget {
           final count = _countFor(f);
           final label = count > 0 ? '${_labels[f]} · $count' : _labels[f]!;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: AppSpacing.md),
             child: ChoiceChip(
               label: Text(label),
               selected: isSelected,
               onSelected: (_) => onSelected(f),
               labelStyle: AppTypography.etiquetaSm.copyWith(
                 color: isSelected
-                    ? Colors.white
+                    ? AppColors.white
                     : (isVencidos && count > 0
                         ? AppColors.error
                         : AppColors.onSurfaceVariant),
@@ -637,7 +639,7 @@ class _FilteredEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xgiant),
       child: Center(
         child: Text(
           'No hay tratamientos en este filtro.',
@@ -664,14 +666,14 @@ class _AgendaSectionHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(AppSpacing.xsPlus),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(_sectionIcon(section), size: 14, color: color),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.md),
         Text(
           _agendaSectionTitles[section]!,
           style: AppTypography.tituloMd.copyWith(
@@ -680,12 +682,12 @@ class _AgendaSectionHeader extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.md),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxs),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
           ),
           child: Text(
             '$count',
@@ -735,11 +737,11 @@ class _TreatmentCardState extends State<_TreatmentCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -747,7 +749,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -785,7 +787,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
   Widget _buildHeader(Color accent) {
     final isDone = treatment.activeStep == null;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -794,7 +796,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
             height: 44,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.lgXl),
             ),
             child: Icon(
               _agendaCardIcon(treatment),
@@ -802,7 +804,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
               size: 24,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -815,7 +817,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Row(
                   children: [
                     const Icon(
@@ -823,7 +825,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                       size: 13,
                       color: AppColors.forestGreen,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
                         treatment.cropName,
@@ -837,7 +839,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.sm),
                 if (!isDone)
                   Row(
                     children: [
@@ -846,7 +848,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                         size: 14,
                         color: AppColors.onSurfaceVariant,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: AppSpacing.xxs),
                       Expanded(
                         child: Text(
                           'Siguiente: ${treatment.activeStep!.title}',
@@ -862,12 +864,12 @@ class _TreatmentCardState extends State<_TreatmentCard> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mdLg, vertical: AppSpacing.xsPlus),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.mdLg),
             ),
             child: Text(
               _cardBadgeLabel(treatment),
@@ -886,12 +888,12 @@ class _TreatmentCardState extends State<_TreatmentCard> {
 
   Widget _buildDiagnosticoChip() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.none, AppSpacing.xxlPlus, AppSpacing.md),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.primaryContainer.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdLg),
           border: Border.all(
             color: AppColors.primaryContainer.withValues(alpha: 0.3),
             width: 0.5,
@@ -905,7 +907,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
               size: 15,
               color: AppColors.primary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 treatment.llmDiagnostico,
@@ -925,7 +927,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
 
   Widget _buildProgressBar(Color accent) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xs, AppSpacing.xxlPlus, AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -948,9 +950,9 @@ class _TreatmentCardState extends State<_TreatmentCard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: LinearProgressIndicator(
               value: treatment.progress,
               minHeight: 6,
@@ -965,7 +967,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
 
   Widget _buildRemindersToggle(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.none, AppSpacing.xl, AppSpacing.lg),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -980,7 +982,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                     ? AppColors.forestGreen
                     : AppColors.onSurfaceVariant,
               ),
-              const SizedBox(width: 7),
+              const SizedBox(width: AppSpacing.smMd),
               Text(
                 'Recordatorios',
                 style: AppTypography.etiquetaSm.copyWith(
@@ -1030,7 +1032,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
     return InkWell(
       onTap: () => setState(() => _timelineExpanded = !_timelineExpanded),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus, vertical: AppSpacing.lg),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1041,7 +1043,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Icon(
               _timelineExpanded
                   ? Icons.expand_less_rounded
@@ -1057,7 +1059,7 @@ class _TreatmentCardState extends State<_TreatmentCard> {
 
   Widget _buildTimeline(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxlPlus, AppSpacing.xxlPlus),
       child: Column(
         children: [
           for (int i = 0; i < treatment.steps.length; i++)
@@ -1107,10 +1109,10 @@ class _TimelineStepState extends State<_TimelineStep> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildIndicatorColumn(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.xl),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+              padding: EdgeInsets.only(bottom: isLast ? AppSpacing.none : AppSpacing.huge),
               child: _buildContent(context),
             ),
           ),
@@ -1217,7 +1219,7 @@ class _TimelineStepState extends State<_TimelineStep> {
             _buildStatusChip(),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Row(
           children: [
             Icon(
@@ -1227,7 +1229,7 @@ class _TimelineStepState extends State<_TimelineStep> {
               size: 12,
               color: step.isOverdue ? AppColors.error : AppColors.onSurfaceVariant,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
                 step.isOverdue
@@ -1244,7 +1246,7 @@ class _TimelineStepState extends State<_TimelineStep> {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           step.description,
           maxLines: _descriptionExpanded ? null : 2,
@@ -1257,7 +1259,7 @@ class _TimelineStepState extends State<_TimelineStep> {
         ),
         if (step.description.length > _descriptionCollapseThreshold)
           Padding(
-            padding: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: AppSpacing.xxs),
             child: GestureDetector(
               onTap: () =>
                   setState(() => _descriptionExpanded = !_descriptionExpanded),
@@ -1272,7 +1274,7 @@ class _TimelineStepState extends State<_TimelineStep> {
             ),
           ),
         if (step.isScheduled) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -1284,20 +1286,20 @@ class _TimelineStepState extends State<_TimelineStep> {
                     label: const Text('Marcar completado'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.forestGreen,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       textStyle: AppTypography.etiquetaSm.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.mdLg),
                       ),
                       elevation: 0,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               SizedBox(
                 width: 34,
                 height: 34,
@@ -1310,7 +1312,7 @@ class _TimelineStepState extends State<_TimelineStep> {
                       side: const BorderSide(color: AppColors.forestGreen),
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.mdLg),
                       ),
                     ),
                     child: const Icon(Icons.event_repeat_rounded, size: 16),
@@ -1327,10 +1329,10 @@ class _TimelineStepState extends State<_TimelineStep> {
   Widget _buildStatusChip() {
     if (step.isCompleted) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
         decoration: BoxDecoration(
           color: AppColors.statusHealthyBg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Text(
           'Completado',
@@ -1344,10 +1346,10 @@ class _TimelineStepState extends State<_TimelineStep> {
     }
     if (step.isOverdue) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
         decoration: BoxDecoration(
           color: AppColors.error.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Text(
           'Vencido',
@@ -1361,10 +1363,10 @@ class _TimelineStepState extends State<_TimelineStep> {
     }
     if (step.isScheduled) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
         decoration: BoxDecoration(
           color: AppColors.warmAmber.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Text(
           'Próximo',
@@ -1377,10 +1379,10 @@ class _TimelineStepState extends State<_TimelineStep> {
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smMd, vertical: AppSpacing.xxsPlus),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(
         'En espera',
@@ -1444,7 +1446,7 @@ class _EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1461,7 +1463,7 @@ class _EmptyView extends StatelessWidget {
                 color: AppColors.forestGreen,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
             Text(
               'Sin tratamientos activos',
               style: AppTypography.tituloMd.copyWith(
@@ -1469,7 +1471,7 @@ class _EmptyView extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'Realiza un diagnóstico de tu cultivo.\nCuando se detecte una enfermedad, aparecerá\naquí un plan de tratamiento automático.',
               textAlign: TextAlign.center,
@@ -1494,13 +1496,13 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.giant),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.wifi_off_rounded,
                 size: 48, color: AppColors.offlineGrey),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xxlPlus),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -1508,12 +1510,12 @@ class _ErrorView extends StatelessWidget {
                 color: AppColors.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.huge),
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.forestGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.white,
               ),
               child: const Text('Reintentar'),
             ),

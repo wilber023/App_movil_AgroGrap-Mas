@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 
 /// Tarjeta "HOY": resume la etapa actual del cultivo y enlaza a la Agenda
@@ -23,12 +25,17 @@ class CultivoTodayStageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.xxlPlus,
+        AppSpacing.none,
+      ),
       decoration: BoxDecoration(
         color: AppColors.aLightGreen,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -40,17 +47,17 @@ class CultivoTodayStageCard extends StatelessWidget {
               letterSpacing: 0.05,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             stageName,
             style: AppTypography.agendaTitle.copyWith(color: AppColors.aPrimary),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             stageDescription,
             style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.xxl),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -58,8 +65,8 @@ class CultivoTodayStageCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.aSecondary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -71,7 +78,7 @@ class CultivoTodayStageCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.md),
                   const Icon(Icons.arrow_forward, size: 18, color: AppColors.aOnPrimary),
                 ],
               ),

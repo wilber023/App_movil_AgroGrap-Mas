@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../../agricultor/diagnosis/domain/entities/llm_response_entity.dart';
 import '../../../agenda/agenda.dart';
@@ -40,7 +42,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
             Container(
               height: 56,
               color: AppColors.aPrimaryContainer,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               child: Row(
                 children: [
                   IconButton(
@@ -59,20 +61,20 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  const SizedBox(width: AppSpacing.xgiantPlus),
                 ],
               ),
             ),
 
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.xxlPlus),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Breadcrumb
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 16),
+                      padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.xxlPlus),
                       child: RichText(
                         text: TextSpan(
                           style: const TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant),
@@ -103,7 +105,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                           content: r.tratamiento,
                         ),
                       if (r.prevencion.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.xl),
                         _ActionCard(
                           icon: Icons.shield_outlined,
                           label: 'CÓMO PREVENIRLO',
@@ -119,7 +121,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         ),
                     ],
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppSpacing.giant),
 
                     // CTA buttons
                     SizedBox(
@@ -134,12 +136,12 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.aOrange,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
                           elevation: 0,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xl),
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -151,7 +153,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: AppSpacing.colossal),
                   ],
                 ),
               ),
@@ -244,24 +246,24 @@ class _ActionCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
         boxShadow: [
           BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: const BoxDecoration(color: AppColors.aMint, shape: BoxShape.circle),
                 child: Icon(icon, color: AppColors.aSecondary, size: 16),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.lg),
               Text(
                 label,
                 style: const TextStyle(
@@ -274,7 +276,7 @@ class _ActionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             content,
             style: const TextStyle(fontFamily: _kFont, fontSize: 15, color: AppColors.aOnSurface, height: 1.5),
@@ -298,17 +300,17 @@ class _InfoCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.aSurfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: AppColors.aOutlineVariant),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(icon, color: AppColors.aOnSurfaceVariant, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   title,
@@ -317,7 +319,7 @@ class _InfoCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             body,
             style: const TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant, height: 1.4),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../domain/entities/phytosanitary_alert_entity.dart';
 
@@ -29,10 +31,10 @@ class HomePhytosanitaryAlertCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.xlPlus),
         border: Border.all(color: border),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.xxlPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +46,7 @@ class HomePhytosanitaryAlertCard extends StatelessWidget {
                 size: 18,
                 color: iconColor,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'Alerta epidemiológica',
@@ -53,10 +55,13 @@ class HomePhytosanitaryAlertCard extends StatelessWidget {
               ),
               if (!isNone)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xxsPlus,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.aOrange,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     _levelLabel,
@@ -69,7 +74,7 @@ class HomePhytosanitaryAlertCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.md),
           Text(
             alert.message,
             style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant, height: 1.3),

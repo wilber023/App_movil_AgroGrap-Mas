@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../inicio/inicio.dart';
 import '../diagnostico/diagnostico.dart';
 import '../agenda/agenda.dart';
@@ -94,12 +95,12 @@ class _StitchNavBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: isActive ? AppColors.aOrangeAccent : Colors.transparent,
+                        color: isActive ? AppColors.aOrangeAccent : AppColors.transparent,
                         width: 3,
                       ),
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -107,10 +108,10 @@ class _StitchNavBar extends StatelessWidget {
                         isActive ? item.activeIcon : item.icon,
                         color: isActive
                             ? AppColors.aOrangeAccent
-                            : Colors.white.withValues(alpha: 0.6),
+                            : AppColors.onPrimary.withValues(alpha: 0.6),
                         size: 24,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         item.label,
                         style: TextStyle(
@@ -118,7 +119,7 @@ class _StitchNavBar extends StatelessWidget {
                           fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                           color: isActive
                               ? AppColors.aOrangeAccent
-                              : Colors.white.withValues(alpha: 0.6),
+                              : AppColors.onPrimary.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
