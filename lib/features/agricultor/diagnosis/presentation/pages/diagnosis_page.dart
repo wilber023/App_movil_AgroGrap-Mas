@@ -2,23 +2,26 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show compute;
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../bloc/diagnosis_bloc.dart';
 import 'diagnosis_processing_page.dart';
 import 'diagnosis_history_page.dart';
+import '../widgets/diagnosis_captured_panel.dart';
+import '../widgets/diagnosis_focus_frame.dart';
+import '../widgets/diagnosis_idle_placeholder.dart';
+import '../widgets/diagnosis_shooting_bar.dart';
+import '../widgets/diagnosis_top_bar.dart';
+import '../widgets/diagnosis_vignette_overlay.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- Diagnóstico con cámara nativa
 // =============================================================================
-
 
 // Top-level: corre en isolate separado para no bloquear la UI
 Future<String> _compressToJpeg(String sourcePath) async {
@@ -256,7 +259,7 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                   child: Image.file(File(capturedPath), fit: BoxFit.cover),
                 )
               else
-                Positioned.fill(child: _buildIdlePlaceholder()),
+                const Positioned.fill(child: DiagnosisIdlePlaceholder()),
 
               // Overlay oscuro sobre imagen capturada
               if (isCaptured)
@@ -264,10 +267,33 @@ class _DiagnosisPageState extends State<DiagnosisPage>
                   child: Container(color: AppColors.black.withValues(alpha: 0.38)),
                 ),
 
-              if (!isCaptured) _buildVignette(),
-              _buildTopBar(isCaptured),
-              _buildFocusFrame(isCaptured),
-              _buildBottomBar(isCaptured),
+              if (!isCaptured) const DiagnosisVignetteOverlay(),
+              DiagnosisTopBar(isCaptured: isCaptured, onRetake: _retakePhoto),
+              DiagnosisFocusFrame(
+                isCaptured: isCaptured,
+                pulseAnimation: _pulseAnimation,
+                guideMessage: _guideMessages[_guideIndex],
+                guideMessageKey: _guideIndex,
+              ),
+              Positioned(
+                bottom: AppSpacing.none,
+                left: AppSpacing.none,
+                right: AppSpacing.none,
+                child: isCaptured
+                    ? DiagnosisCapturedPanel(
+                        symptomsController: _symptomsController,
+                        symptomsError: _symptomsError,
+                        onRetake: _retakePhoto,
+                        onAnalyze: _processWithAI,
+                        onGallery: _pickFromGallery,
+                      )
+                    : DiagnosisShootingBar(
+                        isCapturing: _isCapturing,
+                        onHistory: _openHistory,
+                        onShutter: _captureWithNativeCamera,
+                        onGallery: _pickFromGallery,
+                      ),
+              ),
 
               // Indicador mientras se abre la cámara / galería
               if (_isCapturing)
@@ -286,421 +312,6 @@ class _DiagnosisPageState extends State<DiagnosisPage>
     );
   }
 
-  // Fondo de espera antes de tomar foto
-  Widget _buildIdlePlaceholder() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.diagnosisCameraGradientStart, AppColors.black],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.camera_alt_outlined,
-              size: 52,
-              color: AppColors.onPrimary.withValues(alpha: 0.18),
-            ),
-            const SizedBox(height: AppSpacing.xxl),
-            Text(
-              'Toca el botón para fotografiar\ntu cultivo',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppColors.onPrimary.withValues(alpha: 0.28),
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Top bar ────────────────────────────────────────────────────────────────
-  Widget _buildTopBar(bool isCaptured) {
-    return Positioned(
-      top: MediaQuery.of(context).padding.top,
-      left: AppSpacing.none,
-      right: AppSpacing.none,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxlPlus),
-        color: AppColors.black.withValues(alpha: 0.55),
-        child: Row(
-          children: [
-            // Botón "Repetir" solo cuando hay foto capturada
-            if (isCaptured)
-              GestureDetector(
-                onTap: _retakePhoto,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.black.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.refresh_rounded,
-                    color: AppColors.onPrimary,
-                    size: 18,
-                  ),
-                ),
-              )
-            else
-              const SizedBox(width: AppSpacing.giantPlus),
-            Expanded(
-              child: Center(
-                child: Text(
-                  'Diagnóstico CNN',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.onPrimary,
-                  ),
-                ),
-              ),
-            ),
-            // Espacio de balance
-            const SizedBox(width: AppSpacing.giantPlus),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVignette() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment.center,
-              radius: 0.85,
-              colors: [
-                AppColors.transparent,
-                AppColors.black.withValues(alpha: 0.45),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFocusFrame(bool isCaptured) {
-    final sw = MediaQuery.of(context).size.width;
-    final sh = MediaQuery.of(context).size.height;
-    final fw = sw * 0.75;
-    final fh = sh * 0.50;
-
-    return Positioned.fill(
-      child: Center(
-        child: AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, _) {
-            final scale = isCaptured ? 1.0 : _pulseAnimation.value;
-            final bracketColor = isCaptured
-                ? AppColors.warmAmber
-                : AppColors.parcelsAddGreen;
-            return Transform.scale(
-              scale: scale,
-              child: SizedBox(
-                width: fw,
-                height: fh,
-                child: CustomPaint(
-                  painter: _CornerBracketPainter(
-                    color: bracketColor.withValues(
-                      alpha: isCaptured ? 1.0 : _pulseAnimation.value,
-                    ),
-                    armLength: 26,
-                    strokeWidth: 3,
-                  ),
-                  child: !isCaptured
-                      ? Center(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 400),
-                            child: Text(
-                              _guideMessages[_guideIndex],
-                              key: ValueKey(_guideIndex),
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: AppColors.onPrimary.withValues(alpha: 0.75),
-                              ),
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar(bool isCaptured) {
-    return Positioned(
-      bottom: AppSpacing.none,
-      left: AppSpacing.none,
-      right: AppSpacing.none,
-      child: isCaptured ? _buildCapturedPanel() : _buildShootingBar(),
-    );
-  }
-
-  // Panel tras capturar: campo de síntomas + botones de acción
-  Widget _buildCapturedPanel() {
-    final bottomPad = MediaQuery.of(context).padding.bottom;
-    return Container(
-      padding: EdgeInsets.fromLTRB(AppSpacing.xxlPlus, AppSpacing.xxl, AppSpacing.xxlPlus, bottomPad + AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.black.withValues(alpha: 0.82),
-        border: Border(
-          top: BorderSide(
-            color: AppColors.onPrimary.withValues(alpha: 0.08),
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Etiqueta del campo ──────────────────────────────────────────
-          Row(
-            children: [
-              Icon(
-                Icons.chat_bubble_outline_rounded,
-                size: 11,
-                color: AppColors.onPrimary.withValues(alpha: 0.65),
-              ),
-              const SizedBox(width: AppSpacing.xsPlus),
-              Text(
-                'SÍNTOMAS OBSERVADOS  ·  OPCIONAL',
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                  color: AppColors.onPrimary.withValues(alpha: 0.65),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // ── Campo de texto ──────────────────────────────────────────────
-          TextField(
-            controller: _symptomsController,
-            maxLines: 2,
-            maxLength: 400,
-            style: GoogleFonts.inter(
-              color: AppColors.onPrimary,
-              fontSize: 12.5,
-              height: 1.4,
-            ),
-            decoration: InputDecoration(
-              hintText:
-                  'Ej: manchas amarillas en hojas, tallos negros, frutos caídos...',
-              hintStyle: GoogleFonts.inter(
-                color: AppColors.onPrimary.withValues(alpha: 0.50),
-                fontSize: 11.5,
-              ),
-              errorText: _symptomsError,
-              errorStyle: GoogleFonts.inter(
-                color: AppColors.errorBright,
-                fontSize: 10.5,
-                height: 1.4,
-              ),
-              errorMaxLines: 3,
-              filled: true,
-              fillColor: AppColors.onPrimary.withValues(alpha: 0.13),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.mdLg),
-                borderSide: BorderSide(
-                  color: AppColors.onPrimary.withValues(alpha: 0.28),
-                  width: 0.8,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.mdLg),
-                borderSide: BorderSide(
-                  color: AppColors.onPrimary.withValues(alpha: 0.28),
-                  width: 0.8,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.mdLg),
-                borderSide: const BorderSide(color: AppColors.parcelsAddGreen, width: 1.5),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.mdLg),
-                borderSide: const BorderSide(
-                  color: AppColors.errorBright,
-                  width: 1.0,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.mdLg),
-                borderSide: const BorderSide(
-                  color: AppColors.errorBright,
-                  width: 1.5,
-                ),
-              ),
-              counterStyle: GoogleFonts.inter(
-                color: AppColors.onPrimary.withValues(alpha: 0.30),
-                fontSize: 9,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.lg,
-              ),
-            ),
-          ),
-          // ── Botones ─────────────────────────────────────────────────────
-          SizedBox(
-            height: 80,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildIconButton(
-                  icon: Icons.refresh_outlined,
-                  label: 'Repetir',
-                  onTap: _retakePhoto,
-                ),
-                _buildAnalyzeButton(),
-                _buildIconButton(
-                  icon: Icons.photo_outlined,
-                  label: 'Galería',
-                  onTap: _pickFromGallery,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Barra de disparo: historial / cámara / galería
-  Widget _buildShootingBar() {
-    return Container(
-      height: 100,
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-      color: AppColors.black.withValues(alpha: 0.6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildIconButton(
-            icon: Icons.access_time_outlined,
-            label: 'Historial',
-            onTap: _openHistory,
-          ),
-          _buildShutterButton(),
-          _buildIconButton(
-            icon: Icons.photo_outlined,
-            label: 'Galería',
-            onTap: _pickFromGallery,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton({
-    required IconData icon,
-    required String label,
-    VoidCallback? onTap,
-  }) {
-    final isDisabled = onTap == null;
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 56,
-        height: 56,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: AppColors.onPrimary.withValues(alpha: isDisabled ? 0.3 : 0.7),
-              size: 22,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: AppColors.onPrimary.withValues(alpha: isDisabled ? 0.25 : 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShutterButton() {
-    return GestureDetector(
-      onTap: _isCapturing ? null : _captureWithNativeCamera,
-      child: AnimatedOpacity(
-        opacity: _isCapturing ? 0.4 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.onPrimary.withValues(alpha: 0.35),
-              width: 3,
-            ),
-          ),
-          child: Container(
-            margin: const EdgeInsets.all(AppSpacing.xs),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.onPrimary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnalyzeButton() {
-    return GestureDetector(
-      onTap: _processWithAI,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 62,
-            height: 62,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.warmAmber,
-            ),
-            child: const Icon(
-              Icons.search_outlined,
-              color: AppColors.onPrimary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Analizar',
-            style: GoogleFonts.inter(fontSize: 10, color: AppColors.onPrimary),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _openHistory() {
     showModalBottomSheet(
       context: context,
@@ -716,47 +327,4 @@ class _DiagnosisPageState extends State<DiagnosisPage>
       ),
     );
   }
-}
-
-// =============================================================================
-// Corner bracket painter
-// =============================================================================
-class _CornerBracketPainter extends CustomPainter {
-  final Color color;
-  final double armLength;
-  final double strokeWidth;
-
-  const _CornerBracketPainter({
-    required this.color,
-    required this.armLength,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final w = size.width;
-    final h = size.height;
-    final a = armLength;
-
-    canvas.drawLine(Offset(0, a), Offset.zero, paint);
-    canvas.drawLine(Offset.zero, Offset(a, 0), paint);
-
-    canvas.drawLine(Offset(w - a, 0), Offset(w, 0), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w, a), paint);
-
-    canvas.drawLine(Offset(0, h - a), Offset(0, h), paint);
-    canvas.drawLine(Offset(0, h), Offset(a, h), paint);
-
-    canvas.drawLine(Offset(w, h - a), Offset(w, h), paint);
-    canvas.drawLine(Offset(w - a, h), Offset(w, h), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CornerBracketPainter old) => color != old.color;
 }
