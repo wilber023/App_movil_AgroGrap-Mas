@@ -6,7 +6,6 @@ import '../../../login/auth/domain/usecases/get_current_user_usecase.dart';
 import '../../../notifications/domain/usecases/notification_preferences_usecases.dart';
 import '../../agenda/domain/usecases/get_agenda_overview_usecase.dart';
 import '../../cultivo/domain/usecases/get_crop_health_indicator_usecase.dart';
-import '../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
 import '../../cultivo/domain/usecases/get_saved_crop_plan_usecase.dart';
 import '../../cultivo/domain/usecases/postpone_activity_usecase.dart';
 import '../../diagnostico/domain/usecases/get_diagnosis_history_aprendiz_usecase.dart';
@@ -29,7 +28,6 @@ Future<void> initAprendizHomeDependencies(GetIt sl) async {
     () => AprendizHomeRepositoryImpl(
       getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
       getSavedCropPlanUseCase: sl<GetSavedCropPlanUseCase>(),
-      getDueInspectionActivityUseCase: sl<GetDueInspectionActivityUseCase>(),
       getCropHealthIndicatorUseCase: sl<GetCropHealthIndicatorUseCase>(),
       getDiagnosisHistoryUseCase: sl<GetDiagnosisHistoryAprendizUseCase>(),
       getAgendaOverviewUseCase: sl<GetAgendaOverviewUseCase>(),
@@ -44,7 +42,6 @@ Future<void> initAprendizHomeDependencies(GetIt sl) async {
   // -- Bloc --
   sl.registerFactory(() => AprendizHomeBloc(
         getHomeOverviewUseCase: sl(),
-        getDueInspectionActivityUseCase: sl<GetDueInspectionActivityUseCase>(),
         postponeActivityUseCase: sl<PostponeActivityUseCase>(),
         networkInfo: sl<NetworkInfo>(),
       ));

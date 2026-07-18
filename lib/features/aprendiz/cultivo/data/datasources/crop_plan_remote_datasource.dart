@@ -1,4 +1,5 @@
 import '../../../../../../core/network/api_client.dart';
+import '../../../../../../core/network/api_endpoints.dart';
 import '../models/crop_plan_model.dart';
 import '../../domain/entities/crop_health_entity.dart';
 import '../models/crop_activity_model.dart';
@@ -24,7 +25,7 @@ class CropPlanRemoteDataSourceImpl implements CropPlanRemoteDataSource {
   @override
   Future<CropPlanModel> getSavedCropPlan() async {
     final response = await apiClient.get<CropPlanModel>(
-      '/api/v1/aprendiz/crop-plan',
+      ApiEndpoints.aprendiz.cropPlan,
       fromJsonT: (json) => CropPlanModel.fromJson(json),
     );
     if (!response.success || response.data == null) {
@@ -40,7 +41,7 @@ class CropPlanRemoteDataSourceImpl implements CropPlanRemoteDataSource {
     required CropPracticeLocation practiceLocation,
   }) async {
     final response = await apiClient.post<CropPlanModel>(
-      '/api/v1/aprendiz/crop-plan',
+      ApiEndpoints.aprendiz.cropPlan,
       data: {
         'cropName': cropName,
         'startDate': startDate.toIso8601String(),
@@ -57,7 +58,7 @@ class CropPlanRemoteDataSourceImpl implements CropPlanRemoteDataSource {
   @override
   Future<CropHealthEntity> getCropHealthIndicator() async {
     final response = await apiClient.get<CropHealthEntity>(
-      '/api/v1/aprendiz/crop-health',
+      ApiEndpoints.aprendiz.cropHealth,
       fromJsonT: (json) => CropHealthEntity(
         status: json['status'],
         healthyPlantsPercentage: json['healthyPlantsPercentage'],
@@ -74,7 +75,7 @@ class CropPlanRemoteDataSourceImpl implements CropPlanRemoteDataSource {
   @override
   Future<CropActivityModel> updateActivityStatus(String activityId, ActivityStatus status, String? reason) async {
     final response = await apiClient.post<CropActivityModel>(
-      '/api/v1/aprendiz/crop-plan/activities/$activityId',
+      ApiEndpoints.aprendiz.activityStatus(activityId),
       data: {'status': status.name, 'reason': reason},
       fromJsonT: (json) => CropActivityModel.fromJson(json),
     );

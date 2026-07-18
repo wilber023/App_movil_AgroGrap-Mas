@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../agenda/domain/entities/agenda_activity_entity.dart';
+import '../../../cultivo/domain/entities/crop_activity_entity.dart';
 import 'crop_catalog_item_entity.dart';
 import 'crop_status_summary_entity.dart';
 import 'home_notice_entity.dart';
@@ -33,6 +34,12 @@ class AprendizHomeOverviewEntity extends Equatable {
   /// (`llmResponse.explicacion`), si existe. Null si aun no hay ninguno.
   final String? funFact;
 
+  /// Actividad de inspección vencida o programada para hoy, ya resuelta a
+  /// partir del plan de cultivo (ver `resolveDueInspectionActivity`). Se
+  /// expone aquí para que los consumidores (ej. `AprendizHomeBloc`) no
+  /// tengan que volver a pedir el plan por red solo para calcular esto.
+  final CropActivityEntity? dueInspection;
+
   const AprendizHomeOverviewEntity({
     required this.userName,
     required this.notices,
@@ -45,6 +52,7 @@ class AprendizHomeOverviewEntity extends Equatable {
     required this.upcomingTasks,
     required this.pendingTasksCount,
     required this.funFact,
+    required this.dueInspection,
   });
 
   @override
@@ -60,5 +68,6 @@ class AprendizHomeOverviewEntity extends Equatable {
         upcomingTasks,
         pendingTasksCount,
         funFact,
+        dueInspection,
       ];
 }

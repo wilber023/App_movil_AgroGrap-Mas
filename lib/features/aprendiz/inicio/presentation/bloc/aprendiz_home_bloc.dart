@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../../../core/network/network_info.dart';
 import '../../../cultivo/domain/entities/crop_activity_entity.dart';
-import '../../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
 import '../../../cultivo/domain/usecases/postpone_activity_usecase.dart';
 import '../../domain/entities/aprendiz_home_overview_entity.dart';
 import '../../domain/usecases/get_aprendiz_home_overview_usecase.dart';
@@ -88,13 +87,11 @@ final class HomeFailure extends AprendizHomeState {
 // -- Bloc --
 class AprendizHomeBloc extends Bloc<AprendizHomeEvent, AprendizHomeState> {
   final GetAprendizHomeOverviewUseCase getHomeOverviewUseCase;
-  final GetDueInspectionActivityUseCase getDueInspectionActivityUseCase;
   final PostponeActivityUseCase postponeActivityUseCase;
   final NetworkInfo networkInfo;
 
   AprendizHomeBloc({
     required this.getHomeOverviewUseCase,
-    required this.getDueInspectionActivityUseCase,
     required this.postponeActivityUseCase,
     required this.networkInfo,
   }) : super(const HomeInitial()) {
@@ -112,7 +109,6 @@ class AprendizHomeBloc extends Bloc<AprendizHomeEvent, AprendizHomeState> {
     try {
       final isOffline = !(await networkInfo.isConnected);
       final overviewResult = await getHomeOverviewUseCase(const NoParams());
-      final dueInspectionResult = await getDueInspectionActivityUseCase(const NoParams());
 
       final previous = state;
       final modalAlreadyShown = previous is HomeLoaded ? previous.modalAlreadyShown : false;
@@ -121,7 +117,7 @@ class AprendizHomeBloc extends Bloc<AprendizHomeEvent, AprendizHomeState> {
         (failure) => emit(HomeFailure(failure.message)),
         (overview) => emit(HomeLoaded(
           overview: overview,
-          dueInspection: dueInspectionResult.fold((_) => null, (a) => a),
+          dueInspection: overview.dueInspection,
           modalAlreadyShown: modalAlreadyShown,
           isOffline: isOffline,
         )),

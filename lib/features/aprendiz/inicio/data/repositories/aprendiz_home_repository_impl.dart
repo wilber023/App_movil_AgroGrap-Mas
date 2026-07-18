@@ -14,7 +14,7 @@ import '../../../cultivo/domain/entities/crop_activity_entity.dart';
 import '../../../cultivo/domain/entities/crop_health_entity.dart';
 import '../../../cultivo/domain/entities/crop_plan_entity.dart';
 import '../../../cultivo/domain/usecases/get_crop_health_indicator_usecase.dart';
-import '../../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
+import '../../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart' show resolveDueInspectionActivity;
 import '../../../cultivo/domain/usecases/get_saved_crop_plan_usecase.dart';
 import '../../../diagnostico/domain/usecases/get_diagnosis_history_aprendiz_usecase.dart';
 import '../../domain/entities/aprendiz_home_overview_entity.dart';
@@ -33,7 +33,6 @@ import '../../domain/repositories/aprendiz_home_repository.dart';
 class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final GetSavedCropPlanUseCase getSavedCropPlanUseCase;
-  final GetDueInspectionActivityUseCase getDueInspectionActivityUseCase;
   final GetCropHealthIndicatorUseCase getCropHealthIndicatorUseCase;
   final GetDiagnosisHistoryAprendizUseCase getDiagnosisHistoryUseCase;
   final GetAgendaOverviewUseCase getAgendaOverviewUseCase;
@@ -43,7 +42,6 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
   AprendizHomeRepositoryImpl({
     required this.getCurrentUserUseCase,
     required this.getSavedCropPlanUseCase,
-    required this.getDueInspectionActivityUseCase,
     required this.getCropHealthIndicatorUseCase,
     required this.getDiagnosisHistoryUseCase,
     required this.getAgendaOverviewUseCase,
@@ -73,31 +71,52 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
 
   @override
   Future<Either<Failure, AprendizHomeOverviewEntity>> getHomeOverview() async {
-    final user = (await getCurrentUserUseCase(NoParams())).fold(
+    // Las 6 fuentes de abajo son independientes entre si (ninguna consume el
+    // resultado de otra), asi que se disparan todas de una vez y se esperan
+    // en paralelo -- antes se esperaban una por una, lo que sumaba la
+    // latencia de cada llamada (incluida red) en vez de tomar solo la mas
+    // lenta. `dueInspection` ya no dispara su propia llamada de red: se
+    // deriva del `plan` que este mismo metodo ya obtuvo (ver
+    // `resolveDueInspectionActivity`), eliminando una segunda consulta
+    // redundante del plan de cultivo.
+    final userFuture = getCurrentUserUseCase(NoParams());
+    final planFuture = getSavedCropPlanUseCase(NoParams());
+    final healthFuture = getCropHealthIndicatorUseCase(const NoParams());
+    final diagnosesFuture = getDiagnosisHistoryUseCase(NoParams());
+    final agendaFuture = getAgendaOverviewUseCase(NoParams());
+    final phytosanitaryAlertFuture = _resolvePhytosanitaryAlert();
+
+    await Future.wait([
+      userFuture,
+      planFuture,
+      healthFuture,
+      diagnosesFuture,
+      agendaFuture,
+      phytosanitaryAlertFuture,
+    ]);
+
+    final user = (await userFuture).fold(
       (_) => UserEntity.empty,
       (u) => u,
     );
-    final plan = (await getSavedCropPlanUseCase(NoParams())).fold(
+    final plan = (await planFuture).fold(
       (_) => null,
       (p) => p,
     );
-    final dueInspection = (await getDueInspectionActivityUseCase(NoParams())).fold(
-      (_) => null,
-      (a) => a,
-    );
-    final health = (await getCropHealthIndicatorUseCase(const NoParams())).fold(
+    final dueInspection = plan == null ? null : resolveDueInspectionActivity(plan);
+    final health = (await healthFuture).fold(
       (_) => null,
       (h) => h,
     );
-    final diagnoses = (await getDiagnosisHistoryUseCase(NoParams())).fold(
+    final diagnoses = (await diagnosesFuture).fold(
       (_) => const <DiagnosisEntity>[],
       (d) => d,
     );
-    final agendaOverview = (await getAgendaOverviewUseCase(NoParams())).fold(
+    final agendaOverview = (await agendaFuture).fold(
       (_) => null,
       (o) => o,
     );
-    final phytosanitaryAlert = await _resolvePhytosanitaryAlert();
+    final phytosanitaryAlert = await phytosanitaryAlertFuture;
     final latestDiagnosis = _latestDiagnosis(diagnoses);
 
     return Right(
@@ -115,6 +134,7 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
         funFact: latestDiagnosis?.llmResponse?.explicacion.trim().isNotEmpty == true
             ? latestDiagnosis!.llmResponse!.explicacion.trim()
             : null,
+        dueInspection: dueInspection,
       ),
     );
   }
