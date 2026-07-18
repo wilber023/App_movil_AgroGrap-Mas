@@ -6,14 +6,15 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
-import '../../domain/entities/diagnosis_entity.dart';
 import '../bloc/diagnosis_bloc.dart';
-import 'diagnosis_result_page.dart';
+import '../widgets/diagnosis_history_card.dart';
+import '../widgets/diagnosis_history_empty_state.dart';
+import '../widgets/diagnosis_history_filter_bar.dart';
+import '../widgets/diagnosis_history_grouped_list.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- Historial de Diagnosticos
 // =============================================================================
-
 
 // =============================================================================
 // Bottom sheet version (invoked from camera history button)
@@ -98,13 +99,13 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
                 if (state is DiagnosisHistoryLoaded) {
                   final items = state.filteredItems;
                   if (items.isEmpty) {
-                    return _buildEmptyState(context);
+                    return const DiagnosisHistoryEmptyState();
                   }
                   return ListView.builder(
                     controller: widget.scrollController,
                     padding: const EdgeInsets.only(top: AppSpacing.md),
                     itemCount: items.length,
-                    itemBuilder: (context, i) => _buildCard(context, items[i]),
+                    itemBuilder: (context, i) => DiagnosisHistoryCard(diagnosis: items[i]),
                   );
                 }
                 return const Center(
@@ -116,46 +117,6 @@ class _DiagnosisHistorySheetState extends State<DiagnosisHistorySheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: const BoxDecoration(
-                color: AppColors.parcelsChipGreenBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: AppColors.parcelsAddGreen,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xxlPlus),
-            Text(
-              'Aún no hay diagnósticos',
-              style: AppTypography.labelMd.copyWith(
-                color: AppColors.parcelsTextPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -208,72 +169,19 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
           if (state is DiagnosisHistoryLoaded) {
             return Column(
               children: [
-                // Filter bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.onPrimary,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.parcelsBorderLight.withValues(alpha: 0.2),
-                        width: 0.5,
-                      ),
-                    ),
-                  ),
-                  child: SizedBox(
-                    height: 32,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _filters.length,
-                      itemBuilder: (context, i) {
-                        final filterName = _filters[i];
-                        final isSelected = filterName == state.activeFilter;
-                        return GestureDetector(
-                          onTap: () {
-                            context.read<DiagnosisBloc>().add(
-                              DiagnosisFilterHistory(filterName),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: AppSpacing.md),
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.forestGreen
-                                  : AppColors.transparent,
-                              borderRadius: BorderRadius.circular(AppRadius.xxlPlus),
-                              border: isSelected
-                                  ? null
-                                  : Border.all(
-                                      color: AppColors.parcelsBorderLight.withValues(alpha: 0.3),
-                                      width: 0.5,
-                                    ),
-                            ),
-                            child: Text(
-                              filterName,
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: isSelected
-                                    ? AppColors.onPrimary
-                                    : AppColors.parcelsTextSecondary,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                DiagnosisHistoryFilterBar(
+                  filters: _filters,
+                  activeFilter: state.activeFilter,
+                  onFilterSelected: (filterName) => context
+                      .read<DiagnosisBloc>()
+                      .add(DiagnosisFilterHistory(filterName)),
                 ),
-                // Grouped list
                 Expanded(
                   child: state.filteredItems.isEmpty
-                      ? _buildEmptyStateFull()
-                      : _buildGroupedList(state.filteredItems),
+                      ? DiagnosisHistoryEmptyState(
+                          onGoToCamera: () => Navigator.pop(context),
+                        )
+                      : DiagnosisHistoryGroupedList(items: state.filteredItems),
                 ),
               ],
             );
@@ -285,280 +193,4 @@ class _DiagnosisHistoryFullPageState extends State<DiagnosisHistoryFullPage> {
       ),
     );
   }
-
-  static const List<String> _meses = [
-    '',
-    'ENERO',
-    'FEBRERO',
-    'MARZO',
-    'ABRIL',
-    'MAYO',
-    'JUNIO',
-    'JULIO',
-    'AGOSTO',
-    'SEPTIEMBRE',
-    'OCTUBRE',
-    'NOVIEMBRE',
-    'DICIEMBRE',
-  ];
-
-  Widget _buildGroupedList(List<DiagnosisEntity> items) {
-    final grouped = <String, List<DiagnosisEntity>>{};
-    for (final e in items) {
-      final monthStr = '${e.diagnosedAt.month}/${e.diagnosedAt.year}';
-      grouped.putIfAbsent(monthStr, () => []).add(e);
-    }
-
-    return ListView(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
-      children: [
-        for (final month in grouped.keys) ...[
-          // Encabezado de mes en español
-          Container(
-            width: double.infinity,
-            color: AppColors.parcelsBg,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.md),
-            child: Text(
-              _formatMes(month),
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppColors.parcelsTextSecondary,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          ...grouped[month]!.map((e) => _buildCard(context, e)),
-        ],
-      ],
-    );
-  }
-
-  /// Convierte "6/2026" → "JUNIO 2026"
-  String _formatMes(String monthSlash) {
-    final parts = monthSlash.split('/');
-    if (parts.length != 2) return monthSlash;
-    final m = int.tryParse(parts[0]) ?? 0;
-    final y = parts[1];
-    final nombre = (m >= 1 && m <= 12) ? _meses[m] : monthSlash;
-    return '$nombre $y';
-  }
-
-  Widget _buildEmptyStateFull() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.giant),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: const BoxDecoration(
-                color: AppColors.parcelsChipGreenBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: AppColors.parcelsAddGreen,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xxlPlus),
-            Text(
-              'Aún no hay diagnósticos',
-              style: AppTypography.labelMd.copyWith(
-                color: AppColors.parcelsTextPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Toma tu primera foto para analizar el estado de tus cultivos.',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.parcelsTextSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xxlPlus),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warmAmber,
-                  foregroundColor: AppColors.onWarmAmber,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lgXl),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Ir a c\u00e1mara \u2192',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Shared: Diagnosis card (used by both sheet and full screen)
-// =============================================================================
-Widget _buildCard(BuildContext context, DiagnosisEntity e) {
-  Color statusBg = AppColors.parcelsChipGreenBg;
-  Color statusText = AppColors.parcelsChipGreenText;
-  if (e.statusLabel == 'En tratamiento' || e.statusLabel == 'Seguimiento') {
-    statusBg = AppColors.parcelsChipFollowBg;
-    statusText = AppColors.parcelsChipFollowText;
-  }
-
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => DiagnosisResultPage(diagnosis: e)),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.none, AppSpacing.xl, AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.onPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.lgXl),
-        border: Border.all(
-          color: AppColors.parcelsBorderLight.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Thumbnail placeholder
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.diagnosisThumbBg,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: e.imagePath != null
-                ? const Icon(Icons.image, size: 24, color: AppColors.parcelsTextSecondary)
-                : const Icon(
-                    Icons.eco_outlined,
-                    size: 24,
-                    color: AppColors.parcelsTextSecondary,
-                  ),
-          ),
-          const SizedBox(width: AppSpacing.xl),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Row 1: name + severity dot
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      e.diseaseName,
-                      style: AppTypography.labelMd.copyWith(
-                        color: AppColors.parcelsTextPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.forestGreen,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xxsPlus),
-                // Row 2: crop chip
-                Row(
-                  children: [
-                    _buildPill(e.cropName, AppColors.parcelsChipGreenBg, AppColors.parcelsChipGreenText),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                // Row 3: date + status chip
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${e.diagnosedAt.day}/${e.diagnosedAt.month}/${e.diagnosedAt.year}',
-                      style: GoogleFonts.inter(fontSize: 10, color: AppColors.parcelsBorderLight),
-                    ),
-                    _buildPill(e.statusLabel, statusBg, statusText),
-                  ],
-                ),
-                // Row 4: treatment bar
-                if (e.treatmentProgress != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                          child: SizedBox(
-                            height: 4,
-                            child: LinearProgressIndicator(
-                              value: e.treatmentProgress!,
-                              backgroundColor: AppColors.parcelsTrackGrey,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.forestGreen,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (e.treatmentStep != null) ...[
-                        const SizedBox(width: AppSpacing.md),
-                        Text(
-                          e.treatmentStep!,
-                          style: GoogleFonts.inter(
-                            fontSize: 9,
-                            color: AppColors.parcelsTextSecondary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildPill(String label, Color bg, Color text) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(AppRadius.mdLg),
-    ),
-    child: Text(
-      label,
-      style: GoogleFonts.inter(
-        fontSize: 10,
-        fontWeight: FontWeight.w500,
-        color: text,
-      ),
-    ),
-  );
 }

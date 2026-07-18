@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +6,7 @@ import 'package:hive/hive.dart';
 import '../../data/services/cnn_engine.dart';
 import '../../domain/entities/diagnosis_entity.dart';
 import '../../domain/entities/llm_response_entity.dart';
+import 'diagnosis_history_storage.dart';
 
 // =============================================================================
 // AgroGraph-MAS -- DiagnosisBloc
@@ -132,10 +131,10 @@ final class DiagnosisHistoryLoaded extends DiagnosisState {
 // -- Bloc --------------------------------------------------------------------
 
 class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
-  final Box<String> _historyBox;
+  final DiagnosisHistoryStorage _storage;
 
   DiagnosisBloc({required Box<String> historyBox})
-      : _historyBox = historyBox,
+      : _storage = DiagnosisHistoryStorage(historyBox),
         super(const DiagnosisIdle()) {
     on<DiagnosisCameraIdle>(_onCameraIdle);
     on<DiagnosisPhotoCaptured>(_onPhotoCaptured);
@@ -180,7 +179,7 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
         parcelName: event.parcelName,
       );
 
-      await _persistDiagnosis(entity);
+      await _storage.persist(entity);
       emit(DiagnosisResult(entity, userText: event.userText));
     } on StateError catch (e) {
       debugPrint('[DiagnosisBloc] Modelo no disponible: $e');
@@ -197,13 +196,13 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
 
   void _onHistoryRequested(
       DiagnosisHistoryRequested event, Emitter<DiagnosisState> emit) {
-    final items = _loadHistory();
+    final items = _storage.loadAll();
     emit(DiagnosisHistoryLoaded(allItems: items, filteredItems: items));
   }
 
   void _onParcelHistoryRequested(
       DiagnosisParcelHistoryRequested event, Emitter<DiagnosisState> emit) {
-    final items = _loadHistory()
+    final items = _storage.loadAll()
         .where((e) => e.parcelId == event.parcelId)
         .toList();
     emit(DiagnosisHistoryLoaded(allItems: items, filteredItems: items));
@@ -241,23 +240,12 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     emit(const DiagnosisIdle());
   }
 
-  /// Persiste la respuesta LLM en la entrada de Hive del diagnóstico indicado.
   Future<void> _onLlmSaved(
       DiagnosisLlmSaved event, Emitter<DiagnosisState> emit) async {
-    for (final key in _historyBox.keys) {
-      final raw = _historyBox.get(key);
-      if (raw == null) continue;
-      try {
-        final m = jsonDecode(raw) as Map<String, dynamic>;
-        if (m['id'] == event.diagnosisId) {
-          m['llmResponse'] = event.llmResponse.toJson();
-          await _historyBox.put(key, jsonEncode(m));
-          return;
-        }
-      } catch (e) {
-        debugPrint('[DiagnosisBloc] Error al guardar LLM en Hive: $e');
-      }
-    }
+    await _storage.saveLlmResponse(
+      diagnosisId: event.diagnosisId,
+      llmResponse: event.llmResponse,
+    );
   }
 
   // -- Helpers ---------------------------------------------------------------
@@ -267,59 +255,5 @@ class DiagnosisBloc extends Bloc<DiagnosisEvent, DiagnosisState> {
     final lower = diseaseName.toLowerCase();
     if (lower.contains('saludable') || lower.contains('healthy')) return 'Saludable';
     return 'Seguimiento';
-  }
-
-  Future<void> _persistDiagnosis(DiagnosisEntity entity) async {
-    try {
-      final encoded = jsonEncode({
-        'id': entity.id,
-        'diseaseName': entity.diseaseName,
-        'cropName': entity.cropName,
-        'confidence': entity.confidence,
-        'imagePath': entity.imagePath,
-        'diagnosedAt': entity.diagnosedAt.toIso8601String(),
-        'isPendingSync': entity.isPendingSync,
-        'statusLabel': entity.statusLabel,
-        if (entity.parcelId != null) 'parcelId': entity.parcelId,
-        if (entity.parcelName != null) 'parcelName': entity.parcelName,
-        // topK no se persiste (solo vive en sesión)
-      });
-      await _historyBox.add(encoded);
-    } catch (e) {
-      debugPrint('[DiagnosisBloc] Error al persistir en Hive: $e');
-    }
-  }
-
-  List<DiagnosisEntity> _loadHistory() {
-    final items = <DiagnosisEntity>[];
-    for (final raw in _historyBox.values) {
-      try {
-        final m = jsonDecode(raw) as Map<String, dynamic>;
-        items.add(_mapToEntity(m));
-      } catch (e) {
-        debugPrint('[DiagnosisBloc] Error al deserializar historial: $e');
-      }
-    }
-    return items.reversed.toList();
-  }
-
-  DiagnosisEntity _mapToEntity(Map<String, dynamic> m) {
-    final llmJson = m['llmResponse'] as Map<String, dynamic>?;
-    return DiagnosisEntity(
-      id: m['id'] as String? ?? '',
-      diseaseName: m['diseaseName'] as String? ?? '',
-      cropName: m['cropName'] as String? ?? '',
-      confidence: (m['confidence'] as num?)?.toDouble() ?? 0.0,
-      imagePath: m['imagePath'] as String?,
-      diagnosedAt:
-          DateTime.tryParse(m['diagnosedAt'] as String? ?? '') ?? DateTime.now(),
-      isPendingSync: m['isPendingSync'] as bool? ?? false,
-      statusLabel: m['statusLabel'] as String? ?? 'Seguimiento',
-      // topK vacío en historial persistido (no se guarda)
-      llmResponse:
-          llmJson != null ? LlmResponseEntity.fromJson(llmJson) : null,
-      parcelId: m['parcelId'] as String?,
-      parcelName: m['parcelName'] as String?,
-    );
   }
 }

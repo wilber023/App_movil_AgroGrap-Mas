@@ -14,19 +14,17 @@ import '../../../shell/aprendiz_main_shell.dart';
 import '../bloc/diagnosis_result_aprendiz_cubit.dart';
 import '../mappers/diagnosis_result_mapper.dart';
 import '../models/diagnosis_result_view_data.dart';
-import '../widgets/diagnosis_checklist_card.dart';
-import '../widgets/diagnosis_evidence_card.dart';
+import '../widgets/agenda_updated_modal_sheet.dart';
 import '../widgets/diagnosis_explanation_card.dart';
-import '../widgets/diagnosis_fun_fact_card.dart';
 import '../widgets/diagnosis_healthy_result_card.dart';
 import '../widgets/diagnosis_important_note_card.dart';
 import '../widgets/diagnosis_llm_status_card.dart';
-import '../widgets/diagnosis_next_step_card.dart';
+import '../widgets/diagnosis_loaded_sections.dart';
 import '../widgets/diagnosis_result_bottom_bar.dart';
 import '../widgets/diagnosis_result_diagnosis_card.dart';
 import '../widgets/diagnosis_result_photo_card.dart';
 import '../widgets/diagnosis_result_plant_card.dart';
-import '../widgets/diagnosis_risk_card.dart';
+import '../widgets/diagnosis_result_top_bar.dart';
 import 'aprendiz_recommended_action_page.dart';
 
 class DiagnosisResultAprendizPage extends StatelessWidget {
@@ -161,7 +159,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
           bottom: false,
           child: Column(
             children: [
-              _TopBar(),
+              const DiagnosisResultTopBar(),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(
@@ -237,7 +235,7 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
             return DiagnosisLlmErrorCard(onRetry: () => context.read<LlmDiagnosisCubit>().consultar(diagnosis: diagnosis, rol: 'aprendiz'));
           }
           if (state is LlmDiagnosisLoaded) {
-            return _LoadedDiagnosisSections(
+            return DiagnosisLoadedSections(
               llmData: DiagnosisResultMapper.mapLlmResponse(state.response),
               onViewTreatment: () => _openRecommendedAction(context),
             );
@@ -267,212 +265,14 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
       backgroundColor: AppColors.transparent,
       isDismissible: false,
       enableDrag: false,
-      builder: (_) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.aSurfaceContainerLowest,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xhuge)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.xhuge,
-            AppSpacing.xhuge,
-            AppSpacing.xhuge,
-            MediaQuery.of(context).viewInsets.bottom + AppSpacing.xhuge,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpacing.xhuge),
-                decoration: BoxDecoration(
-                  color: AppColors.aOutlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                ),
-              ),
-              Container(
-                width: 64, height: 64,
-                decoration: const BoxDecoration(
-                  color: AppColors.aSecondaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_circle_outline, size: 36, color: AppColors.aSecondary),
-              ),
-              const SizedBox(height: AppSpacing.xxlPlus),
-              Text(
-                '¡Agenda actualizada!',
-                style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnSurface),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Se crearon ${activities.length} actividades en tu agenda:',
-                style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.huge),
-              ...activities.take(3).map(
-                (a) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 10, height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.aOrange,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xl),
-                      Expanded(
-                        child: Text(
-                          a.title,
-                          style: AppTypography.agendaBody.copyWith(fontWeight: FontWeight.w500, color: AppColors.aOnSurface),
-                        ),
-                      ),
-                      Text(
-                        '${a.scheduledDate.day}/${a.scheduledDate.month}',
-                        style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xhuge),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const AprendizMainShell(initialIndex: 3)),
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.aOrange,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Ver mi agenda',
-                    style: AppTypography.agendaTitle.copyWith(fontSize: 16, color: AppColors.aOnPrimary),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      color: AppColors.aPrimaryContainer,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.aOnPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          Expanded(
-            child: Text(
-              'Resultado de tu análisis',
-              textAlign: TextAlign.center,
-              style: AppTypography.agendaTitle.copyWith(fontSize: 17, color: AppColors.aOnPrimary),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.xgiantPlus),
-        ],
-      ),
-    );
-  }
-}
-
-/// Compone las tarjetas que dependen de la respuesta del LLM ya cargada:
-/// qué está pasando + evidencia, acciones + prevención, y la fila de
-/// dato curioso / riesgos / próximo paso — cada fila con tarjetas de igual
-/// altura y solo mostrando las que realmente tienen contenido.
-class _LoadedDiagnosisSections extends StatelessWidget {
-  final DiagnosisLlmViewData llmData;
-  final VoidCallback onViewTreatment;
-
-  const _LoadedDiagnosisSections({required this.llmData, required this.onViewTreatment});
-
-  @override
-  Widget build(BuildContext context) {
-    final topRow = <Widget>[
-      if (llmData.whatIsHappening.isNotEmpty) DiagnosisExplanationCard(explanation: llmData.whatIsHappening),
-      if (llmData.evidence.isNotEmpty) DiagnosisEvidenceCard(evidence: llmData.evidence),
-    ];
-
-    final actionsRow = <Widget>[
-      if (llmData.actions.isNotEmpty)
-        DiagnosisChecklistCard(
-          icon: Icons.assignment_outlined,
-          iconColor: AppColors.aOrange,
-          backgroundColor: AppColors.aWarningBg,
-          borderColor: AppColors.aWarningBorder,
-          title: '¿Qué puedes hacer ahora?',
-          items: llmData.actions,
-        ),
-      if (llmData.prevention.isNotEmpty)
-        DiagnosisChecklistCard(
-          icon: Icons.shield_outlined,
-          iconColor: AppColors.aSecondary,
-          backgroundColor: AppColors.aSecondaryContainer,
-          borderColor: AppColors.aSecondary,
-          title: '¿Cómo prevenirlo?',
-          items: llmData.prevention,
-        ),
-    ];
-
-    final smallCards = <Widget>[
-      if (llmData.funFact != null) DiagnosisFunFactCard(funFact: llmData.funFact),
-      if (llmData.risks.isNotEmpty) DiagnosisRiskCard(risks: llmData.risks),
-      DiagnosisNextStepCard(
-        description: 'Te recomendamos revisar el tratamiento recomendado para controlar el problema en tu cultivo.',
-        actionLabel: 'Ver tratamiento',
-        onAction: onViewTreatment,
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (topRow.isNotEmpty) _EqualHeightRow(children: topRow),
-        if (topRow.isNotEmpty) const SizedBox(height: AppSpacing.xxlPlus),
-        if (actionsRow.isNotEmpty) _EqualHeightRow(children: actionsRow),
-        if (actionsRow.isNotEmpty) const SizedBox(height: AppSpacing.xxlPlus),
-        _EqualHeightRow(children: smallCards),
-      ],
-    );
-  }
-}
-
-/// Fila de tarjetas de igual altura (usa la mas alta de las visibles),
-/// con espaciado uniforme entre ellas.
-class _EqualHeightRow extends StatelessWidget {
-  final List<Widget> children;
-  const _EqualHeightRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.xl),
-            Expanded(child: children[i]),
-          ],
-        ],
+      builder: (_) => AgendaUpdatedModalSheet(
+        activities: activities,
+        onViewAgenda: () {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AprendizMainShell(initialIndex: 3)),
+            (route) => false,
+          );
+        },
       ),
     );
   }

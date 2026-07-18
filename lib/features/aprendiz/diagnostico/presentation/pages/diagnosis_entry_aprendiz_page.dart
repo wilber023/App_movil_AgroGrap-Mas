@@ -4,28 +4,27 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../cultivo/domain/usecases/get_due_inspection_activity_usecase.dart';
 import '../bloc/aprendiz_diagnosis_history_cubit.dart';
 import '../bloc/diagnosis_camera_aprendiz_cubit.dart';
+import '../widgets/diagnosis_analyze_submit_button.dart';
+import '../widgets/diagnosis_analyzing_overlay.dart';
 import '../widgets/diagnosis_capture_area.dart';
+import '../widgets/diagnosis_capture_buttons_row.dart';
 import '../widgets/diagnosis_confidence_indicator.dart';
 import '../widgets/diagnosis_description_field.dart';
 import '../widgets/diagnosis_educational_footnote.dart';
+import '../widgets/diagnosis_entry_tab_item.dart';
+import '../widgets/diagnosis_entry_top_bar.dart';
 import '../widgets/diagnosis_history_list.dart';
 import '../widgets/diagnosis_learning_section.dart';
+import '../widgets/diagnosis_pending_inspection_banner.dart';
 import '../widgets/diagnosis_tips_card.dart';
 import 'diagnosis_camera_aprendiz_page.dart';
 import 'diagnosis_result_aprendiz_page.dart';
-
-/// Sombra sutil compartida por las cards de esta pantalla, para que todo el
-/// feature se sienta parte de un mismo sistema visual (ver diagnosis_result_aprendiz_page).
-final List<BoxShadow> _kCardShadow = [
-  BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
-];
 
 class DiagnosisEntryAprendizPage extends StatefulWidget {
   const DiagnosisEntryAprendizPage({super.key});
@@ -141,20 +140,20 @@ class _DiagnosisEntryAprendizPageState extends State<DiagnosisEntryAprendizPage>
           bottom: false,
           child: Column(
             children: [
-              _TopBar(onInfoTap: _showInfoDialog),
+              DiagnosisEntryTopBar(onInfoTap: _showInfoDialog),
 
               // Internal tabs
               Container(
                 color: AppColors.aSurfaceContainerLowest,
                 child: Row(
                   children: [
-                    _TabItem(
+                    DiagnosisEntryTabItem(
                       icon: Icons.eco_outlined,
                       label: 'Analizar',
                       isSelected: _selectedTab == 0,
                       onTap: () => setState(() => _selectedTab = 0),
                     ),
-                    _TabItem(
+                    DiagnosisEntryTabItem(
                       icon: Icons.history_rounded,
                       label: 'Mis diagnósticos',
                       isSelected: _selectedTab == 1,
@@ -178,86 +177,6 @@ class _DiagnosisEntryAprendizPageState extends State<DiagnosisEntryAprendizPage>
                         notesController: _notesController,
                       )
                     : const DiagnosisHistoryList(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  final VoidCallback onInfoTap;
-  const _TopBar({required this.onInfoTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.aPrimaryContainer,
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-      child: Row(
-        children: [
-          IconButton(icon: const Icon(Icons.menu, color: AppColors.aOnPrimary), onPressed: () {}),
-          Expanded(
-            child: Text(
-              'Diagnóstico',
-              textAlign: TextAlign.center,
-              style: AppTypography.agendaTitle.copyWith(color: AppColors.aOnPrimary, fontSize: 19),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: AppColors.aOnPrimary),
-            onPressed: onInfoTap,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TabItem({required this.icon, required this.label, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: isSelected ? AppColors.aOrange : AppColors.transparent,
-                width: 3,
-              ),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? AppColors.aOrange : AppColors.aOnSurfaceVariant,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTypography.etiquetaSm.copyWith(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  letterSpacing: 0.1,
-                  color: isSelected ? AppColors.aOnSurface : AppColors.aOnSurfaceVariant,
-                ),
               ),
             ],
           ),
@@ -365,64 +284,8 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
                   const SizedBox(height: AppSpacing.huge),
 
                   // Context banner (pending inspection info)
-                  if (widget.hasPendingInspection) ...[
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.aWarningBg,
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                        border: Border.all(color: AppColors.aWarningBorder),
-                        boxShadow: _kCardShadow,
-                      ),
-                      padding: const EdgeInsets.all(AppSpacing.xxl),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.event_note_rounded, color: AppColors.aOrange, size: 20),
-                          const SizedBox(width: AppSpacing.lg),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'INSPECCIÓN PENDIENTE · SEMANA ${widget.nextWeek}',
-                                  style: AppTypography.etiquetaSm.copyWith(
-                                    color: AppColors.aWarningText,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.xs),
-                                Text(
-                                  'Tu plan indica que es momento de revisar tu cultivo.',
-                                  style: AppTypography.agendaBody.copyWith(color: AppColors.aOnSurfaceVariant, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.huge),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                          child: Text(
-                            'O REALIZA UN DIAGNÓSTICO LIBRE',
-                            style: AppTypography.etiquetaSm.copyWith(
-                              fontSize: 10,
-                              color: AppColors.aOnSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider(color: AppColors.aOutlineVariant)),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.huge),
-                  ],
+                  if (widget.hasPendingInspection)
+                    DiagnosisPendingInspectionBanner(nextWeek: widget.nextWeek),
 
                   // Mejora 1: consejos para una mejor foto
                   const DiagnosisTipsCard(),
@@ -438,42 +301,10 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
 
                   const SizedBox(height: AppSpacing.xxl),
 
-                  // Camera / Gallery buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: isAnalyzing ? null : _takePhoto,
-                          icon: const Icon(Icons.photo_camera_outlined, color: AppColors.aOnPrimary, size: 20),
-                          label: Text(
-                            'Tomar foto',
-                            style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontSize: 13),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.aSecondary,
-                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xl),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: isAnalyzing ? null : _pickFromGallery,
-                          icon: const Icon(Icons.image_outlined, color: AppColors.aSecondary, size: 20),
-                          label: Text(
-                            'Galería',
-                            style: AppTypography.labelMd.copyWith(color: AppColors.aSecondary, fontSize: 13),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.aSecondary, width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
-                          ),
-                        ),
-                      ),
-                    ],
+                  DiagnosisCaptureButtonsRow(
+                    isEnabled: !isAnalyzing,
+                    onTakePhoto: _takePhoto,
+                    onPickGallery: _pickFromGallery,
                   ),
 
                   const SizedBox(height: AppSpacing.hugePlus),
@@ -486,44 +317,10 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
 
                   const SizedBox(height: AppSpacing.huge),
 
-                  // Submit button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: (_hasPhoto && !isAnalyzing) ? _analyzeCrop : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.aOrange,
-                        disabledBackgroundColor: AppColors.aSurfaceVariant,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
-                        elevation: 0,
-                      ),
-                      child: isAnalyzing
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(color: AppColors.aOnPrimary, strokeWidth: 2),
-                                ),
-                                const SizedBox(width: AppSpacing.xl),
-                                Text(
-                                  'Analizando tu foto...',
-                                  style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontSize: 15),
-                                ),
-                              ],
-                            )
-                          : Text(
-                              _hasPhoto ? 'Analizar foto' : 'Primero agrega una foto',
-                              style: AppTypography.labelMd.copyWith(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: _hasPhoto ? AppColors.aOnPrimary : AppColors.aOnSurfaceVariant,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                    ),
+                  DiagnosisAnalyzeSubmitButton(
+                    hasPhoto: _hasPhoto,
+                    isAnalyzing: isAnalyzing,
+                    onPressed: _analyzeCrop,
                   ),
 
                   // Mejora 4 y 5: secciones preparadas para un resultado real.
@@ -541,38 +338,7 @@ class _AnalyzeTabState extends State<_AnalyzeTab> {
 
             // Overlay ligero mientras se analiza, para reforzar que la app
             // está trabajando (además del estado del botón).
-            if (isAnalyzing)
-              Positioned(
-                top: AppSpacing.xl,
-                left: AppSpacing.xxlPlus,
-                right: AppSpacing.xxlPlus,
-                child: IgnorePointer(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: AppColors.aPrimaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.lgXl),
-                      boxShadow: _kCardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(color: AppColors.aOnPrimary, strokeWidth: 2),
-                        ),
-                        const SizedBox(width: AppSpacing.lg),
-                        Expanded(
-                          child: Text(
-                            'Estamos revisando tu foto con inteligencia artificial...',
-                            style: AppTypography.etiquetaSm.copyWith(color: AppColors.aOnPrimary, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            if (isAnalyzing) const DiagnosisAnalyzingOverlay(),
           ],
         );
       },
