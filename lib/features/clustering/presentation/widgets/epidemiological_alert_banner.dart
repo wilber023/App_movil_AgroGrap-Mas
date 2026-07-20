@@ -36,7 +36,7 @@ class EpidemiologicalAlertBanner extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
-                  'ALERTA EPIDEMIOLÓGICA · ${alerta.estado}',
+                  alerta.estado.trim().isEmpty ? 'ALERTA EPIDEMIOLÓGICA' : 'ALERTA EPIDEMIOLÓGICA · ${alerta.estado}',
                   style: AppTypography.labelMd.copyWith(
                     color: AppColors.error,
                     fontWeight: FontWeight.bold,

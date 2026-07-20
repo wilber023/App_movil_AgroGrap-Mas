@@ -2,9 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/usecases/usecase.dart';
-import '../../../notifications/domain/usecases/notification_preferences_usecases.dart';
+import '../../../notifications/domain/entities/push_notification_entry_entity.dart';
+import '../../../notifications/domain/usecases/get_notification_history_usecase.dart';
 import '../../domain/entities/alerta_epidemiologica_entity.dart';
-import '../../domain/usecases/get_alerta_usecase.dart';
 
 abstract class EpidemiologicalAlertState extends Equatable {
   const EpidemiologicalAlertState();
@@ -34,33 +34,42 @@ class EpidemiologicalAlertLoaded extends EpidemiologicalAlertState {
 
 /// Resuelve la alerta epidemiológica para el Home del usuario.
 ///
-/// El "estado" del usuario no tiene una fuente dedicada en la app -- se
-/// reusa `NotificationPreferencesEntity.estado`, ya capturado en Ajustes >
-/// Notificaciones para este mismo propósito (alertas por estado). Si el
-/// usuario nunca lo configuró, se consulta la alerta nacional (`estado:
-/// null`), comportamiento explícitamente soportado por el backend.
+/// La alerta que antes venia del endpoint nacional de clustering
+/// (`GET /api/v1/alertas`) quedaba desactualizada (no reflejaba lo que el
+/// usuario ya veia en la campanita de notificaciones). Ahora se reusa la
+/// misma fuente que `NotificationsPage`: el historial local de push
+/// recibidas (`NotificationHistoryRepository.getHistory()`, ya ordenado del
+/// mas reciente al mas antiguo), tomando solo la mas reciente. Sin
+/// notificaciones guardadas -> sin alerta, nunca datos inventados.
 class EpidemiologicalAlertCubit extends Cubit<EpidemiologicalAlertState> {
-  final GetAlertaUseCase getAlertaUseCase;
-  final GetNotificationPreferencesUseCase getNotificationPreferencesUseCase;
+  final GetNotificationHistoryUseCase getNotificationHistoryUseCase;
 
   EpidemiologicalAlertCubit({
-    required this.getAlertaUseCase,
-    required this.getNotificationPreferencesUseCase,
+    required this.getNotificationHistoryUseCase,
   }) : super(const EpidemiologicalAlertInitial());
 
   Future<void> load() async {
     emit(const EpidemiologicalAlertLoading());
 
-    final prefsResult = await getNotificationPreferencesUseCase(const NoParams());
-    final estado = prefsResult.fold(
+    final historyResult = await getNotificationHistoryUseCase(const NoParams());
+    final alerta = historyResult.fold(
       (_) => null,
-      (prefs) => prefs.estado.trim().isNotEmpty ? prefs.estado.trim() : null,
+      (items) => items.isEmpty ? null : _toAlerta(items.first),
     );
+    emit(EpidemiologicalAlertLoaded(alerta));
+  }
 
-    final alertaResult = await getAlertaUseCase(GetAlertaParams(estado: estado));
-    alertaResult.fold(
-      (_) => emit(const EpidemiologicalAlertLoaded(null)),
-      (alerta) => emit(EpidemiologicalAlertLoaded(alerta.hayAlerta ? alerta : null)),
+  /// El historial no trae nivel de severidad ni el contrato de
+  /// `AlertaEpidemiologicaEntity` completo (solo `title`/`body`/`estado`);
+  /// se arma la version minima que el banner necesita para mostrarse.
+  AlertaEpidemiologicaEntity? _toAlerta(PushNotificationEntryEntity entry) {
+    final mensaje = entry.body.trim().isNotEmpty ? entry.body.trim() : entry.title.trim();
+    if (mensaje.isEmpty) return null;
+
+    return AlertaEpidemiologicaEntity(
+      hayAlerta: true,
+      estado: entry.estado?.trim() ?? '',
+      mensaje: mensaje,
     );
   }
 }

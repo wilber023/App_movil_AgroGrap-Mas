@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../../../../../core/constants/supported_crops.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -78,25 +79,6 @@ class _AddParcelPageState extends State<AddParcelPage> {
     'No hay / No sé',
   ];
 
-  // Cultivos soportados por el modelo CNN
-  static const Set<String> _allowedCrops = {
-    'Calabaza',
-    'Frijol',
-    'Maíz',
-    'Papa',
-    'Tomate',
-  };
-
-  static const Map<String, String> _emojiMap = {
-    'Calabaza': '🍈',
-    'Frijol': '🫘',
-    'Maíz': '🌽',
-    'Papa': '🥔',
-    'Tomate': '🍅',
-  };
-
-  String _emojiFor(String cropName) => _emojiMap[cropName] ?? '🌿';
-
   @override
   void initState() {
     super.initState();
@@ -132,7 +114,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
         (_) => setState(() => _catalogLoading = false),
         (cultivos) => setState(() {
           _catalog = cultivos
-              .where((c) => _allowedCrops.contains(c.nombre))
+              .where((c) => SupportedCrops.names.contains(c.nombre))
               .toList();
           _catalogLoading = false;
         }),
@@ -389,7 +371,7 @@ class _AddParcelPageState extends State<AddParcelPage> {
                                 catalogLoading: _catalogLoading,
                                 catalog: _catalog,
                                 selectedIndex: _selectedCropIndex,
-                                emojiFor: _emojiFor,
+                                emojiFor: SupportedCrops.emojiFor,
                                 onSelected: (i) => setState(() => _selectedCropIndex = i),
                                 onRetry: _loadCatalog,
                               ),

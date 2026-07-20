@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/constants/supported_crops.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/usecases/usecase.dart';
+import '../../../../agricultor/parcels/domain/entities/cultivo_entity.dart';
+import '../../../../agricultor/parcels/domain/usecases/get_cultivo_catalog_usecase.dart';
 import '../../domain/entities/crop_practice_location.dart';
 import '../bloc/cultivo_bloc.dart';
+import '../widgets/cultivo_crop_catalog_grid.dart';
 import '../widgets/cultivo_date_field.dart';
 import '../widgets/cultivo_form_section_label.dart';
 import '../widgets/cultivo_harvest_estimate_chip.dart';
@@ -39,21 +44,44 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
   DateTime? _sowingDate;
   CropPracticeLocation? _selectedPracticeLocation;
 
-  static const _crops = [
-    ('🍈', 'Calabaza'),
-    ('🫘', 'Frijol'),
-    ('🌽', 'Maíz'),
-    ('🥔', 'Papa'),
-    ('🍅', 'Tomate'),
-  ];
+  List<CultivoEntity> _catalog = [];
+  bool _catalogLoading = false;
 
   static const _practiceLocations = [
     (CropPracticeLocation.home, Icons.cottage_outlined, 'Jardín en casa'),
     (CropPracticeLocation.greenhouse, Icons.warehouse_outlined, 'Invernadero'),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    setState(() => _catalogLoading = true);
+    try {
+      final result = await sl<GetCultivoCatalogUseCase>()(const NoParams());
+      if (!mounted) return;
+      result.fold(
+        (_) => setState(() => _catalogLoading = false),
+        (cultivos) => setState(() {
+          _catalog = cultivos
+              .where((c) => SupportedCrops.names.contains(c.nombre))
+              .toList();
+          _catalogLoading = false;
+        }),
+      );
+    } catch (_) {
+      if (mounted) setState(() => _catalogLoading = false);
+    }
+  }
+
   bool get _canSubmit =>
-      _selectedCropIndex != null && _sowingDate != null && _selectedPracticeLocation != null;
+      _selectedCropIndex != null &&
+      _sowingDate != null &&
+      _selectedPracticeLocation != null &&
+      _catalog.isNotEmpty;
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -79,10 +107,10 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
 
   void _submit() {
     if (!_canSubmit) return;
-    final cropName = _crops[_selectedCropIndex!].$2;
+    final cultivoId = _catalog[_selectedCropIndex!].id;
     context.read<CultivoBloc>().add(
           CultivoCropRegistered(
-            cropName: cropName,
+            cultivoId: cultivoId,
             startDate: _sowingDate!,
             practiceLocation: _selectedPracticeLocation!,
           ),
@@ -136,25 +164,12 @@ class _AprendizCropRegisterViewState extends State<_AprendizCropRegisterView> {
                     children: [
                       const CultivoFormSectionLabel(label: '¿Qué vas a sembrar?'),
                       const SizedBox(height: AppSpacing.xl),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: AppSpacing.lg,
-                          crossAxisSpacing: AppSpacing.lg,
-                          childAspectRatio: 1.0,
-                        ),
-                        itemCount: _crops.length,
-                        itemBuilder: (context, i) {
-                          final (emoji, name) = _crops[i];
-                          return CultivoSelectableGridCard(
-                            icon: Text(emoji, style: const TextStyle(fontSize: 26)),
-                            label: name,
-                            isSelected: _selectedCropIndex == i,
-                            onTap: () => setState(() => _selectedCropIndex = i),
-                          );
-                        },
+                      CultivoCropCatalogGrid(
+                        isLoading: _catalogLoading,
+                        catalog: _catalog,
+                        selectedIndex: _selectedCropIndex,
+                        onSelected: (i) => setState(() => _selectedCropIndex = i),
+                        onRetry: _loadCatalog,
                       ),
                       const SizedBox(height: AppSpacing.xhuge),
 

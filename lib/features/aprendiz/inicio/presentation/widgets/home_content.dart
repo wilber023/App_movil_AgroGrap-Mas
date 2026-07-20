@@ -12,7 +12,6 @@ import 'home_crop_catalog_section.dart';
 import 'home_crop_stage_card.dart';
 import 'home_crop_status_card.dart';
 import 'home_daily_summary_section.dart';
-import 'home_fun_fact_card.dart';
 import 'home_notices_card.dart';
 import 'home_phytosanitary_alert_card.dart';
 import 'home_recent_activity_list.dart';
@@ -91,35 +90,10 @@ class HomeContent extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxxl),
 
-          Builder(builder: (context) {
-            final hasAlert = overview.phytosanitaryAlert.level != PhytosanitaryAlertLevel.none;
-            final hasFunFact = overview.funFact != null;
-            if (!hasAlert && !hasFunFact) return const SizedBox.shrink();
-            return Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (hasAlert) ...[
-                      Expanded(child: HomePhytosanitaryAlertCard(alert: overview.phytosanitaryAlert)),
-                      if (hasFunFact) const SizedBox(width: AppSpacing.lg),
-                    ],
-                    if (hasFunFact)
-                      Expanded(
-                        child: HomeFunFactCard(
-                          funFact: overview.funFact,
-                          onViewMore: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const DiagnosisEntryAprendizPage()),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xxxl),
-              ],
-            );
-          }),
+          if (overview.phytosanitaryAlert.level != PhytosanitaryAlertLevel.none) ...[
+            HomePhytosanitaryAlertCard(alert: overview.phytosanitaryAlert),
+            const SizedBox(height: AppSpacing.xxxl),
+          ],
 
           HomeTodayTasksSection(
             tasks: overview.upcomingTasks,

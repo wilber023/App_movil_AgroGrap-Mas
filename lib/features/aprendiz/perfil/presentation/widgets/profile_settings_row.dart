@@ -64,51 +64,6 @@ class ProfileSettingsRow extends StatelessWidget {
   }
 }
 
-/// Variante de [ProfileSettingsRow] con un `Switch` en vez de chevron
-/// (usada por "Modo sin conexión").
-class ProfileSettingsSwitchRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const ProfileSettingsSwitchRow({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xxlPlus,
-        vertical: AppSpacing.lg,
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.aOnSurfaceVariant, size: 22),
-          const SizedBox(width: AppSpacing.xxl),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTypography.agendaBody.copyWith(fontSize: 15, color: AppColors.aOnSurface),
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: AppColors.aSecondary,
-            activeTrackColor: AppColors.aSecondaryContainer,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Divisor entre filas de una [ProfileSettingsCard].
 class ProfileRowDivider extends StatelessWidget {
   const ProfileRowDivider({super.key});

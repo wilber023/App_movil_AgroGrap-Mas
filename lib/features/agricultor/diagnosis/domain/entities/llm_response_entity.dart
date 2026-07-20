@@ -6,6 +6,7 @@ class LlmResponseEntity {
   final String diagnostico;
   final String tratamiento;
   final String prevencion;
+  final String aprendizaje;
   final List<String> fuentes;
   final double confianzaAjustada;
   /// "reforzado" | "posible_contradiccion" | "sin_senal_textual"
@@ -19,6 +20,7 @@ class LlmResponseEntity {
     required this.diagnostico,
     required this.tratamiento,
     required this.prevencion,
+    required this.aprendizaje,
     required this.fuentes,
     required this.confianzaAjustada,
     required this.estado,
@@ -32,6 +34,7 @@ class LlmResponseEntity {
         'diagnostico': diagnostico,
         'tratamiento': tratamiento,
         'prevencion': prevencion,
+        'aprendizaje': aprendizaje,
         'fuentes': fuentes,
         'confianzaAjustada': confianzaAjustada,
         'estado': estado,
@@ -46,6 +49,7 @@ class LlmResponseEntity {
         diagnostico: json['diagnostico'] as String? ?? '',
         tratamiento: json['tratamiento'] as String? ?? '',
         prevencion: json['prevencion'] as String? ?? '',
+        aprendizaje: json['aprendizaje'] as String? ?? '',
         fuentes:
             (json['fuentes'] as List<dynamic>? ?? []).cast<String>(),
         confianzaAjustada:

@@ -19,14 +19,11 @@ import '../bloc/aprendiz_profile_bloc.dart';
 import '../widgets/profile_activity_summary_card.dart';
 import '../widgets/profile_avatar_header.dart';
 import '../widgets/profile_danger_zone.dart';
-import '../widgets/profile_progress_card.dart';
 import '../widgets/profile_recommendation_card.dart';
 import '../widgets/profile_section_header.dart';
 import '../widgets/profile_settings_card.dart';
 import '../widgets/profile_settings_row.dart';
-import '../widgets/profile_subscription_card.dart';
 import '../widgets/profile_top_bar.dart';
-import '../widgets/profile_weekly_goal_card.dart';
 
 class AprendizProfilePage extends StatelessWidget {
   const AprendizProfilePage({super.key});
@@ -140,16 +137,8 @@ class _AprendizProfileView extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.huge),
 
-                        // ── Progreso ───────────────────────────────────
-                        ProfileProgressCard(progress: overview.progress),
-                        const SizedBox(height: AppSpacing.xxlPlus),
-
                         // ── Resumen de actividad ──────────────────────
                         ProfileActivitySummaryCard(summary: overview.activitySummary),
-                        const SizedBox(height: AppSpacing.xxlPlus),
-
-                        // ── Objetivo semanal ──────────────────────────
-                        ProfileWeeklyGoalCard(goals: overview.weeklyGoals),
                         const SizedBox(height: AppSpacing.xxlPlus),
 
                         // ── Recomendación personalizada ───────────────
@@ -167,92 +156,20 @@ class _AprendizProfileView extends StatelessWidget {
                         ProfileSettingsCard(
                           children: [
                             ProfileSettingsRow(
-                              icon: Icons.person_outline,
-                              label: 'Editar perfil',
-                              isFirst: true,
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.location_on_outlined,
-                              label: 'Región',
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
                               icon: Icons.notifications_outlined,
                               label: 'Notificaciones',
+                              isFirst: true,
                               onTap: () => Navigator.push(context, NotificationSettingsPage.route()),
                             ),
                             const ProfileRowDivider(),
                             ProfileSettingsRow(
                               icon: Icons.map_outlined,
                               label: 'Mapa epidemiológico',
+                              isLast: true,
                               onTap: () => Navigator.push(context, EpidemiologicalMapPage.route()),
                             ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.language_outlined,
-                              label: 'Idioma',
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsSwitchRow(
-                              icon: Icons.wifi_off_outlined,
-                              label: 'Modo sin conexión',
-                              value: overview.offlineModeEnabled,
-                              onChanged: (v) =>
-                                  context.read<AprendizProfileBloc>().add(OfflineModeToggled(v)),
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.storage_outlined,
-                              label: 'Almacenamiento local',
-                              isLast: true,
-                              onTap: () {},
-                            ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.huge),
-
-                        // ── RECURSOS ───────────────────────────────────
-                        const ProfileSectionHeader(label: 'RECURSOS'),
-                        const SizedBox(height: AppSpacing.md),
-                        ProfileSettingsCard(
-                          children: [
-                            ProfileSettingsRow(
-                              icon: Icons.help_outline,
-                              label: 'Centro de ayuda',
-                              isFirst: true,
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.menu_book_outlined,
-                              label: 'Guías de cultivo',
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.quiz_outlined,
-                              label: 'Preguntas frecuentes',
-                              onTap: () {},
-                            ),
-                            const ProfileRowDivider(),
-                            ProfileSettingsRow(
-                              icon: Icons.support_agent_outlined,
-                              label: 'Contactar soporte',
-                              isLast: true,
-                              onTap: () {},
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.huge),
-
-                        // ── SUSCRIPCIÓN ────────────────────────────────
-                        const ProfileSectionHeader(label: 'SUSCRIPCIÓN'),
-                        const SizedBox(height: AppSpacing.md),
-                        const ProfileSubscriptionCard(),
                         const SizedBox(height: AppSpacing.huge),
 
                         // ── LEGAL Y PRIVACIDAD ─────────────────────────

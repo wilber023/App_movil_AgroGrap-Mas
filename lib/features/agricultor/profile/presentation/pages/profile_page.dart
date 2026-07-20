@@ -59,14 +59,6 @@ class _ProfileScaffold extends StatelessWidget {
 
             const ProfileSectionTitle('MI CUENTA'),
             const SizedBox(height: AppSpacing.md),
-            const ProfileListTile(
-              title: 'Editar datos personales',
-              icon: Icons.person_outline_rounded,
-            ),
-            const ProfileListTile(
-              title: 'Región y cultivos',
-              icon: Icons.layers_outlined,
-            ),
             ProfileListTile(
               title: 'Notificaciones y recordatorios',
               icon: Icons.notifications_none_rounded,

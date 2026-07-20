@@ -51,7 +51,7 @@ abstract final class DiagnosisResultMapper {
       evidence: llm.sintomas.where((s) => s.trim().isNotEmpty).toList(),
       actions: DiagnosisTextParser.splitIntoItems(llm.tratamiento),
       prevention: DiagnosisTextParser.splitIntoItems(llm.prevencion),
-      funFact: llm.explicacion.trim().isEmpty ? null : llm.explicacion.trim(),
+      funFact: llm.aprendizaje.trim().isEmpty ? null : llm.aprendizaje.trim(),
       risks: llm.avisos.where((a) => a.trim().isNotEmpty).toList(),
     );
   }

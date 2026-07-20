@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../core/network/network_info.dart';
+import '../../agenda/domain/usecases/generate_agenda_usecase.dart';
 import '../data/datasources/crop_plan_local_datasource.dart';
 import '../data/datasources/crop_plan_remote_datasource.dart';
 import '../data/repositories/crop_plan_repository_impl.dart';
@@ -11,6 +13,7 @@ import '../domain/usecases/get_crop_health_indicator_usecase.dart';
 import '../domain/usecases/get_crop_plan_progress_usecase.dart';
 import '../domain/usecases/get_due_inspection_activity_usecase.dart';
 import '../domain/usecases/get_saved_crop_plan_usecase.dart';
+import '../domain/usecases/get_sowing_plan_text_usecase.dart';
 import '../domain/usecases/postpone_activity_usecase.dart';
 import '../domain/usecases/register_crop_plan_usecase.dart';
 import '../presentation/bloc/cultivo_bloc.dart';
@@ -32,8 +35,16 @@ Future<void> initCultivoDependencies(GetIt sl) async {
   );
 
   // -- DataSources --
+  // `cultivosDio` ya esta registrado por la feature Parcels (agricultor),
+  // inicializada antes que Cultivo en `injection_container.dart`. `llmDio`
+  // ya esta registrado por Diagnostico (Agricultor), tambien antes que
+  // Cultivo. Ambos se reutilizan sin crear un nuevo Dio.
   sl.registerLazySingleton<CropPlanRemoteDataSource>(
-    () => CropPlanRemoteDataSourceImpl(apiClient: sl()),
+    () => CropPlanRemoteDataSourceImpl(
+      apiClient: sl(),
+      cultivosClient: sl<Dio>(instanceName: 'cultivosDio'),
+      llmClient: sl<Dio>(instanceName: 'llmDio'),
+    ),
   );
   sl.registerLazySingleton<CropPlanLocalDataSource>(
     () => CropPlanLocalDataSourceImpl(
@@ -58,11 +69,18 @@ Future<void> initCultivoDependencies(GetIt sl) async {
   sl.registerLazySingleton(() => CompleteActivityUseCase(sl()));
   sl.registerLazySingleton(() => PostponeActivityUseCase(sl()));
   sl.registerLazySingleton(() => GetDueInspectionActivityUseCase(sl()));
+  sl.registerLazySingleton(() => GetSowingPlanTextUseCase(sl()));
 
   // -- Bloc --
+  // `GenerateAgendaUseCase` ya esta registrado por Agenda (inicializada
+  // antes que Cultivo, ver `_initAprendizFeature()`): se reutiliza el mismo
+  // caso de uso que ya usa el flujo de diagnostico, sin duplicar logica de
+  // agenda.
   sl.registerFactory(() => CultivoBloc(
         getSavedCropPlanUseCase: sl(),
         registerCropPlanUseCase: sl(),
+        getSowingPlanTextUseCase: sl(),
+        generateAgendaUseCase: sl<GenerateAgendaUseCase>(),
         networkInfo: sl<NetworkInfo>(),
       ));
 }

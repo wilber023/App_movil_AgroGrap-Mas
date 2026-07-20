@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import '../../../../../core/error/exceptions.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/network/network_info.dart';
 import '../../domain/entities/crop_plan_entity.dart';
@@ -35,7 +36,7 @@ class CropPlanRepositoryImpl implements CropPlanRepository {
         if (localPlan != null) {
           return Right(localPlan);
         }
-        return Left(ServerFailure(message: e.toString()));
+        return Left(_mapException(e));
       }
     } else {
       final localPlan = await localDataSource.getCachedCropPlan();
@@ -48,38 +49,53 @@ class CropPlanRepositoryImpl implements CropPlanRepository {
 
   @override
   Future<Either<Failure, CropPlanEntity>> registerCropPlan({
-    required String cropName,
+    required String cultivoId,
     required DateTime startDate,
     required CropPracticeLocation practiceLocation,
   }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final remotePlan = await remoteDataSource.registerCropPlan(
-          cropName: cropName,
-          startDate: startDate,
-          practiceLocation: practiceLocation,
-        );
-        await localDataSource.cacheCropPlan(remotePlan);
-        return Right(remotePlan);
-      } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
-      }
-    } else {
-      // Offline-first: crear un plan falso pendiente de sincronización
-      final offlinePlan = CropPlanModel(
-        id: 'offline_${DateTime.now().millisecondsSinceEpoch}',
-        userId: 'current_user', // Mock
-        cropName: cropName,
-        currentStage: 'Pendiente de inicio',
-        startDate: startDate,
-        currentWeek: 1,
-        progressPercentage: 0,
-        activities: const [],
-        isPendingSync: true,
-      );
-      await localDataSource.cacheCropPlan(offlinePlan);
-      return Right(offlinePlan);
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure());
     }
+    try {
+      final remotePlan = await remoteDataSource.registerCropPlan(
+        cultivoId: cultivoId,
+        startDate: startDate,
+        practiceLocation: practiceLocation,
+      );
+      await localDataSource.cacheCropPlan(remotePlan);
+      return Right(remotePlan);
+    } catch (e) {
+      return Left(_mapException(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> getSowingPlanText({
+    required String cropName,
+    required CropPracticeLocation practiceLocation,
+  }) async {
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+    try {
+      final texto = await remoteDataSource.getSowingPlanText(
+        cropName: cropName,
+        practiceLocation: practiceLocation,
+      );
+      return Right(texto);
+    } catch (e) {
+      return Left(_mapException(e));
+    }
+  }
+
+  Failure _mapException(Object e) {
+    if (e is ServerException) {
+      if (e.statusCode == 401) {
+        return AuthFailure(message: e.message, statusCode: e.statusCode);
+      }
+      return ServerFailure(message: e.message, statusCode: e.statusCode);
+    }
+    return ServerFailure(message: e.toString());
   }
 
   @override

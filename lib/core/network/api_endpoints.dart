@@ -257,6 +257,10 @@ class LlmEndpoints {
 
   /// Endpoint principal: CNN result + texto de usuario → diagnóstico enriquecido.
   String get consultar => '/api/v1/consultar';
+
+  /// POST — genera el texto del plan de siembra del cultivo de práctica del
+  /// Aprendiz (mismo host que `consultar`). Ver README_plan_siembra_aprendiz.md.
+  String get planSiembra => '/api/v1/aprendiz/plan-siembra';
 }
 
 // =============================================================================

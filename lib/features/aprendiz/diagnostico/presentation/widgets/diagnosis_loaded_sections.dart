@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../models/diagnosis_result_view_data.dart';
-import 'diagnosis_checklist_card.dart';
-import 'diagnosis_evidence_card.dart';
-import 'diagnosis_explanation_card.dart';
-import 'diagnosis_fun_fact_card.dart';
-import 'diagnosis_next_step_card.dart';
-import 'diagnosis_risk_card.dart';
+import 'diagnosis_detail_blocks.dart';
+import 'diagnosis_section_carousel.dart';
+import 'diagnosis_section_item.dart';
 
-/// Compone las tarjetas que dependen de la respuesta del LLM ya cargada:
-/// qué está pasando + evidencia, acciones + prevención, y la fila de
-/// dato curioso / riesgos / próximo paso — cada fila con tarjetas de igual
-/// altura y solo mostrando las que realmente tienen contenido.
+/// Compone el carrusel de secciones del diagnóstico ya cargado por el LLM:
+/// qué está pasando, qué hacer, cómo prevenir, un dato curioso, riesgos y
+/// el próximo paso. Cada sección aparece primero como una tarjeta resumen
+/// y se expande a una experiencia inmersiva al tocarla, en vez de mostrar
+/// todo el texto de golpe.
 class DiagnosisLoadedSections extends StatelessWidget {
   final DiagnosisLlmViewData llmData;
   final VoidCallback onViewTreatment;
@@ -22,73 +22,122 @@ class DiagnosisLoadedSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topRow = <Widget>[
-      if (llmData.whatIsHappening.isNotEmpty) DiagnosisExplanationCard(explanation: llmData.whatIsHappening),
-      if (llmData.evidence.isNotEmpty) DiagnosisEvidenceCard(evidence: llmData.evidence),
-    ];
+    final actionsCount = llmData.actions.length;
+    final preventionCount = llmData.prevention.length;
+    final risksCount = llmData.risks.length;
 
-    final actionsRow = <Widget>[
-      if (llmData.actions.isNotEmpty)
-        DiagnosisChecklistCard(
+    final items = <DiagnosisSectionItem>[
+      if (llmData.whatIsHappening.isNotEmpty)
+        DiagnosisSectionItem(
+          id: 'explanation',
+          icon: Icons.menu_book_outlined,
+          accent: AppColors.aSecondary,
+          background: AppColors.aMint,
+          border: AppColors.aSecondaryContainer,
+          title: '¿Qué está pasando?',
+          summary: 'Entiende, en palabras simples, qué le ocurre a tu cultivo.',
+          expandedBuilder: (context) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DiagnosisDetailParagraph(llmData.whatIsHappening),
+              if (llmData.evidence.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xxhuge),
+                const DiagnosisDetailSectionLabel('CÓMO LO DETECTAMOS'),
+                DiagnosisDetailStepList(items: llmData.evidence, accent: AppColors.aSecondary),
+              ],
+            ],
+          ),
+        ),
+      if (actionsCount > 0)
+        DiagnosisSectionItem(
+          id: 'actions',
           icon: Icons.assignment_outlined,
-          iconColor: AppColors.aOrange,
-          backgroundColor: AppColors.aWarningBg,
-          borderColor: AppColors.aWarningBorder,
+          accent: AppColors.aOrange,
+          background: AppColors.aWarningBg,
+          border: AppColors.aWarningBorder,
           title: '¿Qué puedes hacer ahora?',
-          items: llmData.actions,
+          summary: actionsCount == 1 ? '1 acción recomendada para tu cultivo.' : '$actionsCount acciones recomendadas para tu cultivo.',
+          expandedBuilder: (context) => DiagnosisDetailStepList(items: llmData.actions, accent: AppColors.aOrange),
         ),
-      if (llmData.prevention.isNotEmpty)
-        DiagnosisChecklistCard(
+      if (preventionCount > 0)
+        DiagnosisSectionItem(
+          id: 'prevention',
           icon: Icons.shield_outlined,
-          iconColor: AppColors.aSecondary,
-          backgroundColor: AppColors.aSecondaryContainer,
-          borderColor: AppColors.aSecondary,
+          accent: AppColors.aSecondary,
+          background: AppColors.aSecondaryContainer,
+          border: AppColors.aSecondary,
           title: '¿Cómo prevenirlo?',
-          items: llmData.prevention,
+          summary: preventionCount == 1 ? '1 recomendación disponible.' : '$preventionCount recomendaciones disponibles.',
+          expandedBuilder: (context) => DiagnosisDetailStepList(items: llmData.prevention, accent: AppColors.aSecondary),
         ),
-    ];
-
-    final smallCards = <Widget>[
-      if (llmData.funFact != null) DiagnosisFunFactCard(funFact: llmData.funFact),
-      if (llmData.risks.isNotEmpty) DiagnosisRiskCard(risks: llmData.risks),
-      DiagnosisNextStepCard(
-        description: 'Te recomendamos revisar el tratamiento recomendado para controlar el problema en tu cultivo.',
-        actionLabel: 'Ver tratamiento',
-        onAction: onViewTreatment,
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (topRow.isNotEmpty) _EqualHeightRow(children: topRow),
-        if (topRow.isNotEmpty) const SizedBox(height: AppSpacing.xxlPlus),
-        if (actionsRow.isNotEmpty) _EqualHeightRow(children: actionsRow),
-        if (actionsRow.isNotEmpty) const SizedBox(height: AppSpacing.xxlPlus),
-        _EqualHeightRow(children: smallCards),
-      ],
-    );
-  }
-}
-
-/// Fila de tarjetas de igual altura (usa la mas alta de las visibles),
-/// con espaciado uniforme entre ellas.
-class _EqualHeightRow extends StatelessWidget {
-  final List<Widget> children;
-  const _EqualHeightRow({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.xl),
-            Expanded(child: children[i]),
+      if (llmData.funFact != null)
+        DiagnosisSectionItem(
+          id: 'fun-fact',
+          icon: Icons.school_outlined,
+          accent: AppColors.aOnTertiaryFixedVariant,
+          background: AppColors.aTertiaryFixed,
+          border: AppColors.aOnTertiaryFixedVariant,
+          title: 'Aprende algo nuevo',
+          summary: 'Un dato curioso sobre tu cultivo te espera.',
+          expandedBuilder: (context) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const DiagnosisDetailSectionLabel('¿SABÍAS QUE...?', color: AppColors.aOnTertiaryFixedVariant),
+              DiagnosisDetailParagraph(llmData.funFact!),
+            ],
+          ),
+        ),
+      if (risksCount > 0)
+        DiagnosisSectionItem(
+          id: 'risks',
+          icon: Icons.error_outline,
+          accent: AppColors.aWarningText,
+          background: AppColors.aWarningBg,
+          border: AppColors.aWarningBorder,
+          title: 'Riesgos si no actúas',
+          summary: risksCount == 1 ? '1 riesgo identificado.' : '$risksCount riesgos identificados.',
+          expandedBuilder: (context) => DiagnosisDetailStepList(items: llmData.risks, accent: AppColors.aWarningText),
+        ),
+      DiagnosisSectionItem(
+        id: 'next-step',
+        icon: Icons.arrow_circle_right_outlined,
+        accent: AppColors.infoBlue,
+        background: AppColors.infoBlue.withValues(alpha: 0.10),
+        border: AppColors.infoBlue.withValues(alpha: 0.35),
+        title: 'Próximo paso',
+        summary: 'Revisa el tratamiento recomendado para tu cultivo.',
+        expandedBuilder: (context) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const DiagnosisDetailParagraph(
+              'Te recomendamos revisar el tratamiento recomendado para controlar el problema en tu cultivo.',
+            ),
+            const SizedBox(height: AppSpacing.xxhuge),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onViewTreatment();
+                },
+                icon: const Icon(Icons.medical_services_outlined, size: 18, color: AppColors.aOnPrimary),
+                label: Text(
+                  'Ver tratamiento',
+                  style: AppTypography.labelMd.copyWith(color: AppColors.aOnPrimary, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.infoBlue,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lgXl)),
+                  elevation: 0,
+                ),
+              ),
+            ),
           ],
-        ],
+        ),
       ),
-    );
+    ];
+
+    return DiagnosisSectionCarousel(items: items);
   }
 }

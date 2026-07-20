@@ -76,6 +76,7 @@ class LlmDiagnosisDataSourceImpl implements LlmDiagnosisDataSource {
       diagnostico: diagnostico.isNotEmpty ? diagnostico : texto,
       tratamiento: tratamiento,
       prevencion: prevencion,
+      aprendizaje: respuesta['aprendizaje'] as String? ?? '',
       fuentes: fuentes,
       confianzaAjustada:
           (diag['confianza_ajustada'] as num?)?.toDouble() ?? 0.0,

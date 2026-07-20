@@ -856,8 +856,7 @@ void _initClusteringFeature() {
   );
   sl.registerFactory(
     () => EpidemiologicalAlertCubit(
-      getAlertaUseCase: sl(),
-      getNotificationPreferencesUseCase: sl(),
+      getNotificationHistoryUseCase: sl(),
     ),
   );
 }

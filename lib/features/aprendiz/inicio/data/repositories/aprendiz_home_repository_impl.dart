@@ -3,10 +3,9 @@ import 'package:dartz/dartz.dart';
 import '../../../../../core/error/failures.dart';
 import '../../../../../core/usecases/usecase.dart';
 import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
-import '../../../../clustering/domain/usecases/get_alerta_usecase.dart';
 import '../../../../login/auth/domain/entities/user_entity.dart';
 import '../../../../login/auth/domain/usecases/get_current_user_usecase.dart';
-import '../../../../notifications/domain/usecases/notification_preferences_usecases.dart';
+import '../../../../notifications/domain/usecases/get_notification_history_usecase.dart';
 import '../../../agenda/domain/entities/agenda_activity_entity.dart';
 import '../../../agenda/domain/entities/agenda_overview_entity.dart';
 import '../../../agenda/domain/usecases/get_agenda_overview_usecase.dart';
@@ -27,17 +26,16 @@ import '../../domain/entities/recent_activity_item_entity.dart';
 import '../../domain/repositories/aprendiz_home_repository.dart';
 
 /// Compone el resumen de Inicio a partir de casos de uso ya existentes de
-/// Auth, Cultivo, Diagnostico, Agenda y Clustering — no persiste ni duplica
-/// datos, solo los agrega. Ver [AprendizHomeOverviewEntity] para el detalle
-/// de cada seccion.
+/// Auth, Cultivo, Diagnostico, Agenda y Notificaciones — no persiste ni
+/// duplica datos, solo los agrega. Ver [AprendizHomeOverviewEntity] para el
+/// detalle de cada seccion.
 class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final GetSavedCropPlanUseCase getSavedCropPlanUseCase;
   final GetCropHealthIndicatorUseCase getCropHealthIndicatorUseCase;
   final GetDiagnosisHistoryAprendizUseCase getDiagnosisHistoryUseCase;
   final GetAgendaOverviewUseCase getAgendaOverviewUseCase;
-  final GetAlertaUseCase getAlertaUseCase;
-  final GetNotificationPreferencesUseCase getNotificationPreferencesUseCase;
+  final GetNotificationHistoryUseCase getNotificationHistoryUseCase;
 
   AprendizHomeRepositoryImpl({
     required this.getCurrentUserUseCase,
@@ -45,8 +43,7 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
     required this.getCropHealthIndicatorUseCase,
     required this.getDiagnosisHistoryUseCase,
     required this.getAgendaOverviewUseCase,
-    required this.getAlertaUseCase,
-    required this.getNotificationPreferencesUseCase,
+    required this.getNotificationHistoryUseCase,
   });
 
   /// Catalogo real de cultivos que el Aprendiz puede sembrar — el mismo que
@@ -131,39 +128,38 @@ class AprendizHomeRepositoryImpl implements AprendizHomeRepository {
         cropCatalog: _buildCropCatalog(plan),
         upcomingTasks: _upcomingTasks(agendaOverview),
         pendingTasksCount: _pendingTasksCount(agendaOverview),
-        funFact: latestDiagnosis?.llmResponse?.explicacion.trim().isNotEmpty == true
-            ? latestDiagnosis!.llmResponse!.explicacion.trim()
+        funFact: latestDiagnosis?.llmResponse?.aprendizaje.trim().isNotEmpty == true
+            ? latestDiagnosis!.llmResponse!.aprendizaje.trim()
             : null,
         dueInspection: dueInspection,
       ),
     );
   }
 
-  /// El "estado" del usuario no tiene una fuente dedicada en la app -- se
-  /// reusa `NotificationPreferencesEntity.estado`, ya capturado en Ajustes >
-  /// Notificaciones para este mismo propósito (alertas por estado). Si el
-  /// usuario nunca lo configuró, se consulta la alerta nacional (`estado:
-  /// null`), comportamiento explícitamente soportado por el backend.
+  /// La alerta que antes venia del endpoint nacional de clustering quedaba
+  /// desactualizada (no reflejaba lo que el usuario ya veia en la campanita
+  /// de notificaciones). Ahora se reusa la misma fuente que
+  /// `NotificationsPage`: el historial local de push recibidas
+  /// (`NotificationHistoryRepository.getHistory()`, ya ordenado del mas
+  /// reciente al mas antiguo), tomando solo la mas reciente. Sin
+  /// notificaciones guardadas -> sin alerta, nunca datos inventados.
   ///
-  /// El backend solo expone `hay_alerta` (bool), sin niveles de severidad;
-  /// se mapea a `moderate` como único nivel "activo" -- no se inventa una
-  /// escala de riesgo que el backend no reporta.
+  /// El historial no trae nivel de severidad (solo `title`/`body`); se
+  /// mapea a `moderate` como unico nivel "activo", igual que antes.
   Future<PhytosanitaryAlertEntity> _resolvePhytosanitaryAlert() async {
-    final prefs = (await getNotificationPreferencesUseCase(const NoParams())).fold(
+    final history = (await getNotificationHistoryUseCase(const NoParams())).fold(
       (_) => null,
-      (p) => p,
+      (items) => items,
     );
-    final estado = (prefs != null && prefs.estado.trim().isNotEmpty) ? prefs.estado.trim() : null;
+    if (history == null || history.isEmpty) return PhytosanitaryAlertEntity.none;
 
-    final alerta = (await getAlertaUseCase(GetAlertaParams(estado: estado))).fold(
-      (_) => null,
-      (a) => a,
-    );
-    if (alerta == null || !alerta.hayAlerta) return PhytosanitaryAlertEntity.none;
+    final latest = history.first;
+    final message = latest.body.trim().isNotEmpty ? latest.body.trim() : latest.title.trim();
+    if (message.isEmpty) return PhytosanitaryAlertEntity.none;
 
     return PhytosanitaryAlertEntity(
       level: PhytosanitaryAlertLevel.moderate,
-      message: alerta.mensaje,
+      message: message,
     );
   }
 

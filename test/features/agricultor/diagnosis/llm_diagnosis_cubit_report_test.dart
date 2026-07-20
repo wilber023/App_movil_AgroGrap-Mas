@@ -130,6 +130,7 @@ const _llmResponseOk = LlmResponseEntity(
   diagnostico: 'Diagnóstico de prueba',
   tratamiento: 'Tratamiento de prueba',
   prevencion: 'Prevención de prueba',
+  aprendizaje: '',
   fuentes: [],
   confianzaAjustada: 0.9,
   estado: 'reforzado',

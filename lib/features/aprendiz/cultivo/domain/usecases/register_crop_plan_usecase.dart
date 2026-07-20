@@ -14,7 +14,7 @@ class RegisterCropPlanUseCase implements UseCase<CropPlanEntity, RegisterCropPla
   @override
   Future<Either<Failure, CropPlanEntity>> call(RegisterCropPlanParams params) {
     return repository.registerCropPlan(
-      cropName: params.cropName,
+      cultivoId: params.cultivoId,
       startDate: params.startDate,
       practiceLocation: params.practiceLocation,
     );
@@ -22,16 +22,16 @@ class RegisterCropPlanUseCase implements UseCase<CropPlanEntity, RegisterCropPla
 }
 
 class RegisterCropPlanParams extends Equatable {
-  final String cropName;
+  final String cultivoId;
   final DateTime startDate;
   final CropPracticeLocation practiceLocation;
 
   const RegisterCropPlanParams({
-    required this.cropName,
+    required this.cultivoId,
     required this.startDate,
     required this.practiceLocation,
   });
 
   @override
-  List<Object?> get props => [cropName, startDate, practiceLocation];
+  List<Object?> get props => [cultivoId, startDate, practiceLocation];
 }

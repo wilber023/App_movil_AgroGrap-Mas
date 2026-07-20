@@ -87,20 +87,6 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
     }
   }
 
-  void _saveDiagnosis(BuildContext context) {
-    // El diagnostico ya se persiste automaticamente al analizarlo
-    // (AprendizDiagnosisRepositoryImpl.analyzeCrop -> insertDiagnosis), asi
-    // que este boton solo confirma el estado real, sin logica nueva.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Diagnóstico guardado en tu historial', style: AppTypography.agendaBody.copyWith(color: AppColors.aOnPrimary)),
-        backgroundColor: AppColors.aSecondary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mdLg)),
-      ),
-    );
-  }
-
   void _scheduleFollowUp(BuildContext context) {
     if (activityId.isNotEmpty) {
       context.read<DiagnosisResultAprendizCubit>().acceptAction(activityId);
@@ -249,7 +235,6 @@ class _DiagnosisResultAprendizViewState extends State<_DiagnosisResultAprendizVi
       BlocBuilder<DiagnosisResultAprendizCubit, DiagnosisResultAprendizState>(
         builder: (context, state) {
           return DiagnosisResultBottomBar(
-            onSave: () => _saveDiagnosis(context),
             onScheduleFollowUp: () => _scheduleFollowUp(context),
             isSchedulingFollowUp: state is DiagnosisResultLoading,
           );
