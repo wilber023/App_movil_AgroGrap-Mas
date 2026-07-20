@@ -19,6 +19,7 @@ import '../../features/agricultor/parcels/domain/usecases/get_parcels_usecase.da
 import '../../features/agricultor/parcels/domain/usecases/add_parcel_usecase.dart';
 import '../../features/agricultor/parcels/domain/usecases/delete_parcel_usecase.dart';
 import '../../features/agricultor/parcels/domain/usecases/get_cultivo_catalog_usecase.dart';
+import '../../features/agricultor/parcels/domain/usecases/get_parcel_region_local_usecase.dart';
 import '../../features/agricultor/parcels/presentation/bloc/parcel_bloc.dart';
 
 // -- Auth --
@@ -132,8 +133,10 @@ import '../../features/notifications/presentation/cubit/notification_history_cub
 
 // -- Clustering (Mapa epidemiológico -- mismo host que LLM/RAG) --
 import '../../features/clustering/data/datasources/clustering_remote_datasource.dart';
+import '../../features/clustering/data/datasources/clustering_report_remote_datasource.dart';
 import '../../features/clustering/data/repositories/clustering_repository_impl.dart';
 import '../../features/clustering/domain/repositories/clustering_repository.dart';
+import '../../features/clustering/domain/usecases/enviar_reporte_diagnostico_usecase.dart';
 import '../../features/clustering/domain/usecases/get_alerta_usecase.dart';
 import '../../features/clustering/domain/usecases/get_mapa_campanias_usecase.dart';
 import '../../features/clustering/presentation/cubit/epidemiological_alert_cubit.dart';
@@ -441,7 +444,13 @@ void _initDiagnosisFeature() {
 
   sl.registerLazySingleton(() => GetLlmDiagnosisUseCase(sl()));
 
-  sl.registerFactory(() => LlmDiagnosisCubit(sl()));
+  sl.registerFactory(
+    () => LlmDiagnosisCubit(
+      sl(),
+      enviarReporteUseCase: sl(),
+      getParcelRegionLocalUseCase: sl(),
+    ),
+  );
 
   // -- Productos: recomendaciones post-diagnóstico (http://44.196.107.153) --
   // Requiere X-API-Key + Authorization: Bearer <user_jwt>.
@@ -601,6 +610,7 @@ void _initParcelsFeature() {
   sl.registerLazySingleton(() => AddParcelUseCase(sl()));
   sl.registerLazySingleton(() => DeleteParcelUseCase(sl()));
   sl.registerLazySingleton(() => GetCultivoCatalogUseCase(sl()));
+  sl.registerLazySingleton(() => GetParcelRegionLocalUseCase(sl()));
 
   // -- Bloc (Factory: una instancia compartida via root MultiBlocProvider) --
   sl.registerFactory(
@@ -823,14 +833,22 @@ void _initClusteringFeature() {
     () => ClusteringRemoteDataSourceImpl(client: sl<Dio>(instanceName: 'llmDio')),
   );
 
+  // Reporte de diagnósticos (fire-and-forget): reutiliza el Dio compartido
+  // de _initCore() (mismo que Offline Knowledge), no 'llmDio' — ver
+  // KnowledgeRemoteDataSourceImpl.
+  sl.registerLazySingleton<ClusteringReportRemoteDataSource>(
+    () => ClusteringReportRemoteDataSourceImpl(client: sl()),
+  );
+
   // -- Repository --
   sl.registerLazySingleton<ClusteringRepository>(
-    () => ClusteringRepositoryImpl(remoteDataSource: sl()),
+    () => ClusteringRepositoryImpl(remoteDataSource: sl(), reportRemoteDataSource: sl()),
   );
 
   // -- UseCases --
   sl.registerLazySingleton(() => GetMapaCampaniasUseCase(sl()));
   sl.registerLazySingleton(() => GetAlertaUseCase(sl()));
+  sl.registerLazySingleton(() => EnviarReporteDiagnosticoUseCase(sl()));
 
   // -- Cubits (Factory: nueva instancia por pantalla) --
   sl.registerFactory(

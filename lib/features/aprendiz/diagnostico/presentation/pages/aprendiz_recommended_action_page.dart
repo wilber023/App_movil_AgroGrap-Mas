@@ -11,8 +11,6 @@ import '../../../agenda/agenda.dart';
 import '../../../agenda/domain/usecases/generate_agenda_usecase.dart';
 import '../../../agenda/domain/usecases/get_agenda_overview_usecase.dart';
 
-const String _kFont = 'Inter';
-
 /// Muestra el tratamiento/prevención recomendados por el asistente IA (LLM),
 /// en lenguaje sencillo para el aprendiz. Sin datos económicos ni de producto
 /// fabricados: si el LLM aún no respondió, se informa en vez de inventar cifras.
@@ -54,7 +52,6 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       'Qué hacer ahora',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: _kFont,
                         color: AppColors.aOnPrimary,
                         fontSize: 19,
                         fontWeight: FontWeight.w700,
@@ -77,11 +74,11 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                       padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.xxlPlus),
                       child: RichText(
                         text: TextSpan(
-                          style: const TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant),
+                          style: const TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant),
                           children: [
                             const TextSpan(
                               text: 'Sobre: ',
-                              style: TextStyle(fontFamily: _kFont, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                             ),
                             TextSpan(text: '$diseaseName · $cropName'),
                           ],
@@ -132,7 +129,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         icon: const Icon(Icons.event_available, color: AppColors.aOnPrimary),
                         label: const Text(
                           'Agregar a mi agenda',
-                          style: TextStyle(fontFamily: _kFont, color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppColors.aOnPrimary, fontSize: 16, fontWeight: FontWeight.w700),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.aOrange,
@@ -149,7 +146,7 @@ class AprendizRecommendedActionPage extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                         child: const Text(
                           'Volver al resultado',
-                          style: TextStyle(fontFamily: _kFont, fontSize: 14, color: AppColors.aOnSurfaceVariant, fontWeight: FontWeight.w600),
+                          style: TextStyle(fontSize: 14, color: AppColors.aOnSurfaceVariant, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -267,7 +264,6 @@ class _ActionCard extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: _kFont,
                   fontSize: 12,
                   color: AppColors.aSecondary,
                   fontWeight: FontWeight.w700,
@@ -279,7 +275,7 @@ class _ActionCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
           Text(
             content,
-            style: const TextStyle(fontFamily: _kFont, fontSize: 15, color: AppColors.aOnSurface, height: 1.5),
+            style: const TextStyle(fontSize: 15, color: AppColors.aOnSurface, height: 1.5),
           ),
         ],
       ),
@@ -314,7 +310,7 @@ class _InfoCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontFamily: _kFont, fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                 ),
               ),
             ],
@@ -322,7 +318,7 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             body,
-            style: const TextStyle(fontFamily: _kFont, fontSize: 13, color: AppColors.aOnSurfaceVariant, height: 1.4),
+            style: const TextStyle(fontSize: 13, color: AppColors.aOnSurfaceVariant, height: 1.4),
           ),
         ],
       ),

@@ -35,7 +35,15 @@ class SeleccionModel extends ParcelEntity {
       cropName: cultivoNombre,
       areaSize: (_num(json, ['area_ha', 'areaHa']) ?? 0.0),
       areaUnit: _str(json, ['unidad_area', 'unidadArea']) ?? 'ha',
-      region: _str(json, ['region']) ?? '',
+      region: _str(json, [
+            'region',
+            'region_comunidad',
+            'regionComunidad',
+            'comunidad',
+            'ubicacion',
+            'localidad',
+          ]) ??
+          '',
       fechaSiembra: rawFechaSiembra != null ? DateTime.tryParse(rawFechaSiembra) : null,
       status: _mapEstado(estado),
       stageName: _mapEtapa(rawEtapa),

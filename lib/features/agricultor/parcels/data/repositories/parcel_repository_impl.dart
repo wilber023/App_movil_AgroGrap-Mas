@@ -76,6 +76,16 @@ class ParcelRepositoryImpl implements ParcelRepository {
     }
   }
 
+  @override
+  Future<String?> getRegionLocal(String seleccionId) {
+    return remoteDataSource.getRegionLocal(seleccionId);
+  }
+
+  @override
+  Future<List<ParcelEntity>> getParcelsLocal() async {
+    return remoteDataSource.getSeleccionesLocal();
+  }
+
   Failure _map(ServerException e) {
     if (e.statusCode == 401) {
       return AuthFailure(message: e.message, statusCode: e.statusCode);

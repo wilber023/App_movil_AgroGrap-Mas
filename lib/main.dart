@@ -31,6 +31,7 @@ import 'features/agricultor/home/presentation/pages/home_page.dart';
 import 'features/agricultor/profile/presentation/pages/profile_page.dart';
 import 'features/agricultor/parcels/presentation/pages/parcels_page.dart';
 import 'features/agricultor/parcels/presentation/bloc/parcel_bloc.dart';
+import 'features/agricultor/parcels/domain/usecases/get_parcels_usecase.dart';
 import 'features/agricultor/offline/presentation/cubit/offline_cubit.dart';
 import 'features/agricultor/treatment/presentation/bloc/treatment_bloc.dart';
 import 'features/agricultor/treatment/presentation/pages/treatment_page.dart';
@@ -121,6 +122,16 @@ class _AgroGraphAppState extends State<AgroGraphApp> {
   // ---------------------------------------------------------------------------
 
   Future<void> _onLoggedIn() async {
+    // Precalienta la caché local de parcelas (Región/Comunidad) apenas hay
+    // sesión activa -- fresh login o sesión restaurada, da igual. El reporte
+    // de diagnóstico a Clustering lee esa caché sin red (nunca puede
+    // consultar el microservicio de Cultivos al momento del diagnóstico),
+    // así que debe quedar poblada ANTES de que el usuario alcance a
+    // diagnosticar, sin depender de que primero visite Inicio/Mis Parcelas.
+    // Nunca bloquea la navegación ni el login: solo agricultor tiene
+    // parcelas, y cualquier error se descarta en silencio.
+    unawaited(_warmUpParcelsCache());
+
     if (!Platform.isAndroid) return;
     try {
       final prefsResult = await sl<GetNotificationPreferencesUseCase>()(const NoParams());
@@ -144,6 +155,24 @@ class _AgroGraphAppState extends State<AgroGraphApp> {
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[FCM] Re-suscripción tras login falló: $e');
+    }
+  }
+
+  Future<void> _warmUpParcelsCache() async {
+    try {
+      if (kDebugMode) debugPrint('[Parcels] precargando caché tras login...');
+      final result = await sl<GetParcelsUseCase>()(const NoParams());
+      if (kDebugMode) {
+        result.fold(
+          (failure) => debugPrint('[Parcels] precarga falló: ${failure.message}'),
+          (parcels) => debugPrint(
+            '[Parcels] precarga OK: ${parcels.length} parcela(s) -- '
+            '${parcels.map((p) => '${p.seleccionId}:"${p.cropName}"->region="${p.region}"').join(', ')}',
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Parcels] Precarga de caché tras login falló: $e');
     }
   }
 

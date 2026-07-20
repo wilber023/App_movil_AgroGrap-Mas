@@ -7,8 +7,6 @@ import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../agricultor/diagnosis/domain/entities/diagnosis_entity.dart';
 
-const String _kFont = 'Inter';
-
 final List<BoxShadow> kAprendizCardShadow = [
   BoxShadow(color: AppColors.aOnSurface.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
 ];
@@ -67,12 +65,12 @@ class DiagnosisHistoryCard extends StatelessWidget {
                 children: [
                   Text(
                     d.diseaseName,
-                    style: const TextStyle(fontFamily: _kFont, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.aOnSurface),
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     d.cropName,
-                    style: const TextStyle(fontFamily: _kFont, fontSize: 12, color: AppColors.aOnSurfaceVariant),
+                    style: const TextStyle(fontSize: 12, color: AppColors.aOnSurfaceVariant),
                   ),
                   const SizedBox(height: AppSpacing.smMd),
                   Row(
@@ -89,7 +87,6 @@ class DiagnosisHistoryCard extends StatelessWidget {
                         child: Text(
                           d.statusLabel,
                           style: TextStyle(
-                            fontFamily: _kFont,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: isHealthy ? AppColors.aOnSecondaryContainer : AppColors.aDiseaseCardText,
@@ -99,7 +96,7 @@ class DiagnosisHistoryCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         _fmtDate(d.diagnosedAt),
-                        style: const TextStyle(fontFamily: _kFont, fontSize: 11, color: AppColors.aOnSurfaceVariant),
+                        style: const TextStyle(fontSize: 11, color: AppColors.aOnSurfaceVariant),
                       ),
                     ],
                   ),

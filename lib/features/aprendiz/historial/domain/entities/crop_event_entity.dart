@@ -39,11 +39,11 @@ extension CropEventTypeExtension on CropEventType {
       case CropEventType.mejoraObservada:
         return AppColors.primaryContainer; // verde claro
       case CropEventType.fertilizacion:
-        return Colors.lightBlue.shade100; // azul claro
+        return AppColors.aFertilizerBg; // azul claro
       case CropEventType.deteccionEnfermedad:
         return AppColors.errorContainer; // rojo claro
       case CropEventType.tratamientoAplicado:
-        return Colors.orange.shade100; // ámbar claro
+        return AppColors.aWarningBg; // ámbar claro
       case CropEventType.actividadPospuesta:
         return AppColors.surfaceVariant; // gris claro
     }
@@ -56,11 +56,11 @@ extension CropEventTypeExtension on CropEventType {
       case CropEventType.mejoraObservada:
         return AppColors.forestGreen; // verde oscuro
       case CropEventType.fertilizacion:
-        return Colors.blue; // azul
+        return AppColors.aFertilizerIcon; // azul
       case CropEventType.deteccionEnfermedad:
         return AppColors.error; // rojo
       case CropEventType.tratamientoAplicado:
-        return Colors.orange.shade800; // ámbar
+        return AppColors.aWarningText; // ámbar
       case CropEventType.actividadPospuesta:
         return AppColors.onSurfaceVariant; // gris
     }

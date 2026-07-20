@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../../core/error/exceptions.dart';
@@ -16,6 +17,17 @@ abstract interface class CultivosRemoteDataSource {
   Future<List<SeleccionModel>> getMisSelecciones();
   Future<SeleccionModel> crearSeleccion(AddParcelParams params);
   Future<void> eliminarSeleccion(String seleccionId);
+
+  /// Lee el campo `region` de una selección directamente de la caché local
+  /// (`seleccionesBox`), sin ninguna llamada de red. `null` si no hay nada
+  /// cacheado para ese `seleccionId` (p. ej. nunca se llamó a
+  /// `getMisSelecciones()`/`crearSeleccion()` en este dispositivo).
+  Future<String?> getRegionLocal(String seleccionId);
+
+  /// Todas las selecciones del usuario cacheadas localmente
+  /// (`seleccionesBox`), sin ninguna llamada de red. Se puebla en cada
+  /// `getMisSelecciones()`/`crearSeleccion()` exitoso.
+  Future<List<SeleccionModel>> getSeleccionesLocal();
 }
 
 class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
@@ -158,8 +170,27 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
               ? <String, dynamic>{...raw, 'cultivo_nombre': catalogMap[cultivoId]}
               : Map<String, dynamic>.from(raw);
 
-          final model = SeleccionModel.fromJson(enriched);
+          var model = SeleccionModel.fromJson(enriched);
           if (model.seleccionId.isEmpty) continue;
+
+          // El endpoint de listado a veces no incluye `region` (o la manda
+          // vacía) aunque sí se guardó al crear la parcela -- no pisar un
+          // valor ya bueno en caché con uno vacío (ver reporte de
+          // diagnóstico a Clustering, que depende de este campo).
+          if (model.region.trim().isEmpty) {
+            final preserved = _preservedRegion(userId, model.seleccionId);
+            if (preserved != null && preserved.isNotEmpty) {
+              model = _withRegion(model, preserved);
+            }
+          }
+
+          if (kDebugMode) {
+            debugPrint(
+              '[Parcels] cacheando seleccion=${model.seleccionId} '
+              'cultivo="${model.cropName}" region="${model.region}"',
+            );
+          }
+
           // Actualiza caché local (offline fallback)
           await seleccionesBox.put(
               _hiveKey(userId, model.seleccionId), json.encode(model.toJson()));
@@ -173,6 +204,37 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
       return _readFromHive(userId);
     }
   }
+
+  /// Región ya cacheada para esta selección (si la hay), para no perderla
+  /// cuando una respuesta de listado posterior no la incluye.
+  String? _preservedRegion(String userId, String seleccionId) {
+    final raw = seleccionesBox.get(_hiveKey(userId, seleccionId));
+    if (raw == null) return null;
+    try {
+      final map = json.decode(raw) as Map<String, dynamic>;
+      final region = SeleccionModel.fromJson(map).region;
+      return region.trim().isEmpty ? null : region;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  SeleccionModel _withRegion(SeleccionModel model, String region) => SeleccionModel(
+        id: model.id,
+        seleccionId: model.seleccionId,
+        cultivoId: model.cultivoId,
+        name: model.name,
+        cropName: model.cropName,
+        areaSize: model.areaSize,
+        areaUnit: model.areaUnit,
+        region: region,
+        fechaSiembra: model.fechaSiembra,
+        status: model.status,
+        lastDiagnosisAt: model.lastDiagnosisAt,
+        stageName: model.stageName,
+        stageProgress: model.stageProgress,
+        stageIndex: model.stageIndex,
+      );
 
   Future<Map<String, String>> _buildCatalogMap() async {
     try {
@@ -200,6 +262,31 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
     }
     models.sort((a, b) => b.seleccionId.compareTo(a.seleccionId));
     return models;
+  }
+
+  @override
+  Future<String?> getRegionLocal(String seleccionId) async {
+    try {
+      final userId = await _getUserId();
+      if (userId.isEmpty) return null;
+      final raw = seleccionesBox.get(_hiveKey(userId, seleccionId));
+      if (raw == null) return null;
+      final map = json.decode(raw) as Map<String, dynamic>;
+      return SeleccionModel.fromJson(map).region;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<SeleccionModel>> getSeleccionesLocal() async {
+    try {
+      final userId = await _getUserId();
+      if (userId.isEmpty) return [];
+      return _readFromHive(userId);
+    } catch (_) {
+      return [];
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -253,6 +340,12 @@ class CultivosRemoteDataSourceImpl implements CultivosRemoteDataSource {
       if (userId.isNotEmpty && model.seleccionId.isNotEmpty) {
         await seleccionesBox.put(
             _hiveKey(userId, model.seleccionId), json.encode(model.toJson()));
+        if (kDebugMode) {
+          debugPrint(
+            '[Parcels] parcela creada seleccion=${model.seleccionId} '
+            'cultivo="${model.cropName}" region="${model.region}"',
+          );
+        }
       }
 
       return model;

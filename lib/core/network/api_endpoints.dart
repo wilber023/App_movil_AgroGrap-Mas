@@ -272,6 +272,12 @@ class ClusteringEndpoints {
 
   /// Alerta epidemiológica nacional (sin `estado`) o por estado (`?estado=`).
   String get alertas => '/api/v1/alertas';
+
+  /// POST — registra un reporte de diagnóstico (cultivo/plaga/estado) para
+  /// alimentar el sistema de Clustering (mapas de incidencia, estadísticas,
+  /// alertas por región). Mismo host que Offline Knowledge
+  /// ([ApiEndpoints.offlineKnowledgeBaseUrl]).
+  String get reportes => '/api/admin/reportes';
 }
 
 // =============================================================================

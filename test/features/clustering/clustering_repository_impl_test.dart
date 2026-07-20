@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:agrograp_movil/core/error/exceptions.dart';
 import 'package:agrograp_movil/core/error/failures.dart';
 import 'package:agrograp_movil/features/clustering/data/datasources/clustering_remote_datasource.dart';
+import 'package:agrograp_movil/features/clustering/data/datasources/clustering_report_remote_datasource.dart';
 import 'package:agrograp_movil/features/clustering/data/models/alerta_epidemiologica_model.dart';
 import 'package:agrograp_movil/features/clustering/data/models/estado_resumen_model.dart';
 import 'package:agrograp_movil/features/clustering/data/repositories/clustering_repository_impl.dart';
@@ -35,13 +36,55 @@ class _FakeClusteringRemoteDataSource implements ClusteringRemoteDataSource {
   }
 }
 
+/// Fake en memoria de [ClusteringReportRemoteDataSource].
+class _FakeClusteringReportRemoteDataSource implements ClusteringReportRemoteDataSource {
+  Exception? exceptionToThrow;
+  Map<String, String>? lastReporte;
+
+  @override
+  Future<void> enviarReporte({
+    required String cultivo,
+    required String plaga,
+    required String estado,
+  }) async {
+    lastReporte = {'cultivo': cultivo, 'plaga': plaga, 'estado': estado};
+    if (exceptionToThrow != null) throw exceptionToThrow!;
+  }
+}
+
 void main() {
   late _FakeClusteringRemoteDataSource remote;
+  late _FakeClusteringReportRemoteDataSource reportRemote;
   late ClusteringRepositoryImpl repository;
 
   setUp(() {
     remote = _FakeClusteringRemoteDataSource();
-    repository = ClusteringRepositoryImpl(remoteDataSource: remote);
+    reportRemote = _FakeClusteringReportRemoteDataSource();
+    repository = ClusteringRepositoryImpl(
+      remoteDataSource: remote,
+      reportRemoteDataSource: reportRemote,
+    );
+  });
+
+  group('enviarReporte', () {
+    test('envía cultivo/plaga/estado tal cual al datasource', () async {
+      await repository.enviarReporte(cultivo: 'Tomate', plaga: 'Tizón temprano', estado: 'Suchiapa, Chiapas');
+
+      expect(reportRemote.lastReporte, {
+        'cultivo': 'Tomate',
+        'plaga': 'Tizón temprano',
+        'estado': 'Suchiapa, Chiapas',
+      });
+    });
+
+    test('no lanza si el datasource falla -- se descarta silenciosamente', () async {
+      reportRemote.exceptionToThrow = Exception('network down');
+
+      await expectLater(
+        repository.enviarReporte(cultivo: 'Tomate', plaga: 'Tizón temprano', estado: ''),
+        completes,
+      );
+    });
   });
 
   group('getMapaCampanias', () {

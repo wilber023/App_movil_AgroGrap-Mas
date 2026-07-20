@@ -11,6 +11,13 @@ abstract class ParcelRepository {
   Future<Either<Failure, ParcelEntity>> addParcel(AddParcelParams params);
   Future<Either<Failure, void>> deleteParcel(String seleccionId);
   Future<Either<Failure, List<CultivoEntity>>> getCultivoCatalog();
+
+  /// Región/Comunidad de una parcela, leída de la caché local (sin red).
+  /// `null` si no hay nada cacheado para ese `seleccionId`.
+  Future<String?> getRegionLocal(String seleccionId);
+
+  /// Todas las parcelas del usuario cacheadas localmente (sin red).
+  Future<List<ParcelEntity>> getParcelsLocal();
 }
 
 class AddParcelParams extends Equatable {
